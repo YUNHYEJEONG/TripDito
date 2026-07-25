@@ -16,7 +16,7 @@ export function StorageUsageBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-2xl px-4 py-3 text-sm",
+        "rounded-2xl border border-border/80 px-3.5 py-3 text-[13px]",
         usage.level === "danger"
           ? "bg-destructive/10 text-destructive"
           : "bg-warning/15 text-foreground",

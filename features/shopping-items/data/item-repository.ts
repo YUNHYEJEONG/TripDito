@@ -43,6 +43,23 @@ export const itemRepository = {
     return item;
   },
 
+  /** 다른 사람 쇼핑리스트 상품을 내 여행 리스트로 퍼가기 */
+  copyToTrip(sourceItemId: string, targetTripId: string): ShoppingItem {
+    const source = readItems().find((item) => item.id === sourceItemId);
+    if (!source) throw new Error("상품을 찾을 수 없습니다");
+    return this.create(targetTripId, {
+      name: source.name,
+      estimatedPrice: source.estimatedPrice,
+      quantity: source.quantity,
+      memo: source.memo,
+      imageDataUrl: source.imageDataUrl,
+    });
+  },
+
+  copyManyToTrip(sourceItemIds: string[], targetTripId: string): ShoppingItem[] {
+    return sourceItemIds.map((id) => this.copyToTrip(id, targetTripId));
+  },
+
   createMany(tripId: string, inputs: ShoppingItemFormValues[]): ShoppingItem[] {
     const now = new Date().toISOString();
     const created = inputs.map((input, index) => {

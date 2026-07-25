@@ -16,35 +16,36 @@ export function TripCard({
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="group flex items-center gap-4 rounded-2xl bg-background px-4 py-4 transition-colors hover:bg-background/80"
+      className="group flex items-center gap-3 rounded-2xl border border-border/80 bg-background px-3.5 py-3.5 transition-colors active:bg-secondary/70"
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h2 className="truncate text-base font-medium text-foreground">
+          <h2 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
             {trip.name}
           </h2>
         </div>
-        <p className="mt-1 truncate text-sm text-muted-foreground">
+        <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
           {trip.city}, {trip.country}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+          <span className="mx-1.5 text-border">·</span>
           {formatDateRange(trip.startDate, trip.endDate)}
         </p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
           <span>
             예산{" "}
             <CurrencyText
               amount={trip.budget}
               currency={trip.currency}
-              className="text-foreground"
+              className="font-medium text-foreground"
             />
           </span>
           {typeof progress === "number" ? (
-            <span>구매 {Math.round(progress * 100)}%</span>
+            <span className="font-medium text-primary">
+              구매 {Math.round(progress * 100)}%
+            </span>
           ) : null}
         </div>
       </div>
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      <ChevronRight className="size-5 shrink-0 text-muted-foreground/80 transition-transform group-hover:translate-x-0.5" />
     </Link>
   );
 }

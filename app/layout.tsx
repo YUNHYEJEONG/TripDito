@@ -1,12 +1,45 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Noto_Sans_KR, Roboto } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/providers/app-providers";
 import { appConfig } from "@/config/app";
 
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto-sans-kr",
+  display: "swap",
+});
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: appConfig.name,
-  description: "여행 쇼핑 리스트",
+  title: {
+    default: appConfig.name,
+    template: `%s · ${appConfig.name}`,
+  },
+  description: appConfig.tagline,
+  applicationName: appConfig.name,
+  icons: {
+    icon: [
+      { url: "/brand/favicon.ico?v=3" },
+      { url: "/brand/favicon.png?v=3", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/brand/app-icon.png?v=3" }],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#3182F6",
 };
 
 export default function RootLayout({
@@ -18,18 +51,13 @@ export default function RootLayout({
     <html
       lang="ko"
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", "font-sans")}
+      className={cn(
+        "h-full",
+        notoSansKr.variable,
+        roboto.variable,
+        "font-sans",
+      )}
     >
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
-        />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
-      </head>
       <body className="flex min-h-full flex-col bg-canvas text-foreground">
         <AppProviders>{children}</AppProviders>
       </body>

@@ -37,6 +37,47 @@ export function useCreateItem(tripId: string) {
   });
 }
 
+export function useCopyItemToTrip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      sourceItemId,
+      targetTripId,
+    }: {
+      sourceItemId: string;
+      targetTripId: string;
+    }) => itemRepository.copyToTrip(sourceItemId, targetTripId),
+    onSuccess: (item) => {
+      void queryClient.invalidateQueries({
+        queryKey: itemKeys.byTrip(item.tripId),
+      });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+    },
+  });
+}
+
+export function useCopyItemsToTrip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      sourceItemIds,
+      targetTripId,
+    }: {
+      sourceItemIds: string[];
+      targetTripId: string;
+    }) => itemRepository.copyManyToTrip(sourceItemIds, targetTripId),
+    onSuccess: (items) => {
+      const tripId = items[0]?.tripId;
+      if (tripId) {
+        void queryClient.invalidateQueries({
+          queryKey: itemKeys.byTrip(tripId),
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+    },
+  });
+}
+
 export function useCreateManyItems(tripId: string) {
   const queryClient = useQueryClient();
   return useMutation({

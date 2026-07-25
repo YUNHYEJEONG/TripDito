@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FieldLabel } from "@/components/common/field-label";
 import { CURRENCIES } from "@/config/currencies";
 import { defaultTripFormValues } from "../constants";
 import { tripFormSchema, type TripFormValues } from "../schema";
@@ -32,29 +32,53 @@ export function TripForm({
         await onSubmit(values);
       })}
     >
-      <Field label="여행명" error={form.formState.errors.name?.message}>
+      <Field
+        label="여행명"
+        required
+        error={form.formState.errors.name?.message}
+      >
         <Input placeholder="예: 도쿄 3박 4일" {...form.register("name")} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="국가" error={form.formState.errors.country?.message}>
+        <Field
+          label="국가"
+          required
+          error={form.formState.errors.country?.message}
+        >
           <Input placeholder="일본" {...form.register("country")} />
         </Field>
-        <Field label="도시" error={form.formState.errors.city?.message}>
+        <Field
+          label="도시"
+          required
+          error={form.formState.errors.city?.message}
+        >
           <Input placeholder="도쿄" {...form.register("city")} />
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="시작일" error={form.formState.errors.startDate?.message}>
+        <Field
+          label="시작일"
+          required
+          error={form.formState.errors.startDate?.message}
+        >
           <Input type="date" {...form.register("startDate")} />
         </Field>
-        <Field label="종료일" error={form.formState.errors.endDate?.message}>
+        <Field
+          label="종료일"
+          required
+          error={form.formState.errors.endDate?.message}
+        >
           <Input type="date" {...form.register("endDate")} />
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="통화" error={form.formState.errors.currency?.message}>
+        <Field
+          label="통화"
+          required
+          error={form.formState.errors.currency?.message}
+        >
           <select
-            className="h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+            className="h-10 w-full rounded-xl border border-transparent bg-input px-3 text-[13px] shadow-neu-inset outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
             {...form.register("currency")}
           >
             {CURRENCIES.map((currency) => (
@@ -64,7 +88,11 @@ export function TripForm({
             ))}
           </select>
         </Field>
-        <Field label="예산" error={form.formState.errors.budget?.message}>
+        <Field
+          label="예산"
+          required
+          error={form.formState.errors.budget?.message}
+        >
           <Input
             type="number"
             min={0}
@@ -89,16 +117,18 @@ export function TripForm({
 
 function Field({
   label,
+  required,
   error,
   children,
 }: {
   label: string;
+  required?: boolean;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
+      <FieldLabel required={required}>{label}</FieldLabel>
       {children}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>

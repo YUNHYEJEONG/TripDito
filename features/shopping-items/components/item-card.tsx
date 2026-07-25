@@ -22,7 +22,7 @@ export function ItemCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-2xl bg-background px-3 py-3",
+        "flex items-center gap-3 rounded-2xl border border-border/80 bg-background px-3 py-3",
         item.purchased && "opacity-60",
       )}
     >

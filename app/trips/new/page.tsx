@@ -13,7 +13,7 @@ export default function NewTripPage() {
 
   return (
     <AppShell>
-      <PageHeader title="새 여행" backHref="/" />
+      <PageHeader title="새 여행" backHref="/home" />
       <TripForm
         submitLabel="여행 만들기"
         onCancel={() => router.push("/")}

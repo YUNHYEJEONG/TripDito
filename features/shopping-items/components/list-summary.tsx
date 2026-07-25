@@ -11,20 +11,24 @@ export function ListSummary({
   currency: string;
 }) {
   return (
-    <section className="rounded-2xl bg-background px-4 py-4">
+    <section className="rounded-2xl border border-border/80 bg-background px-4 py-3.5">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs text-muted-foreground">구매 진행률</p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight">
+          <p className="text-[12px] font-medium text-muted-foreground">
+            구매 진행률
+          </p>
+          <p className="mt-0.5 text-[28px] font-bold leading-none tracking-tight">
             {Math.round(summary.purchaseProgress * 100)}%
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
             {summary.purchasedCount}/{summary.totalCount}개
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">남은 예산</p>
-          <p className="mt-1 text-lg font-semibold tracking-tight">
+          <p className="text-[12px] font-medium text-muted-foreground">
+            남은 예산
+          </p>
+          <p className="mt-0.5 text-lg font-bold tracking-tight">
             <CurrencyText
               amount={summary.remainingBudget}
               currency={currency}
@@ -32,27 +36,27 @@ export function ListSummary({
           </p>
         </div>
       </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+      <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${summary.purchaseProgress * 100}%` }}
         />
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-3 text-[13px]">
         <div>
-          <p className="text-xs text-muted-foreground">예상 총액</p>
+          <p className="text-[12px] text-muted-foreground">예상 총액</p>
           <CurrencyText
             amount={summary.estimatedTotal}
             currency={currency}
-            className="font-medium"
+            className="font-semibold"
           />
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">구매 완료</p>
+          <p className="text-[12px] text-muted-foreground">구매 완료</p>
           <CurrencyText
             amount={summary.purchasedTotal}
             currency={currency}
-            className="font-medium"
+            className="font-semibold"
           />
         </div>
       </div>

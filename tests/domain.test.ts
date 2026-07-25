@@ -3,12 +3,12 @@ import { describe, it } from "node:test";
 import {
   calculateBudget,
   lineTotal,
-} from "../features/budget/utils/calculate-budget.ts";
+} from "../features/budget/utils/calculate-budget";
 import {
   filterItems,
   sortItems,
-} from "../features/shopping-items/utils/item-query.ts";
-import type { ShoppingItem } from "../features/shopping-items/types.ts";
+} from "../features/shopping-items/utils/item-query";
+import type { ShoppingItem } from "../features/shopping-items/types";
 
 function item(
   partial: Partial<ShoppingItem> & Pick<ShoppingItem, "id" | "name">,

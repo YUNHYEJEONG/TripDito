@@ -8,12 +8,11 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-canvas: var(--canvas);
-  --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
-    Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR",
-    "Malgun Gothic", sans-serif;
+  --font-sans: var(--font-roboto), var(--font-noto-sans-kr), "Noto Sans KR",
+    Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-heading: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
-    sans-serif;
+  --font-heading: var(--font-noto-sans-kr), var(--font-roboto), "Noto Sans KR",
+    Roboto, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,6 +48,11 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-surface-gray: var(--surface-gray);
+  --color-surface-gray-foreground: var(--surface-gray-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -56,111 +60,333 @@
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 1.75);
+  --radius-4xl: calc(var(--radius) * 2);
+  --breakpoint-tablet: 48rem;
+  --breakpoint-desktop: 64rem;
+  --shadow-neu: var(--neu-shadow);
+  --shadow-neu-inset: var(--neu-shadow-inset);
 }
 
 :root {
+  /* Brand reference palette (accent use) */
+  --sky-blue-light: #8ecae6;
+  --blue-green: #219ebc;
+  --deep-space-blue: #191f28;
+  --amber-flame: #ffb703;
+  --princeton-orange: #fb8500;
+
+  /* Toss / 오늘의집 계열: 화이트 베이스 + 강한 블루 CTA */
   --background: #ffffff;
-  --foreground: #0a0a0a;
-  --canvas: #f5f5f5;
+  --foreground: #191f28;
+  --canvas: #ffffff;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #191f28;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #1447e6;
-  --primary-foreground: #eff6ff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #e7000b;
-  --info: #2563eb;
-  --info-foreground: #eff6ff;
-  --success: #16a34a;
-  --success-foreground: #f0fdf4;
-  --warning: #d97706;
-  --warning-foreground: #fffbeb;
-  --error: #e7000b;
+  --popover-foreground: #191f28;
+  --primary: #3182f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f4f6;
+  --secondary-foreground: #191f28;
+  --muted: #f2f4f6;
+  --muted-foreground: #8b95a1;
+  --accent: #ffb703;
+  --accent-foreground: #191f28;
+  --highlight: #fb8500;
+  --highlight-foreground: #ffffff;
+  --brand-soft: #e8f3ff;
+  /* 서비스 설명용 회색 카드 (추가 에셋) */
+  --surface-gray: #f2f4f6;
+  --surface-gray-foreground: #191f28;
+  --destructive: #f04452;
+  --info: #3182f6;
+  --info-foreground: #ffffff;
+  --success: #03b26c;
+  --success-foreground: #ecfdf5;
+  --warning: #ffb703;
+  --warning-foreground: #191f28;
+  --error: #f04452;
   --error-foreground: #fef2f2;
   --wait: var(--muted-foreground);
   --wait-foreground: var(--background);
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #a1a1a1;
-  --chart-1: #8ec5ff;
-  --chart-2: #2b7fff;
-  --chart-3: #155dfc;
-  --chart-4: #1447e6;
-  --chart-5: #193cb8;
-  --radius: 0.45rem;
+  --border: #e5e8eb;
+  --input: #f2f4f6;
+  --ring: #3182f6;
+  --chart-1: #8ecae6;
+  --chart-2: #3182f6;
+  --chart-3: #191f28;
+  --chart-4: #ffb703;
+  --chart-5: #fb8500;
+  --radius: 0.75rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #155dfc;
-  --sidebar-primary-foreground: #eff6ff;
-  --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #171717;
-  --sidebar-border: #e5e5e5;
-  --sidebar-ring: #a1a1a1;
+  --sidebar-foreground: #191f28;
+  --sidebar-primary: #3182f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f4f6;
+  --sidebar-accent-foreground: #191f28;
+  --sidebar-border: #e5e8eb;
+  --sidebar-ring: #3182f6;
+
+  /* 밀도 높은 앱 UI: 그림자보다 경계/대비 우선 (토스·오늘의집) */
+  --neu-shadow: 0 1px 2px rgba(25, 31, 40, 0.04),
+    0 2px 8px rgba(25, 31, 40, 0.04);
+  --neu-shadow-inset: inset 0 0 0 1px rgba(25, 31, 40, 0.04);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --canvas: #0a0a0a;
-  --card: #171717;
-  --card-foreground: #fafafa;
-  --popover: #171717;
-  --popover-foreground: #fafafa;
-  --primary: #193cb8;
-  --primary-foreground: #eff6ff;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a1a1a1;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #ff6467;
-  --info: #60a5fa;
-  --info-foreground: #172554;
-  --success: #4ade80;
-  --success-foreground: #14532d;
-  --warning: #fbbf24;
-  --warning-foreground: #422006;
-  --error: #ff6467;
+  --background: #17171c;
+  --foreground: #f2f4f6;
+  --canvas: #17171c;
+  --card: #212129;
+  --card-foreground: #f2f4f6;
+  --popover: #212129;
+  --popover-foreground: #f2f4f6;
+  --primary: #4593fc;
+  --primary-foreground: #ffffff;
+  --secondary: #2c2c34;
+  --secondary-foreground: #f2f4f6;
+  --muted: #2c2c34;
+  --muted-foreground: #8b95a1;
+  --accent: #ffb703;
+  --accent-foreground: #191f28;
+  --highlight: #fb8500;
+  --highlight-foreground: #ffffff;
+  --brand-soft: #1c2e4a;
+  --surface-gray: #2c2c34;
+  --surface-gray-foreground: #f2f4f6;
+  --destructive: #f04452;
+  --info: #4593fc;
+  --info-foreground: #ffffff;
+  --success: #03b26c;
+  --success-foreground: #064e3b;
+  --warning: #ffb703;
+  --warning-foreground: #191f28;
+  --error: #f04452;
   --error-foreground: #450a0a;
   --wait: var(--muted-foreground);
   --wait-foreground: var(--background);
-  --border: #ffffff1a;
-  --input: #ffffff26;
-  --ring: #737373;
-  --chart-1: #8ec5ff;
-  --chart-2: #2b7fff;
-  --chart-3: #155dfc;
-  --chart-4: #1447e6;
-  --chart-5: #193cb8;
-  --sidebar: #171717;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #2b7fff;
-  --sidebar-primary-foreground: #eff6ff;
-  --sidebar-accent: #262626;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #ffffff1a;
-  --sidebar-ring: #737373;
+  --border: #ffffff14;
+  --input: #2c2c34;
+  --ring: #4593fc;
+  --chart-1: #8ecae6;
+  --chart-2: #4593fc;
+  --chart-3: #f2f4f6;
+  --chart-4: #ffb703;
+  --chart-5: #fb8500;
+  --sidebar: #212129;
+  --sidebar-foreground: #f2f4f6;
+  --sidebar-primary: #4593fc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2c2c34;
+  --sidebar-accent-foreground: #f2f4f6;
+  --sidebar-border: #ffffff14;
+  --sidebar-ring: #4593fc;
+  --neu-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --neu-shadow-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    @apply font-sans antialiased;
+    font-weight: 400;
+    min-width: 320px;
+  }
+
   body {
     @apply bg-canvas text-foreground text-sm;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
   }
-  html {
-    @apply font-sans;
+
+  h1,
+  h2,
+  h3 {
+    @apply font-heading text-foreground;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
+
+  strong,
+  b {
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  .neu-raised {
+    background: var(--background);
+    box-shadow: var(--neu-shadow);
+  }
+
+  .neu-inset {
+    background: var(--muted);
+    box-shadow: var(--neu-shadow-inset);
+  }
+
+  .surface-gray {
+    background: var(--surface-gray);
+    color: var(--surface-gray-foreground);
+  }
+
+  .text-weight-regular {
+    font-weight: 400;
+  }
+  .text-weight-medium {
+    font-weight: 500;
+  }
+  .text-weight-semibold {
+    font-weight: 600;
+  }
+  .text-weight-bold {
+    font-weight: 700;
+  }
+
+  /* 스크롤 기능 유지, 스크롤바 UI만 숨김 */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  .scrollbar-none * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+/* Sonner: 화면 안쪽 마진 + 중앙 정렬 (모바일 width:100% 오버플로우 보정) */
+[data-sonner-toaster][data-x-position="center"] {
+  left: 50% !important;
+  right: auto !important;
+  width: min(22rem, calc(100vw - 2rem)) !important;
+  max-width: calc(100vw - 2rem) !important;
+  transform: translateX(-50%) !important;
+  box-sizing: border-box !important;
+  /* 시트(z-50)보다 위에 표시 — 상세 시트와 겹치지 않도록 상단 토스트 */
+  z-index: 200 !important;
+}
+
+/* 액션 결과 토스트: 앞쪽 상태 아이콘 숨김 (로딩 스피너는 유지) */
+[data-sonner-toast]:not([data-type="loading"]) [data-icon] {
+  display: none !important;
+}
+
+/* 토스트 액션 버튼(바로가기 등) — primary 파란 배경 */
+[data-sonner-toast] [data-button] {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: none !important;
+}
+
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-x-position="center"] {
+    left: 50% !important;
+    right: auto !important;
+    width: min(22rem, calc(100vw - 2rem)) !important;
+    max-width: calc(100vw - 2rem) !important;
+    transform: translateX(-50%) !important;
+  }
+
+  [data-sonner-toaster][data-x-position="center"] [data-sonner-toast] {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* 공통 토스트 얼럿 (파란 배경 / 흰 글씨 / 자동 닫힘) */
+[data-sonner-toast].toast-alert {
+  --normal-bg: var(--primary);
+  --normal-text: #ffffff;
+  --normal-border: transparent;
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgb(49 130 246 / 0.28) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  min-height: 3rem !important;
+  padding: 0.875rem 1.125rem !important;
+  border-radius: 0.875rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  letter-spacing: -0.01em !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: keep-all !important;
+}
+
+@media (min-width: 768px) {
+  [data-sonner-toast].toast-alert {
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+[data-sonner-toast].toast-alert [data-icon],
+[data-sonner-toast].toast-alert [data-close-button],
+[data-sonner-toast].toast-alert [data-button] {
+  display: none !important;
+}
+
+[data-sonner-toast].toast-alert [data-content] {
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+[data-sonner-toast].toast-alert [data-title],
+[data-sonner-toast].toast-alert [data-description] {
+  color: #ffffff !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: keep-all !important;
+  line-height: 1.45 !important;
+}
+
+/* 스크롤은 유지하고 스크롤바 UI만 숨김 (전역) */
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

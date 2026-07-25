@@ -6,7 +6,10 @@ import Link from "next/link";
 import { Camera, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageHeader } from "@/components/layout/page-header";
+import {
+  PageHeader,
+  headerIconButtonClassName,
+} from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { StorageUsageBanner } from "@/components/common/storage-usage-banner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -78,12 +81,12 @@ export default function TripDetailPage({
       <PageHeader
         title={trip.name}
         description={`${trip.city}, ${trip.country} · ${formatDateRange(trip.startDate, trip.endDate)}`}
-        backHref="/"
+        backHref="/home"
         actions={
           <Link
             href={`/trips/${tripId}/edit`}
             aria-label="여행 수정"
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+            className={headerIconButtonClassName}
           >
             <Settings2 />
           </Link>

@@ -39,7 +39,9 @@ npm run dev
 
 | 경로 | 설명 |
 |------|------|
-| `/` | 여행 목록 |
+| `/` | 랜딩 (로고 스플래시 → 자동 진입) |
+| `/home` | 여행 목록 |
+| `/map` | Google Maps 탐색 (검색·내 위치·마커·장소 상세) |
 | `/trips/new` | 여행 생성 |
 | `/trips/[id]` | 쇼핑 리스트 (검색·필터·예산·사진 추가) |
 | `/trips/[id]/edit` | 여행 수정·삭제 |
@@ -59,4 +61,16 @@ lib/storage
 docs/plan
 ```
 
-AI 연동 방법은 [`docs/plan/AI_INTEGRATION.md`](./docs/plan/AI_INTEGRATION.md)를 참고하세요.
+## 브랜드
+
+- 한글명: **트립디토**
+- 영문명: **Trip Ditto** (DITTO + Trip)
+- 태그라인: 복잡함 없이, 여행 쇼핑
+- 자산: `public/brand/` (심볼 SVG, 앱 아이콘, 파비콘)
+- `/` 랜딩(로고 인터랙션) → `/home` 메인
+
+## 디자인
+
+화이트 배경 + 토스형 액션 블루 `#3182F6`. 회색 설명 카드 `GrayCard` 추가.  
+상세 규정: [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md)
+

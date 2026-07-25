@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldLabel } from "@/components/common/field-label";
 import { defaultItemFormValues } from "../constants";
 import {
   shoppingItemFormSchema,
@@ -45,12 +45,17 @@ export function ItemForm({
           className="h-40 w-full rounded-2xl object-cover"
         />
       ) : null}
-      <Field label="상품명" error={form.formState.errors.name?.message}>
+      <Field
+        label="상품명"
+        required
+        error={form.formState.errors.name?.message}
+      >
         <Input placeholder="상품명" {...form.register("name")} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="예상 가격"
+          required
           error={form.formState.errors.estimatedPrice?.message}
         >
           <Input
@@ -60,7 +65,11 @@ export function ItemForm({
             {...form.register("estimatedPrice", { valueAsNumber: true })}
           />
         </Field>
-        <Field label="수량" error={form.formState.errors.quantity?.message}>
+        <Field
+          label="수량"
+          required
+          error={form.formState.errors.quantity?.message}
+        >
           <Input
             type="number"
             min={1}
@@ -89,16 +98,18 @@ export function ItemForm({
 
 function Field({
   label,
+  required,
   error,
   children,
 }: {
   label: string;
+  required?: boolean;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
+      <FieldLabel required={required}>{label}</FieldLabel>
       {children}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>

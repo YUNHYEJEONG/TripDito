@@ -40,10 +40,10 @@ export function ItemToolbar({
               type="button"
               onClick={() => onFilterChange(item.value)}
               className={cn(
-                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                "rounded-lg px-2.5 py-1.5 text-[13px] font-semibold transition-colors",
                 filter === item.value
-                  ? "bg-foreground text-background"
-                  : "bg-background text-muted-foreground hover:text-foreground",
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground",
               )}
             >
               {item.label}
@@ -53,7 +53,7 @@ export function ItemToolbar({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as ItemSort)}
-          className="h-8 rounded-full border-0 bg-background px-3 text-xs outline-none"
+          className="h-8 rounded-lg border-0 bg-secondary px-2.5 text-[13px] font-medium outline-none"
         >
           <option value="createdAt_desc">최신순</option>
           <option value="price_desc">가격 높은순</option>
