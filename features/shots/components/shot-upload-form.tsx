@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
@@ -245,23 +252,34 @@ export function ShotUploadForm({
             등록된 여행이 없습니다. 홈에서 여행을 먼저 만들어 주세요.
           </p>
         ) : (
-          <div className="relative">
-            <select
-              className="h-10 w-full appearance-none rounded-xl border border-transparent bg-input py-1 pr-10 pl-3 text-[13px] shadow-neu-inset outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
-              {...form.register("tripId")}
-            >
-              <option value="">여행지 선택</option>
-              {trips.map((trip) => (
-                <option key={trip.id} value={trip.id}>
-                  {formatTripOptionLabel(trip.startDate, trip.city)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-          </div>
+          <Controller
+            control={form.control}
+            name="tripId"
+            render={({ field }) => {
+              const tripItems = trips.map((trip) => ({
+                value: trip.id,
+                label: formatTripOptionLabel(trip.startDate, trip.city),
+              }));
+              return (
+                <Select
+                  items={tripItems}
+                  value={field.value || null}
+                  onValueChange={(value) => field.onChange(value ?? "")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="여행지 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tripItems.map((trip) => (
+                      <SelectItem key={trip.value} value={trip.value}>
+                        {trip.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
+          />
         )}
       </Field>
 

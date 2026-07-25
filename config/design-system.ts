@@ -26,8 +26,18 @@ export const designSystem = {
     },
   },
   radius: {
-    /** 네모 버튼/컨트롤 — 약한 라운드 */
+    /**
+     * 폼 컨트롤 (Input / Textarea / Select / Button)
+     * - 값: 8px (`rounded-lg`)
+     * - 너무 둥근 `rounded-xl`(12px) 사용 금지
+     */
     control: "0.5rem",
+    /** Tailwind 클래스 — 입력·선택·버튼에 공통 적용 */
+    controlClass: "rounded-lg",
+    /** 입력란·옆 액션 버튼 공통 높이 */
+    fieldHeightClass: "h-10",
+    /** 입력+액션 조합 시 버튼 size */
+    fieldActionSize: "fieldAction",
     surface: "1rem",
     pill: "9999px",
   },
@@ -46,5 +56,15 @@ export const designSystem = {
     default: "Card",
     /** 추가 에셋: 회색 서피스 카드 (설명/안내) */
     gray: "GrayCard",
+  },
+  /**
+   * 화면 레이아웃 간격
+   * - cardStack: 홈 등 세로로 쌓인 섹션/카드 사이 간격
+   */
+  layout: {
+    /** 카드 스택 간격 (기존 gap-6=24px의 절반) */
+    cardStackGap: "0.75rem",
+    /** Tailwind: gap-3 */
+    cardStackGapClass: "gap-3",
   },
 } as const;

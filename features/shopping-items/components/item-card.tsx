@@ -60,7 +60,7 @@ export function ItemCard({
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
             <CurrencyText amount={lineTotal(item)} currency={currency} />
-            {item.quantity > 1 ? ` · ${item.quantity}개` : null}
+            {` · ${item.quantity >= 1 ? item.quantity : 1}개`}
           </p>
           {item.memo ? (
             <p className="mt-0.5 truncate text-xs text-muted-foreground">

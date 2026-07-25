@@ -2,12 +2,26 @@
 
 import type { ItemPurchaseFilter, ItemSort } from "../types";
 import { SearchInput } from "@/components/common/search-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { value: ItemPurchaseFilter; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "pending", label: "미구매" },
   { value: "purchased", label: "구매완료" },
+];
+
+const SORT_OPTIONS: { value: ItemSort; label: string }[] = [
+  { value: "createdAt_desc", label: "최신순" },
+  { value: "price_desc", label: "가격 높은순" },
+  { value: "price_asc", label: "가격 낮은순" },
+  { value: "name_asc", label: "이름순" },
 ];
 
 export function ItemToolbar({
@@ -50,16 +64,27 @@ export function ItemToolbar({
             </button>
           ))}
         </div>
-        <select
+        <Select
+          items={SORT_OPTIONS}
           value={sort}
-          onChange={(e) => onSortChange(e.target.value as ItemSort)}
-          className="h-8 rounded-lg border-0 bg-secondary px-2.5 text-[13px] font-medium outline-none"
+          onValueChange={(value) => {
+            if (value) onSortChange(value as ItemSort);
+          }}
         >
-          <option value="createdAt_desc">최신순</option>
-          <option value="price_desc">가격 높은순</option>
-          <option value="price_asc">가격 낮은순</option>
-          <option value="name_asc">이름순</option>
-        </select>
+          <SelectTrigger
+            size="sm"
+            className="min-w-[7.5rem] px-2.5 font-medium focus-visible:border-ring focus-visible:ring-0"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-[9rem]">
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

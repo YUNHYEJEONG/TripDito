@@ -1,9 +1,16 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FieldLabel } from "@/components/common/field-label";
 import { CURRENCIES } from "@/config/currencies";
 import { defaultTripFormValues } from "../constants";
@@ -77,16 +84,34 @@ export function TripForm({
           required
           error={form.formState.errors.currency?.message}
         >
-          <select
-            className="h-10 w-full rounded-xl border border-transparent bg-input px-3 text-[13px] shadow-neu-inset outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
-            {...form.register("currency")}
-          >
-            {CURRENCIES.map((currency) => (
-              <option key={currency.code} value={currency.code}>
-                {currency.label}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={form.control}
+            name="currency"
+            render={({ field }) => {
+              const currencyItems = CURRENCIES.map((currency) => ({
+                value: currency.code,
+                label: currency.label,
+              }));
+              return (
+                <Select
+                  items={currencyItems}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencyItems.map((currency) => (
+                      <SelectItem key={currency.value} value={currency.value}>
+                        {currency.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
+          />
         </Field>
         <Field
           label="예산"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
@@ -10,10 +11,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { ShotUploadForm } from "@/features/shots/components/shot-upload-form";
 import { useCreateShot } from "@/features/shots/hooks/use-shots";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export default function NewShotPage() {
   const router = useRouter();
   const createShot = useCreateShot();
+  const { isLoggedIn, isLoading } = useIsLoggedIn();
+
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      router.replace("/login");
+    }
+  }, [isLoading, isLoggedIn, router]);
+
+  if (isLoading || !isLoggedIn) {
+    return (
+      <AppShell>
+        <p className="py-16 text-center text-[13px] text-muted-foreground">
+          불러오는 중…
+        </p>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell className="pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
@@ -29,11 +48,6 @@ export default function NewShotPage() {
         onSubmit={async (values) => {
           try {
             await createShot.mutateAsync(values);
-            toast.success(
-              values.channel === "shots"
-                ? "때샷을 올렸습니다"
-                : "커뮤니티 글을 올렸습니다",
-            );
             router.push("/shots");
           } catch (error) {
             const message =

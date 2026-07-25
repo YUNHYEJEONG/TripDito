@@ -67,7 +67,7 @@ export default function TripDetailPage({
           title="여행을 찾을 수 없어요"
           description="삭제되었거나 잘못된 링크일 수 있습니다."
           actionLabel="목록으로"
-          onAction={() => router.push("/")}
+          onAction={() => router.push("/my-trips")}
         />
       </AppShell>
     );
@@ -81,7 +81,7 @@ export default function TripDetailPage({
       <PageHeader
         title={trip.name}
         description={`${trip.city}, ${trip.country} · ${formatDateRange(trip.startDate, trip.endDate)}`}
-        backHref="/home"
+        backHref="/my-trips"
         actions={
           <Link
             href={`/trips/${tripId}/edit`}

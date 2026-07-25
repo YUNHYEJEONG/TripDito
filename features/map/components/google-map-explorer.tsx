@@ -371,7 +371,7 @@ export function GoogleMapExplorer({
           type="text"
           placeholder="예: 남산타워, 강남역…"
           disabled={!ready}
-          className="h-10 min-w-0 flex-1 rounded-xl border border-border/60 bg-background px-3 text-sm shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
+          className="h-10 min-w-0 flex-1 rounded-lg border border-border/60 bg-background px-3 text-sm shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();

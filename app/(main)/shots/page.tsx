@@ -21,11 +21,13 @@ import {
 import { ShotsFilterBar } from "@/features/shots/components/shots-filter-bar";
 import { ShotPostCard } from "@/features/shots/components/shot-post-card";
 import type { DestinationValue } from "@/features/shots/components/destination-filter-sheet";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export default function ShotsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: shots = [], isLoading } = useShots();
+  const { isLoggedIn } = useIsLoggedIn();
 
   const [tab, setTab] = useState<ShotsTab>("shots");
   const [sheetDestination, setSheetDestination] =
@@ -132,7 +134,7 @@ export default function ShotsPage() {
         </>
       )}
 
-      {tab === "shots" ? (
+      {tab === "shots" && isLoggedIn ? (
         <div className="fixed right-4 bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] z-30 md:right-[max(1rem,calc((100vw-720px)/2+1rem))] lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]">
           <Button
             size="icon-lg"

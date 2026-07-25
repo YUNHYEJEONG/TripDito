@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import {
   useAddShotComment,
   useRemoveShotComment,
 } from "../hooks/use-shots";
 import type { ShotComment } from "../schema";
+import { cn } from "@/lib/utils";
 
 function formatCommentTime(iso: string) {
   const date = new Date(iso);
@@ -40,11 +43,13 @@ export function CommentsSheet({
 }) {
   const [text, setText] = useState("");
   const { data: profile } = useLocalProfile();
+  const { isLoggedIn } = useIsLoggedIn();
   const addComment = useAddShotComment();
   const removeComment = useRemoveShotComment();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isLoggedIn) return;
     const trimmed = text.trim();
     if (!trimmed) return;
     try {
@@ -88,6 +93,7 @@ export function CommentsSheet({
             comments.map((comment) => {
               const myId = profile?.id;
               const canDelete =
+                isLoggedIn &&
                 Boolean(myId) &&
                 (myId === shotAuthorId || myId === comment.authorId);
 
@@ -125,27 +131,42 @@ export function CommentsSheet({
           )}
         </ul>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex shrink-0 flex-col gap-2 border-t border-[#EAEDED] px-4 py-3"
-        >
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="댓글 달기…"
-            rows={1}
-            className="min-h-10 resize-none"
-          />
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!text.trim() || addComment.isPending}
+        {isLoggedIn ? (
+          <form
+            onSubmit={handleSubmit}
+            className="flex shrink-0 flex-col gap-2 border-t border-[#EAEDED] px-4 py-3"
+          >
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="댓글 달기…"
+              rows={1}
+              className="min-h-10 resize-none"
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!text.trim() || addComment.isPending}
+              >
+                등록
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex shrink-0 flex-col items-center gap-2 border-t border-[#EAEDED] px-4 py-4">
+            <p className="text-center text-[13px] text-muted-foreground">
+              로그인 후, 댓글을 달아주세요.
+            </p>
+            <Link
+              href="/login"
+              className={cn(buttonVariants({ size: "sm" }), "w-full max-w-xs")}
+              onClick={() => onOpenChange(false)}
             >
-              등록
-            </Button>
+              로그인 하기
+            </Link>
           </div>
-        </form>
+        )}
       </SheetContent>
     </Sheet>
   );

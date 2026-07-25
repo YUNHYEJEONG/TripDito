@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SHOT_SORT_OPTIONS } from "../constants";
 import type { Shot, ShotSort } from "../schema";
+import { useMouseDragScroll } from "../hooks/use-mouse-drag-scroll";
 import { getHotDestinations } from "../utils/shot-query";
 import {
   DestinationFilterSheet,
@@ -37,16 +38,26 @@ export function ShotsFilterBar({
 }) {
   const [internalDestOpen, setInternalDestOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const destOpen = destinationOpen ?? internalDestOpen;
   const setDestOpen = onDestinationOpenChange ?? setInternalDestOpen;
 
   const hot = useMemo(() => getHotDestinations(shots, 5), [shots]);
 
+  useMouseDragScroll(scrollerRef, true, { snap: false, wheel: true });
+
   return (
-    <div className="sticky top-12 z-10 -mx-4 border-b border-[#EAEDED] bg-canvas/95 px-4 pt-0.5 pb-1.5 backdrop-blur-md sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="sticky top-12 z-10 -mx-4 bg-canvas/95 px-4 pt-0.5 pb-1.5 backdrop-blur-md sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
+      <div
+        ref={scrollerRef}
+        className={cn(
+          "flex min-w-0 touch-pan-x items-center gap-1 overflow-x-auto overscroll-x-contain pb-0.5",
+          "cursor-grab [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        )}
+      >
         <FilterChip
+          scrollerRef={scrollerRef}
           active={Boolean(sheetDestination)}
           onClick={() => setDestOpen(true)}
         >
@@ -55,6 +66,7 @@ export function ShotsFilterBar({
         </FilterChip>
 
         <FilterChip
+          scrollerRef={scrollerRef}
           active={sort !== "newest"}
           onClick={() => setSortOpen(true)}
         >
@@ -69,6 +81,7 @@ export function ShotsFilterBar({
           return (
             <FilterChip
               key={`${dest.country}-${dest.city}`}
+              scrollerRef={scrollerRef}
               active={active}
               onClick={() =>
                 onHotDestinationChange(
@@ -104,15 +117,20 @@ function FilterChip({
   children,
   active,
   onClick,
+  scrollerRef,
 }: {
   children: React.ReactNode;
   active?: boolean;
   onClick: () => void;
+  scrollerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (scrollerRef.current?.dataset.dragMoved) return;
+        onClick();
+      }}
       className={cn(
         "inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-[13px] font-medium leading-none whitespace-nowrap transition-colors",
         active
