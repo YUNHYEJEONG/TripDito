@@ -132,13 +132,13 @@ export default function ShoppingPage() {
           <SectionDivider />
 
           <ShoppingSection
-            title="고독한 미식가 나온 맛집"
+            title="고독한 미식가에 나온 맛집"
             description="장보고 들르기 좋은 근처 맛집"
           >
             {restaurants.length ? (
               <RecommendRail
                 items={restaurants}
-                ariaLabel="고독한 미식가 나온 맛집 목록"
+                ariaLabel="고독한 미식가에 나온 맛집 목록"
               />
             ) : (
               <EmptyState

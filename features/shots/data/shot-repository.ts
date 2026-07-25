@@ -3,6 +3,7 @@ import { getJson, setJson } from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
 import { tripRepository } from "@/features/trips/data/trip-repository";
 import { profileRepository } from "@/features/profile/data/profile-repository";
+import { authRepository } from "@/features/auth/data/auth-repository";
 import type { Shot, ShotComment, ShotFormValues, Scrap } from "../schema";
 
 function normalizeShot(shot: Shot): Shot {
@@ -36,6 +37,9 @@ export const shotRepository = {
   },
 
   create(input: ShotFormValues): Shot {
+    if (!authRepository.get().isLoggedIn) {
+      throw new Error("로그인 후 업로드할 수 있습니다");
+    }
     const trip = tripRepository.getById(input.tripId);
     if (!trip) throw new Error("여행을 찾을 수 없습니다");
     const profile = profileRepository.get();
@@ -100,6 +104,9 @@ export const shotRepository = {
   },
 
   addComment(id: string, text: string): Shot {
+    if (!authRepository.get().isLoggedIn) {
+      throw new Error("로그인 후 댓글을 달 수 있습니다");
+    }
     const trimmed = text.trim();
     if (!trimmed) throw new Error("댓글을 입력하세요");
     const shots = readShots();
@@ -147,6 +154,9 @@ export const shotRepository = {
   },
 
   update(id: string, input: ShotFormValues): Shot {
+    if (!authRepository.get().isLoggedIn) {
+      throw new Error("로그인 후 수정할 수 있습니다");
+    }
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === id);
     if (index < 0) throw new Error("피드를 찾을 수 없습니다");
@@ -183,6 +193,9 @@ export const shotRepository = {
   },
 
   remove(id: string) {
+    if (!authRepository.get().isLoggedIn) {
+      throw new Error("로그인 후 삭제할 수 있습니다");
+    }
     const shots = readShots();
     const shot = shots.find((item) => item.id === id);
     if (!shot) throw new Error("피드를 찾을 수 없습니다");

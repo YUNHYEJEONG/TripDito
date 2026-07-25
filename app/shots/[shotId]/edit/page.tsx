@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
@@ -16,6 +16,7 @@ import {
   useUpdateShot,
 } from "@/features/shots/hooks/use-shots";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import type { ShotFormValues } from "@/features/shots/schema";
 
 export default function EditShotPage({
@@ -27,7 +28,14 @@ export default function EditShotPage({
   const router = useRouter();
   const { data: shot, isLoading } = useShot(shotId);
   const { data: profile } = useLocalProfile();
+  const { isLoggedIn, isLoading: authLoading } = useIsLoggedIn();
   const updateShot = useUpdateShot(shotId);
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      router.replace("/login");
+    }
+  }, [authLoading, isLoggedIn, router]);
 
   const formDefaults = useMemo((): Partial<ShotFormValues> | undefined => {
     if (!shot) return undefined;
@@ -41,7 +49,7 @@ export default function EditShotPage({
     };
   }, [shot]);
 
-  if (isLoading) {
+  if (authLoading || !isLoggedIn || isLoading) {
     return (
       <AppShell>
         <p className="py-16 text-center text-sm text-muted-foreground">
@@ -92,7 +100,6 @@ export default function EditShotPage({
         onSubmit={async (values) => {
           try {
             await updateShot.mutateAsync(values);
-            toast.success("피드를 수정했습니다");
             router.push("/shots");
           } catch (error) {
             const message =

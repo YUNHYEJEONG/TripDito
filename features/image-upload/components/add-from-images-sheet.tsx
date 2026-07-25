@@ -81,6 +81,8 @@ export function AddFromImagesSheet({
           quantity: item.quantity,
           memo: item.memo,
           imageDataUrl: item.imageDataUrl,
+          plannedPurchaseDate: null,
+          giftTags: [],
         })),
       );
       toast.success(`${proposed.length}개 상품을 추가했습니다`);

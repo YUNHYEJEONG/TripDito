@@ -36,7 +36,7 @@ export function SearchInput({
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
-        className="pl-9"
+        className="pl-9 shadow-none focus-visible:border-primary focus-visible:ring-0 focus-visible:shadow-none"
       />
     </div>
   );

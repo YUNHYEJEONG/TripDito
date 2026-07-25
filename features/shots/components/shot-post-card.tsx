@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import type { Shot } from "../schema";
 import {
   useDeleteShot,
@@ -64,7 +65,9 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
   const deleteShot = useDeleteShot();
   const scrapped = useIsScrapped(shot.id);
 
-  const isMine = Boolean(profile?.id && profile.id === shot.authorId);
+  const { isLoggedIn } = useIsLoggedIn();
+  const isMine =
+    isLoggedIn && Boolean(profile?.id && profile.id === shot.authorId);
   const body = shot.body.trim();
 
   useEffect(() => {

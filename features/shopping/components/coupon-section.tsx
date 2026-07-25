@@ -5,6 +5,7 @@ import { CouponCardList } from "@/features/coupons/components/coupon-card-list";
 import { useTaxFreeCoupons } from "@/features/coupons/hooks/use-taxfree-coupons";
 import { filterCouponsByDestination } from "@/features/coupons/lib/filter-coupons";
 import type { ShoppingDestination } from "../data/demo-shopping-content";
+import { ShoppingSection } from "./shopping-section";
 import { useMemo } from "react";
 
 export function CouponSection({
@@ -20,7 +21,7 @@ export function CouponSection({
   );
 
   return (
-    <section id="coupons" className="flex flex-col gap-2.5">
+    <ShoppingSection id="coupons" title="쿠폰">
       {isLoading ? (
         <p className="py-6 text-center text-[13px] text-muted-foreground">
           불러오는 중…
@@ -38,6 +39,6 @@ export function CouponSection({
       ) : (
         <CouponCardList coupons={filtered} />
       )}
-    </section>
+    </ShoppingSection>
   );
 }

@@ -31,6 +31,8 @@ export const itemRepository = {
       ...input,
       memo: input.memo ?? "",
       imageDataUrl: input.imageDataUrl ?? null,
+      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+      giftTags: input.giftTags ?? [],
       id: createId(),
       tripId,
       purchased: false,
@@ -53,6 +55,8 @@ export const itemRepository = {
       quantity: source.quantity,
       memo: source.memo,
       imageDataUrl: source.imageDataUrl,
+      plannedPurchaseDate: source.plannedPurchaseDate ?? null,
+      giftTags: source.giftTags ?? [],
     });
   },
 
@@ -67,6 +71,8 @@ export const itemRepository = {
         ...input,
         memo: input.memo ?? "",
         imageDataUrl: input.imageDataUrl ?? null,
+        plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+        giftTags: input.giftTags ?? [],
         id: createId(),
         tripId,
         purchased: false,
@@ -90,6 +96,8 @@ export const itemRepository = {
       ...input,
       memo: input.memo ?? "",
       imageDataUrl: input.imageDataUrl ?? null,
+      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+      giftTags: input.giftTags ?? [],
       updatedAt: new Date().toISOString(),
     };
     items[index] = updated;

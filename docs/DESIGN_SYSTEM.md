@@ -22,6 +22,37 @@
 | 회색 카드 | `GrayCard` (`#F2F4F6`) — 설명/안내용 추가 에셋 |
 | 흰 카드 | 기존 `Card` 유지 |
 
+## 레이아웃 간격 (공통)
+
+| 토큰 | 값 | 사용처 |
+|------|-----|--------|
+| 카드 스택 간격 | **12px** (`gap-3`, 기존 24px의 절반) | 홈 등 세로로 쌓인 섹션/카드 |
+
+- 컴포넌트: `CardStack` (`components/layout/card-stack.tsx`)
+- 설정: `designSystem.layout.cardStackGap` / `cardStackGapClass`
+- 규칙: 홈·요약 대문처럼 **카드/섹션을 세로로 나열할 때** `CardStack`을 쓰고, 임의로 `gap-6` 등을 쓰지 않습니다.
+
+## 폼 컨트롤 라운드 (공통)
+
+| 토큰 | 값 | 사용처 |
+|------|-----|--------|
+| 컨트롤 라운드 | **8px** (`rounded-lg`) | Input, Textarea, Select, Button |
+
+- 설정: `designSystem.radius.control` / `controlClass`
+- 규칙: 입력란·셀렉트·버튼은 **약한 라운드**를 씁니다. `rounded-xl`(12px)처럼 더 둥글게 만들지 않습니다.
+- 구현: `components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, `button.tsx`
+
+### 입력란 + 액션 버튼 조합
+
+| 항목 | 규칙 |
+|------|------|
+| 레이아웃 | `FieldActionRow` (`items-center`, `gap-2`) |
+| 입력 | `Input` `variant="field"` — `h-10` + `rounded-lg` |
+| 버튼 | `Button` `size="fieldAction"` — `h-10` + `rounded-lg` |
+
+- 입력란과 옆 물리 버튼은 **같은 높이·같은 둥글기·세로 중앙**을 맞춥니다.
+- 예: 회원가입 이메일+중복검사, 프로필 닉네임+저장
+
 ## 반응형 (대중적 구간)
 
 | 구간 | 너비 | 콘텐츠 최대폭 |

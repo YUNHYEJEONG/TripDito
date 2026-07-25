@@ -39,6 +39,15 @@ export default function LandingPage() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          src={appConfig.brand.symbolSrc}
+          alt=""
+          className={[
+            "size-[4.5rem] object-contain transition-transform duration-700 ease-out",
+            phase === "hold" ? "scale-100" : "scale-95",
+          ].join(" ")}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={appConfig.brand.logoSrc}
           alt={appConfig.name}
           className={[

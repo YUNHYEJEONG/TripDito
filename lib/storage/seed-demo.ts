@@ -6,7 +6,7 @@ import type { Trip } from "@/features/trips/types";
 import type { ShoppingItem } from "@/features/shopping-items/types";
 import type { Shot } from "@/features/shots/types";
 import type { LocalProfile } from "@/features/profile/types";
-import { DEFAULT_PROFILE_ID } from "@/features/profile/constants";
+import { DEFAULT_PROFILE_ID, DEFAULT_AVATAR_SRC } from "@/features/profile/constants";
 
 /** 데모 때샷 실사 이미지 (`public/demo/shots`) */
 export const DEMO_SHOT_IMAGES = [
@@ -145,6 +145,8 @@ export function seedDemoData() {
       quantity: 2,
       memo: "출국장 전에 사기",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(14),
+      giftTags: ["friend"],
       purchased: false,
       purchasedAt: null,
       sortOrder: 1,
@@ -159,6 +161,8 @@ export function seedDemoData() {
       quantity: 1,
       memo: "마츠모토 키요시",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(14),
+      giftTags: [],
       purchased: true,
       purchasedAt: now,
       sortOrder: 2,
@@ -173,6 +177,8 @@ export function seedDemoData() {
       quantity: 1,
       memo: "선물용",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(15),
+      giftTags: ["acquaintance"],
       purchased: false,
       purchasedAt: null,
       sortOrder: 3,
@@ -187,6 +193,8 @@ export function seedDemoData() {
       quantity: 2,
       memo: "",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(16),
+      giftTags: ["colleague"],
       purchased: false,
       purchasedAt: null,
       sortOrder: 4,
@@ -201,6 +209,8 @@ export function seedDemoData() {
       quantity: 3,
       memo: "도톤보리 근처",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(-20),
+      giftTags: ["friend"],
       purchased: true,
       purchasedAt: hoursAgo(180),
       sortOrder: 1,
@@ -215,6 +225,8 @@ export function seedDemoData() {
       quantity: 2,
       memo: "약국",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(-19),
+      giftTags: [],
       purchased: true,
       purchasedAt: hoursAgo(175),
       sortOrder: 2,
@@ -229,6 +241,8 @@ export function seedDemoData() {
       quantity: 4,
       memo: "디화제 추천",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(-12),
+      giftTags: ["acquaintance", "colleague"],
       purchased: true,
       purchasedAt: hoursAgo(100),
       sortOrder: 1,
@@ -243,6 +257,8 @@ export function seedDemoData() {
       quantity: 3,
       memo: "",
       imageDataUrl: null,
+      plannedPurchaseDate: daysFromNow(-11),
+      giftTags: [],
       purchased: true,
       purchasedAt: hoursAgo(98),
       sortOrder: 2,
@@ -254,7 +270,7 @@ export function seedDemoData() {
   const profile: LocalProfile = {
     id: DEFAULT_PROFILE_ID,
     nickname: "트립디토",
-    avatarDataUrl: null,
+    avatarDataUrl: DEFAULT_AVATAR_SRC,
     updatedAt: now,
   };
 
