@@ -1,12 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ExternalLink, Ticket } from "lucide-react";
+import { SeeMoreButton } from "@/components/common/see-more-control";
 import type { TaxFreeCoupon } from "../types";
 
+const PAGE_SIZE = 5;
+
 export function CouponCardList({ coupons }: { coupons: TaxFreeCoupon[] }) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [coupons]);
+
+  const visible = coupons.slice(0, visibleCount);
+  const hasMore = visibleCount < coupons.length;
+
   return (
     <ul className="overflow-hidden rounded-2xl border border-border/80 bg-background">
-      {coupons.map((coupon, index) => (
+      {visible.map((coupon, index) => (
         <li key={coupon.id} className="px-4">
           {index > 0 ? (
             <div className="border-t border-border/80" aria-hidden />
@@ -48,6 +61,14 @@ export function CouponCardList({ coupons }: { coupons: TaxFreeCoupon[] }) {
           </a>
         </li>
       ))}
+
+      {hasMore ? (
+        <li className="px-4">
+          <SeeMoreButton
+            onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+          />
+        </li>
+      ) : null}
     </ul>
   );
 }

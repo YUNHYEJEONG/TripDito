@@ -36,19 +36,19 @@ export default function SignupPage() {
   function checkEmailDuplicate() {
     const normalized = normalizeEmail(email);
     if (!normalized) {
-      setEmailError("이메일을 입력하세요");
+      setEmailError("이메일을 입력하세요.");
       setEmailOk(null);
       setEmailChecked(false);
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-      setEmailError("올바른 이메일 형식이 아닙니다");
+      setEmailError("올바른 이메일 형식이 아닙니다.");
       setEmailOk(null);
       setEmailChecked(false);
       return false;
     }
     if (accountRepository.isEmailTaken(normalized)) {
-      setEmailError("이미 사용 중인 이메일입니다");
+      setEmailError("이미 사용 중인 이메일입니다.");
       setEmailOk(null);
       setEmailChecked(false);
       return false;
@@ -66,38 +66,38 @@ export default function SignupPage() {
     let hasError = false;
 
     if (!nextNickname) {
-      setNicknameError("닉네임을 입력하세요");
+      setNicknameError("닉네임을 입력하세요.");
       hasError = true;
     } else {
       setNicknameError(null);
     }
 
     if (!nextEmail) {
-      setEmailError("이메일을 입력하세요");
+      setEmailError("이메일을 입력하세요.");
       setEmailOk(null);
       setEmailChecked(false);
       hasError = true;
     } else if (!emailChecked || emailError) {
       if (!checkEmailDuplicate()) hasError = true;
     } else if (accountRepository.isEmailTaken(nextEmail)) {
-      setEmailError("이미 사용 중인 이메일입니다");
+      setEmailError("이미 사용 중인 이메일입니다.");
       setEmailOk(null);
       setEmailChecked(false);
       hasError = true;
     }
 
     if (password.length < 6) {
-      setPasswordError("비밀번호는 6자 이상이어야 합니다");
+      setPasswordError("비밀번호는 6자 이상이어야 합니다.");
       hasError = true;
     } else {
       setPasswordError(null);
     }
 
     if (!passwordConfirm) {
-      setPasswordConfirmError("비밀번호 확인을 입력하세요");
+      setPasswordConfirmError("비밀번호 확인을 입력하세요.");
       hasError = true;
     } else if (password !== passwordConfirm) {
-      setPasswordConfirmError("비밀번호가 일치하지 않습니다");
+      setPasswordConfirmError("비밀번호가 일치하지 않습니다.");
       hasError = true;
     } else {
       setPasswordConfirmError(null);

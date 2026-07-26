@@ -11,7 +11,7 @@ import {
   Send,
   ShoppingBag,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import {
@@ -57,7 +57,9 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [highlight, setHighlight] = useState(false);
+  const [pinsInView, setPinsInView] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const toggleLike = useToggleShotLike();
   const incrementShare = useIncrementShotShare();
@@ -102,6 +104,23 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
     observer.observe(el);
     return () => observer.disconnect();
   }, [body, expanded]);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setPinsInView(Boolean(entry?.isIntersecting));
+      },
+      {
+        threshold: 0.55,
+        rootMargin: "-12% 0px -12% 0px",
+      },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shot.id]);
 
   async function handleLike() {
     try {
@@ -192,7 +211,13 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
         ) : null}
       </header>
 
-      <ShotImageCarousel images={shot.images} pins={shot.pins} />
+      <div ref={carouselRef}>
+        <ShotImageCarousel
+          images={shot.images}
+          pins={shot.pins}
+          autoExpandPins={pinsInView}
+        />
+      </div>
 
       {shot.shoppingItemIds.length > 0 ? (
         <button

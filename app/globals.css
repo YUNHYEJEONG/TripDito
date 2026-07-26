@@ -286,11 +286,29 @@
   display: none !important;
 }
 
-/* 토스트 액션 버튼(바로가기 등) — primary 파란 배경 */
-[data-sonner-toast] [data-button] {
+/* 상단 토스트 공통: 파란 카드 + 흰 텍스트 */
+[data-sonner-toast] {
   background: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  color: #ffffff !important;
   border: none !important;
+  box-shadow: 0 8px 24px rgb(49 130 246 / 0.28) !important;
+}
+
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description] {
+  color: #ffffff !important;
+}
+
+[data-sonner-toast][data-type="loading"] [data-icon] {
+  color: #ffffff !important;
+}
+
+/* 토스트 액션 버튼 — 흰 배경 + primary 글씨 */
+[data-sonner-toast] [data-button] {
+  background: #ffffff !important;
+  color: var(--primary) !important;
+  border: none !important;
+  font-weight: 600 !important;
 }
 
 @media (max-width: 600px) {
@@ -310,15 +328,8 @@
   }
 }
 
-/* 공통 토스트 얼럿 (파란 배경 / 흰 글씨 / 자동 닫힘) */
+/* showToastAlert 전용 레이아웃 보강 */
 [data-sonner-toast].toast-alert {
-  --normal-bg: var(--primary);
-  --normal-text: #ffffff;
-  --normal-border: transparent;
-  background: var(--primary) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: 0 8px 24px rgb(49 130 246 / 0.28) !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
@@ -346,8 +357,7 @@
 }
 
 [data-sonner-toast].toast-alert [data-icon],
-[data-sonner-toast].toast-alert [data-close-button],
-[data-sonner-toast].toast-alert [data-button] {
+[data-sonner-toast].toast-alert [data-close-button] {
   display: none !important;
 }
 
@@ -359,7 +369,6 @@
 
 [data-sonner-toast].toast-alert [data-title],
 [data-sonner-toast].toast-alert [data-description] {
-  color: #ffffff !important;
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;

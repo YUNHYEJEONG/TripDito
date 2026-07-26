@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -53,10 +53,14 @@ export default function EditItemPage({
 
   return (
     <AppShell>
-      <PageHeader title="상품 수정" backHref={`/trips/${tripId}`} />
+      <PageHeader title="상품 정보 수정" backHref={`/trips/${tripId}`} />
       <ItemForm
         defaultValues={item}
-        submitLabel="수정 저장"
+        currency={trip.currency}
+        purchased={item.purchased}
+        tripStartDate={trip.startDate}
+        tripEndDate={trip.endDate}
+        submitLabel="수정"
         onCancel={() => router.push(`/trips/${tripId}`)}
         onSubmit={async (values) => {
           try {
@@ -67,16 +71,18 @@ export default function EditItemPage({
             toast.error("저장에 실패했습니다");
           }
         }}
-      />
-      <div className="mt-8 border-t border-border/60 pt-6">
-        <Button
-          variant="destructive"
-          className="w-full"
-          onClick={() => setConfirmOpen(true)}
-        >
-          상품 삭제
-        </Button>
-      </div>
+      >
+        <div className="border-t border-border/60 pt-4">
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full"
+            onClick={() => setConfirmOpen(true)}
+          >
+            상품 삭제
+          </Button>
+        </div>
+      </ItemForm>
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

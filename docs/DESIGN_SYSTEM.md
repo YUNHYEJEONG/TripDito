@@ -42,12 +42,22 @@
 - 규칙: 입력란·셀렉트·버튼은 **약한 라운드**를 씁니다. `rounded-xl`(12px)처럼 더 둥글게 만들지 않습니다.
 - 구현: `components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, `button.tsx`
 
+### 입력란 배경 (공통)
+
+| 상태 | 배경 | 의미 |
+|------|------|------|
+| 기본 (활성) | **흰색** (`bg-background`) + 연한 테두리 | 입력 가능 |
+| disabled | **회색** (`bg-input`) | 비활성 / 입력 금지 |
+
+- 회색 입력란은 비활성 표현으로만 씁니다. 기본 폼에 회색 inset을 쓰지 않습니다.
+- 구현: `Input`, `Textarea`, `SelectTrigger`
+
 ### 입력란 + 액션 버튼 조합
 
 | 항목 | 규칙 |
 |------|------|
 | 레이아웃 | `FieldActionRow` (`items-center`, `gap-2`) |
-| 입력 | `Input` `variant="field"` — `h-10` + `rounded-lg` |
+| 입력 | `Input` (`variant="field"` 가능, default와 동일 흰 서피스) — `h-10` + `rounded-lg` |
 | 버튼 | `Button` `size="fieldAction"` — `h-10` + `rounded-lg` |
 
 - 입력란과 옆 물리 버튼은 **같은 높이·같은 둥글기·세로 중앙**을 맞춥니다.

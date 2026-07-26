@@ -2,9 +2,12 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageHeader } from "@/components/layout/page-header";
+import {
+  PageHeader,
+  HeaderCancelButton,
+} from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -50,12 +53,19 @@ export default function EditTripPage({
   }
 
   return (
-    <AppShell>
-      <PageHeader title="여행 수정" backHref={`/trips/${tripId}`} />
+    <AppShell className="pb-28">
+      <PageHeader
+        title="내 여행 수정"
+        actions={
+          <HeaderCancelButton
+            onClick={() => router.push(`/trips/${tripId}`)}
+          />
+        }
+      />
       <TripForm
+        tripId={trip.id}
         defaultValues={trip}
-        submitLabel="수정 저장"
-        onCancel={() => router.push(`/trips/${tripId}`)}
+        submitLabel="수정"
         onSubmit={async (values) => {
           try {
             await updateTrip.mutateAsync(values);
@@ -65,21 +75,22 @@ export default function EditTripPage({
             toast.error("저장에 실패했습니다");
           }
         }}
-      />
-      <div className="mt-8 border-t border-border/60 pt-6">
-        <Button
-          variant="destructive"
-          className="w-full"
-          onClick={() => setConfirmOpen(true)}
-        >
-          여행 삭제
-        </Button>
-      </div>
+      >
+        <div className="mt-2 border-t border-border/60 pt-6">
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={() => setConfirmOpen(true)}
+          >
+            여행 삭제
+          </Button>
+        </div>
+      </TripForm>
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="여행을 삭제할까요?"
-        description="쇼핑 리스트 상품도 함께 삭제됩니다."
+        description="쇼핑리스트 상품도 함께 삭제됩니다."
         confirmLabel="삭제"
         loading={deleteTrip.isPending}
         onConfirm={() => {

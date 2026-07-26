@@ -1,10 +1,20 @@
 /**
  * 한국수출입은행 현재환율 API (AP01)
  * https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON
+ *
+ * - 일일 호출 한도 1,000회 (초과 시 `{ result: 4 }`)
+ * - 비영업일·당일 11시 이전은 빈 배열
+ * - 날짜/비교 결과는 프로세스 메모리에 짧게 캐시
  */
 
+import {
+  getFxDisplayUnit,
+  toDisplayKrwPerUnit,
+} from "@/features/fx/lib/fx-display-units";
+import { isStaleQuoteCache, todayKstIso } from "@/features/fx/lib/fx-schedule";
+
 export type KoreaEximRow = {
-  result: number;
+  result: number | string;
   cur_unit: string;
   cur_nm: string;
   ttb: string;
@@ -23,14 +33,27 @@ const CUR_UNIT_CANDIDATES: Record<string, string[]> = {
   JPY: ["JPY(100)", "JPY"],
   EUR: ["EUR"],
   CNY: ["CNH", "CNY"],
+  TWD: ["TWD"],
+  HKD: ["HKD"],
 };
+
+const ROW_CACHE_TTL_MS = 30 * 60 * 1000;
+const COMPARE_CACHE_TTL_MS = 15 * 60 * 1000;
+
+type CacheEntry<T> = { value: T; expiresAt: number };
+
+const rowCache = new Map<string, CacheEntry<KoreaEximRow[]>>();
+const compareCache = new Map<
+  string,
+  CacheEntry<KoreaEximCompareResult>
+>();
 
 export function isKoreaEximSupported(currency: string): boolean {
   return currency.toUpperCase() in CUR_UNIT_CANDIDATES;
 }
 
 export function parseDealBasR(raw: string): number {
-  const n = Number(raw.replace(/,/g, ""));
+  const n = Number(String(raw).replace(/,/g, ""));
   if (!Number.isFinite(n) || n <= 0) {
     throw new Error(`INVALID_DEAL_BAS_R:${raw}`);
   }
@@ -67,6 +90,10 @@ export function findCurrencyRow(
   return null;
 }
 
+function isSuccessResult(result: number | string | undefined): boolean {
+  return Number(result) === 1;
+}
+
 function yyyymmdd(dateIso: string): string {
   return dateIso.replaceAll("-", "");
 }
@@ -83,21 +110,45 @@ function addDaysIso(dateIso: string, delta: number): string {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-export function todayKstIso(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
-  return `${get("year")}-${get("month")}-${get("day")}`;
+// todayKstIso 는 fx-schedule 에서 re-export 성격으로 사용
+export { todayKstIso } from "@/features/fx/lib/fx-schedule";
+
+function readCache<T>(
+  map: Map<string, CacheEntry<T>>,
+  key: string,
+): T | undefined {
+  const hit = map.get(key);
+  if (!hit) return undefined;
+  if (Date.now() > hit.expiresAt) {
+    map.delete(key);
+    return undefined;
+  }
+  return hit.value;
+}
+
+function writeCache<T>(
+  map: Map<string, CacheEntry<T>>,
+  key: string,
+  value: T,
+  ttlMs: number,
+) {
+  map.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
+function throwForResultCode(code: number): never {
+  if (code === 4) throw new Error("RATE_LIMITED");
+  if (code === 3) throw new Error("AUTH_ERROR");
+  if (code === 2) throw new Error("DATA_CODE_ERROR");
+  throw new Error(`KOREAEXIM_RESULT:${code}`);
 }
 
 async function fetchRowsForDate(
   authKey: string,
   dateIso: string,
 ): Promise<KoreaEximRow[]> {
+  const cached = readCache(rowCache, dateIso);
+  if (cached) return cached;
+
   const url = new URL(
     "https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON",
   );
@@ -115,10 +166,38 @@ async function fetchRowsForDate(
   }
 
   const data: unknown = await res.json();
+
+  // 한도/인증 오류는 객체 `{ result: 4 }` 형태
   if (!Array.isArray(data)) {
+    const code = Number(
+      data && typeof data === "object" && "result" in data
+        ? (data as { result: unknown }).result
+        : NaN,
+    );
+    if (Number.isFinite(code) && code !== 1) {
+      throwForResultCode(code);
+    }
+    // 오늘 날짜 공란은 짧게만 캐시 (11시 고시 대기)
+    const ttl =
+      dateIso === todayKstIso() ? 5 * 60 * 1000 : ROW_CACHE_TTL_MS;
+    writeCache(rowCache, dateIso, [], ttl);
     return [];
   }
-  return data as KoreaEximRow[];
+
+  if (data.length > 0) {
+    const code = Number(data[0]?.result);
+    if (Number.isFinite(code) && code !== 1) {
+      throwForResultCode(code);
+    }
+  }
+
+  const rows = data as KoreaEximRow[];
+  const ttl =
+    rows.length === 0 && dateIso === todayKstIso()
+      ? 5 * 60 * 1000
+      : ROW_CACHE_TTL_MS;
+  writeCache(rowCache, dateIso, rows, ttl);
+  return rows;
 }
 
 export type KoreaEximQuote = {
@@ -134,13 +213,13 @@ async function findLatestQuote(
   authKey: string,
   currency: string,
   fromDateIso: string,
-  maxLookback = 14,
+  maxLookback = 10,
 ): Promise<KoreaEximQuote | null> {
   let cursor = fromDateIso;
   for (let i = 0; i < maxLookback; i++) {
     const rows = await fetchRowsForDate(authKey, cursor);
     const row = findCurrencyRow(rows, currency);
-    if (row && row.result === 1) {
+    if (row && isSuccessResult(row.result)) {
       const dealBasR = parseDealBasR(row.deal_bas_r);
       const unitSize = unitSizeFromCurUnit(row.cur_unit);
       return {
@@ -161,9 +240,15 @@ export type KoreaEximCompareResult = {
   currency: string;
   date: string;
   previousDate: string | null;
-  amountPer1000Krw: number;
-  previousAmountPer1000Krw: number | null;
+  /** 화면 단위 (예: 100엔, 1달러) */
+  unitSize: number;
+  unitLabel: string;
+  /** 화면 단위당 원화 */
+  krwPerUnit: number;
+  previousKrwPerUnit: number | null;
+  /** 원화 가격 기준 전일 대비 % */
   changePct: number | null;
+  source: "koreaexim";
 };
 
 /**
@@ -179,7 +264,22 @@ export async function fetchKoreaEximCompare(
     throw new Error(`UNSUPPORTED_CURRENCY:${code}`);
   }
 
+  const display = getFxDisplayUnit(code);
+  if (!display) {
+    throw new Error(`UNSUPPORTED_CURRENCY:${code}`);
+  }
+
   const today = todayKstIso(now);
+  const cacheKey = `v3:${code}:${today}`;
+  const cached = readCache(compareCache, cacheKey);
+  // 11시 이후에도 어제 고시만 캐시돼 있으면 무효화하고 재조회
+  if (cached && !isStaleQuoteCache(cached.date, now)) {
+    return cached;
+  }
+  if (cached) {
+    compareCache.delete(cacheKey);
+  }
+
   const current = await findLatestQuote(authKey, code, today);
   if (!current) {
     throw new Error("NO_RATE_DATA");
@@ -191,19 +291,42 @@ export async function fetchKoreaEximCompare(
     addDaysIso(current.date, -1),
   );
 
+  const krwPerUnit = toDisplayKrwPerUnit(
+    current.dealBasR,
+    current.unitSize,
+    display.unitSize,
+  );
+  const previousKrwPerUnit = previous
+    ? toDisplayKrwPerUnit(
+        previous.dealBasR,
+        previous.unitSize,
+        display.unitSize,
+      )
+    : null;
+
   const changePct =
-    previous && previous.amountPer1000Krw !== 0
-      ? ((current.amountPer1000Krw - previous.amountPer1000Krw) /
-          previous.amountPer1000Krw) *
-        100
+    previousKrwPerUnit && previousKrwPerUnit !== 0
+      ? ((krwPerUnit - previousKrwPerUnit) / previousKrwPerUnit) * 100
       : null;
 
-  return {
+  const result: KoreaEximCompareResult = {
     currency: code,
     date: current.date,
     previousDate: previous?.date ?? null,
-    amountPer1000Krw: current.amountPer1000Krw,
-    previousAmountPer1000Krw: previous?.amountPer1000Krw ?? null,
+    unitSize: display.unitSize,
+    unitLabel: display.unitLabel,
+    krwPerUnit,
+    previousKrwPerUnit,
     changePct,
+    source: "koreaexim",
   };
+
+  writeCache(compareCache, cacheKey, result, COMPARE_CACHE_TTL_MS);
+  return result;
+}
+
+/** 새로고침 시 강제 재조회용 */
+export function clearKoreaEximCaches() {
+  rowCache.clear();
+  compareCache.clear();
 }

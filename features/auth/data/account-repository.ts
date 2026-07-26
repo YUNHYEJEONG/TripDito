@@ -33,11 +33,11 @@ export const accountRepository = {
     nickname: string;
   }): Promise<LocalAccount> {
     const email = normalizeEmail(input.email);
-    if (!email) throw new Error("이메일을 입력하세요");
-    if (!input.password) throw new Error("비밀번호를 입력하세요");
-    if (!input.nickname.trim()) throw new Error("닉네임을 입력하세요");
+    if (!email) throw new Error("이메일을 입력하세요.");
+    if (!input.password) throw new Error("비밀번호를 입력하세요.");
+    if (!input.nickname.trim()) throw new Error("닉네임을 입력하세요.");
     if (this.isEmailTaken(email)) {
-      throw new Error("이미 사용 중인 이메일입니다");
+      throw new Error("이미 사용 중인 이메일입니다.");
     }
 
     const account: LocalAccount = {
@@ -52,10 +52,10 @@ export const accountRepository = {
 
   async verify(email: string, password: string): Promise<LocalAccount> {
     const account = this.findByEmail(email);
-    if (!account) throw new Error("이메일 또는 비밀번호가 올바르지 않습니다");
+    if (!account) throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
     const passwordHash = await hashPassword(password);
     if (passwordHash !== account.passwordHash) {
-      throw new Error("이메일 또는 비밀번호가 올바르지 않습니다");
+      throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
     }
     return account;
   },

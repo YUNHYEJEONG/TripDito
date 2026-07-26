@@ -38,7 +38,7 @@ export const profileRepository = {
     const current = this.get();
     if (input.nickname !== undefined) {
       const next = input.nickname.trim();
-      if (!next) throw new Error("닉네임을 입력하세요");
+      if (!next) throw new Error("닉네임을 입력하세요.");
     }
 
     const updated: LocalProfile = {

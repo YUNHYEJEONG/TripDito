@@ -7,6 +7,7 @@ import { SearchInput } from "@/components/common/search-input";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { Button } from "@/components/ui/button";
 import { POPULAR_DESTINATIONS } from "../constants";
+import { FLIGHT_DESTINATIONS } from "@/features/destinations/constants";
 import { searchDestinations } from "../utils/shot-query";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export function DestinationFilterSheet({
   const [query, setQuery] = useState("");
 
   const results = useMemo(
-    () => searchDestinations(POPULAR_DESTINATIONS, query),
+    () => searchDestinations(FLIGHT_DESTINATIONS, query),
     [query],
   );
 

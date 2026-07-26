@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
@@ -70,6 +70,22 @@ export default function ShoppingPage() {
     [destination],
   );
 
+  // 홈 쿠폰 배너 등에서 /shopping#coupons 로 진입 시 쿠폰 영역으로 스크롤
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#coupons") return;
+
+    const scrollToCoupons = () => {
+      document.getElementById("coupons")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    };
+
+    const t = window.setTimeout(scrollToCoupons, 80);
+    return () => window.clearTimeout(t);
+  }, [couponData]);
+
   return (
     <AppShell withBottomNav>
       <PageHeader title="쇼핑" actions={<HeaderNavActions />} />
@@ -115,6 +131,10 @@ export default function ShoppingPage() {
 
           <SectionDivider />
 
+          <CouponSection destination={destination} />
+
+          <SectionDivider />
+
           <ShoppingSection
             title="투어 추천"
             description="쇼핑과 함께 즐기기 좋은 투어"
@@ -147,10 +167,6 @@ export default function ShoppingPage() {
               />
             )}
           </ShoppingSection>
-
-          <SectionDivider />
-
-          <CouponSection destination={destination} />
         </div>
       </div>
     </AppShell>

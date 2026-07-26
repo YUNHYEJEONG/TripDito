@@ -16,6 +16,21 @@ export function getTripDayNumber(
   return diff + 1;
 }
 
+/** 여러 예상 구매일 → 여행 일차 목록 (오름차순, 중복 제거) */
+export function getTripDayNumbers(
+  startDate: string,
+  endDate: string,
+  dates: string[] | null | undefined,
+): number[] {
+  if (!dates?.length) return [];
+  const days = new Set<number>();
+  for (const date of dates) {
+    const day = getTripDayNumber(startDate, endDate, date);
+    if (day != null) days.add(day);
+  }
+  return [...days].sort((a, b) => a - b);
+}
+
 export function getTripDayFilterOptions(startDate: string, endDate: string) {
   const { days } = getTripStayLength(startDate, endDate);
   return Array.from({ length: Math.max(days, 0) }, (_, i) => i + 1);
@@ -29,4 +44,22 @@ export function addDaysIso(startDate: string, dayOffset: number): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/** 레거시 단일 필드 → 배열 정규화 */
+export function normalizePlannedPurchaseDates(item: {
+  plannedPurchaseDates?: string[] | null;
+  plannedPurchaseDate?: string | null;
+}): string[] {
+  if (Array.isArray(item.plannedPurchaseDates)) {
+    return [
+      ...new Set(
+        item.plannedPurchaseDates
+          .map((date) => date?.trim())
+          .filter((date): date is string => Boolean(date)),
+      ),
+    ].sort();
+  }
+  const legacy = item.plannedPurchaseDate?.trim();
+  return legacy ? [legacy] : [];
 }

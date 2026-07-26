@@ -24,7 +24,7 @@ export default function MapPage() {
       {/* 고정 하단 네비 높이 확보 */}
       <div
         className="shrink-0"
-        style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
+        style={{ height: "calc(4rem + env(safe-area-inset-bottom))" }}
         aria-hidden
       />
     </div>

@@ -38,10 +38,10 @@ export const shotRepository = {
 
   create(input: ShotFormValues): Shot {
     if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 업로드할 수 있습니다");
+      throw new Error("로그인 후 업로드할 수 있습니다.");
     }
     const trip = tripRepository.getById(input.tripId);
-    if (!trip) throw new Error("여행을 찾을 수 없습니다");
+    if (!trip) throw new Error("여행을 찾을 수 없습니다.");
     const profile = profileRepository.get();
     const now = new Date().toISOString();
     const shoppingItemIds =
@@ -75,7 +75,7 @@ export const shotRepository = {
   toggleLike(id: string): Shot {
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
+    if (index < 0) throw new Error("피드를 찾을 수 없습니다.");
     const current = shots[index];
     const likedByMe = !current.likedByMe;
     const updated: Shot = {
@@ -92,7 +92,7 @@ export const shotRepository = {
   incrementShare(id: string): Shot {
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
+    if (index < 0) throw new Error("피드를 찾을 수 없습니다.");
     const updated: Shot = {
       ...shots[index],
       shareCount: (shots[index].shareCount ?? 0) + 1,
@@ -105,13 +105,13 @@ export const shotRepository = {
 
   addComment(id: string, text: string): Shot {
     if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 댓글을 달 수 있습니다");
+      throw new Error("로그인 후 댓글을 달 수 있습니다.");
     }
     const trimmed = text.trim();
-    if (!trimmed) throw new Error("댓글을 입력하세요");
+    if (!trimmed) throw new Error("댓글을 입력하세요.");
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
+    if (index < 0) throw new Error("피드를 찾을 수 없습니다.");
     const profile = profileRepository.get();
     const comment: ShotComment = {
       id: createId(),
@@ -133,15 +133,15 @@ export const shotRepository = {
   removeComment(shotId: string, commentId: string): Shot {
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === shotId);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
+    if (index < 0) throw new Error("피드를 찾을 수 없습니다.");
     const shot = shots[index];
     const comment = shot.comments.find((item) => item.id === commentId);
-    if (!comment) throw new Error("댓글을 찾을 수 없습니다");
+    if (!comment) throw new Error("댓글을 찾을 수 없습니다.");
 
     const profile = profileRepository.get();
     const canDelete =
       profile.id === shot.authorId || profile.id === comment.authorId;
-    if (!canDelete) throw new Error("댓글을 삭제할 권한이 없습니다");
+    if (!canDelete) throw new Error("댓글을 삭제할 권한이 없습니다.");
 
     const updated: Shot = {
       ...shot,
@@ -155,20 +155,20 @@ export const shotRepository = {
 
   update(id: string, input: ShotFormValues): Shot {
     if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 수정할 수 있습니다");
+      throw new Error("로그인 후 수정할 수 있습니다.");
     }
     const shots = readShots();
     const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
+    if (index < 0) throw new Error("피드를 찾을 수 없습니다.");
 
     const current = shots[index];
     const profile = profileRepository.get();
     if (profile.id !== current.authorId) {
-      throw new Error("피드를 수정할 권한이 없습니다");
+      throw new Error("피드를 수정할 권한이 없습니다.");
     }
 
     const trip = tripRepository.getById(input.tripId);
-    if (!trip) throw new Error("여행을 찾을 수 없습니다");
+    if (!trip) throw new Error("여행을 찾을 수 없습니다.");
 
     const shoppingItemIds =
       input.channel === "shots" ? input.shoppingItemIds : [];
@@ -194,15 +194,15 @@ export const shotRepository = {
 
   remove(id: string) {
     if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 삭제할 수 있습니다");
+      throw new Error("로그인 후 삭제할 수 있습니다.");
     }
     const shots = readShots();
     const shot = shots.find((item) => item.id === id);
-    if (!shot) throw new Error("피드를 찾을 수 없습니다");
+    if (!shot) throw new Error("피드를 찾을 수 없습니다.");
 
     const profile = profileRepository.get();
     if (profile.id !== shot.authorId) {
-      throw new Error("피드를 삭제할 권한이 없습니다");
+      throw new Error("피드를 삭제할 권한이 없습니다.");
     }
 
     writeShots(shots.filter((item) => item.id !== id));

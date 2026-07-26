@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -431,7 +431,7 @@ export function ShotUploadForm({
             ) : null}
           </div>
           {pinDraft ? (
-            <div className="mt-2 flex flex-col gap-2">
+            <div className="mt-2 flex flex-col gap-1">
               <Textarea
                 value={pinText}
                 onChange={(e) => setPinText(e.target.value)}
@@ -439,7 +439,7 @@ export function ShotUploadForm({
                 rows={2}
                 className="min-h-16"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-1">
                 <Button
                   type="button"
                   size="sm"

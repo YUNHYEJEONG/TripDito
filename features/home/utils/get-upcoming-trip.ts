@@ -54,3 +54,19 @@ export function formatScheduleBadge(label: TripScheduleLabel): string {
   if (label.days === 0) return "D-Day";
   return `D-${label.days}`;
 }
+
+/** 내 여행지 리스트용: 접속일 기준 여행 상태 */
+export type TripPhase = "preparing" | "ongoing" | "ended";
+
+export function getTripPhase(trip: Trip, today = todayIsoDate()): TripPhase {
+  if (today > trip.endDate) return "ended";
+  if (today >= trip.startDate) return "ongoing";
+  return "preparing";
+}
+
+export function formatTripPhaseTag(phase: TripPhase): string {
+  if (phase === "ongoing") return "여행중";
+  if (phase === "ended") return "여행끝";
+  return "여행준비";
+}
+

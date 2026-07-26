@@ -9,6 +9,7 @@ import { HomeAdBanner } from "@/features/home/components/home-ad-banner";
 import { HomeCouponBanner } from "@/features/home/components/home-coupon-banner";
 import { HomeCreateTripCta } from "@/features/home/components/home-create-trip-cta";
 import { HomeFxCard } from "@/features/home/components/home-fx-card";
+import { HomeShoppingEmptyPrompt } from "@/features/home/components/home-shopping-empty-prompt";
 import { HomeShoppingTodo } from "@/features/home/components/home-shopping-todo";
 import { HomeUpcomingTripCard } from "@/features/home/components/home-upcoming-trip-card";
 import { getUpcomingTrip } from "@/features/home/utils/get-upcoming-trip";
@@ -86,6 +87,8 @@ export default function HomePage() {
 
               <HomeShoppingTodo
                 tripId={upcoming.id}
+                city={upcoming.city}
+                country={upcoming.country}
                 currency={upcoming.currency}
                 startDate={upcoming.startDate}
                 endDate={upcoming.endDate}
@@ -94,7 +97,11 @@ export default function HomePage() {
               <HomeFxCard currency={upcoming.currency} />
             </>
           ) : (
-            <HomeCreateTripCta />
+            <>
+              <HomeCreateTripCta />
+              <HomeCouponBanner variant="generic" />
+              <HomeShoppingEmptyPrompt />
+            </>
           )}
 
           <HomeAdBanner />

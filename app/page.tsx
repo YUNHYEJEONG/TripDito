@@ -55,9 +55,14 @@ export default function LandingPage() {
             phase === "hold" ? "scale-100" : "scale-95",
           ].join(" ")}
         />
-        <p className="text-center text-[14px] font-medium text-muted-foreground">
-          {appConfig.tagline}
-        </p>
+        <div className="flex flex-col items-center gap-0 text-center leading-snug">
+          <p className="text-[15px] font-semibold text-foreground">
+            {appConfig.splashLines[0]}
+          </p>
+          <p className="text-[14px] font-medium text-muted-foreground">
+            {appConfig.splashLines[1]}
+          </p>
+        </div>
       </div>
     </main>
   );

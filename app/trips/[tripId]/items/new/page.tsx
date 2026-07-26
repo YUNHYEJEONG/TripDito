@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
@@ -46,6 +46,9 @@ export default function NewItemPage({
     <AppShell>
       <PageHeader title="상품 추가" backHref={`/trips/${tripId}`} />
       <ItemForm
+        currency={trip.currency}
+        tripStartDate={trip.startDate}
+        tripEndDate={trip.endDate}
         submitLabel="추가"
         onCancel={() => router.push(`/trips/${tripId}`)}
         onSubmit={async (values) => {

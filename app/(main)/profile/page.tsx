@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Bookmark, Camera, Heart, Ticket } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
@@ -62,7 +62,7 @@ export default function ProfilePage() {
   async function handleSaveNickname() {
     const next = nickname.trim();
     if (!next) {
-      toast.error("닉네임을 입력하세요");
+      toast.error("닉네임을 입력하세요.");
       return;
     }
     try {

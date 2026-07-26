@@ -25,8 +25,8 @@ export function useMouseDragScroll(
   const wheel = options.wheel ?? false;
 
   useEffect(() => {
+    if (!ref.current || !enabled) return;
     const el = ref.current;
-    if (!el || !enabled) return;
 
     let dragging = false;
     let capturing = false;

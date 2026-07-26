@@ -20,17 +20,22 @@ export function ShotImageCarousel({
   images,
   pins = [],
   className,
+  /** 피드가 화면 중앙에 있을 때 핀 코멘트 자동 펼침 */
+  autoExpandPins = false,
 }: {
   images: string[];
   pins?: ImagePin[];
   className?: string;
+  autoExpandPins?: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
-  const [openPinId, setOpenPinId] = useState<string | null>(null);
+  const [openPinIds, setOpenPinIds] = useState<Set<string>>(() => new Set());
+  const manualClosedRef = useRef<Set<string>>(new Set());
 
   const total = images.length;
   const currentPins = pins.filter((pin) => pin.imageIndex === index);
+  const currentPinKey = currentPins.map((pin) => pin.id).join("|");
 
   useMouseDragScroll(scrollerRef, total > 1);
 
@@ -40,8 +45,21 @@ export function ShotImageCarousel({
   }, [images]);
 
   useEffect(() => {
-    setOpenPinId(null);
+    setOpenPinIds(new Set());
+    manualClosedRef.current = new Set();
   }, [index]);
+
+  useEffect(() => {
+    if (!autoExpandPins) {
+      setOpenPinIds(new Set());
+      manualClosedRef.current = new Set();
+      return;
+    }
+    const ids = currentPinKey ? currentPinKey.split("|") : [];
+    setOpenPinIds(
+      new Set(ids.filter((id) => !manualClosedRef.current.has(id))),
+    );
+  }, [autoExpandPins, index, currentPinKey]);
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -70,6 +88,20 @@ export function ShotImageCarousel({
     if (!el || total <= 1) return;
     const next = readCarouselIndex(el, total);
     setIndex((prev) => (prev === next ? prev : next));
+  }
+
+  function togglePin(pinId: string) {
+    setOpenPinIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pinId)) {
+        next.delete(pinId);
+        if (autoExpandPins) manualClosedRef.current.add(pinId);
+      } else {
+        next.add(pinId);
+        manualClosedRef.current.delete(pinId);
+      }
+      return next;
+    });
   }
 
   return (
@@ -105,7 +137,7 @@ export function ShotImageCarousel({
       ) : null}
 
       {currentPins.map((pin) => {
-        const open = openPinId === pin.id;
+        const open = openPinIds.has(pin.id);
         return (
           <div
             key={pin.id}
@@ -115,10 +147,11 @@ export function ShotImageCarousel({
             <button
               type="button"
               aria-label="핀 코멘트"
+              aria-expanded={open}
               className="-translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md"
               onClick={(e) => {
                 e.stopPropagation();
-                setOpenPinId(open ? null : pin.id);
+                togglePin(pin.id);
               }}
             >
               <Plus className="size-4" strokeWidth={2.5} />

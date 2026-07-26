@@ -11,7 +11,7 @@ export function CurrencyText({
   className?: string;
 }) {
   return (
-    <span className={cn("tabular-nums", className)}>
+    <span className={cn("inline-block tabular-nums text-right", className)}>
       {formatCurrency(amount, currency)}
     </span>
   );

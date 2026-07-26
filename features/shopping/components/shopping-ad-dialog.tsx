@@ -48,7 +48,7 @@ export function ShoppingAdDialog({ ad }: { ad: ShoppingAd }) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
         showCloseButton={false}
-        className="gap-0 overflow-hidden p-0 sm:max-w-sm"
+        className="w-[78%] max-w-[18rem] gap-0 overflow-hidden p-0 sm:max-w-xs"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{ad.title}</DialogTitle>

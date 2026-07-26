@@ -8,6 +8,7 @@ const FLAG_BY_CURRENCY: Record<string, string> = {
   CNY: "/flags/cn.svg",
   KRW: "/flags/kr.svg",
   TWD: "/flags/tw.svg",
+  HKD: "/flags/hk.svg",
 };
 
 export function getCurrencyFlagSrc(currency: string): string | null {

@@ -63,7 +63,7 @@ export function HomeUpcomingTripCard({
             </p>
             <div className="mt-1.5 flex w-fit flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px]">
               <span className="text-white/80">
-                필요예산{" "}
+                총 예상 비용{" "}
                 <CurrencyText
                   amount={requiredBudget}
                   currency={trip.currency}

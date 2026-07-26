@@ -65,14 +65,14 @@ function SheetContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-4 right-4 bg-secondary"
-                size="icon-sm"
+                size="icon"
+                className="absolute top-1.5 right-2 size-10"
+                aria-label="닫기"
               />
             }
           >
-            <XIcon
-            />
-            <span className="sr-only">Close</span>
+            <XIcon className="size-6" strokeWidth={2} />
+            <span className="sr-only">닫기</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

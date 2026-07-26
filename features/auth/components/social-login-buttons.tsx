@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { cn } from "@/lib/utils";
 
 type SocialStatus = {
@@ -34,8 +34,8 @@ export function SocialLoginButtons({ className }: { className?: string }) {
     if (!ready) {
       toast.error(
         provider === "kakao"
-          ? "카카오 로그인을 쓰려면 .env.local에 AUTH_KAKAO_ID, AUTH_KAKAO_SECRET을 설정하세요"
-          : "네이버 로그인을 쓰려면 .env.local에 AUTH_NAVER_ID, AUTH_NAVER_SECRET을 설정하세요",
+          ? "카카오 로그인을 쓰려면 .env.local에 AUTH_KAKAO_ID, AUTH_KAKAO_SECRET을 설정하세요."
+          : "네이버 로그인을 쓰려면 .env.local에 AUTH_NAVER_ID, AUTH_NAVER_SECRET을 설정하세요.",
       );
       return;
     }
@@ -44,7 +44,7 @@ export function SocialLoginButtons({ className }: { className?: string }) {
     try {
       await signIn(provider, { callbackUrl: "/profile" });
     } catch {
-      toast.error("소셜 로그인을 시작할 수 없습니다");
+      toast.error("소셜 로그인을 시작할 수 없습니다.");
       setPending(null);
     }
   }

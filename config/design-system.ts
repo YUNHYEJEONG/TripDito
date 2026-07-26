@@ -27,7 +27,10 @@ export const designSystem = {
   },
   radius: {
     /**
-     * 폼 컨트롤 (Input / Textarea / Select / Button)
+     * 폼 컨트롤 (Input / Textarea / Select / Button / Checkbox)
+     * - 기본 입력 서피스: 흰 배경 (회색은 disabled 전용)
+     * - Checkbox도 동일: 활성=흰 배경+테두리, 체크=primary, disabled=회색
+     * - 숫자 데이터(가격·수량·합계): 등록/수정은 우측 정렬, 조회(상세)는 좌측 정렬
      * - 값: 8px (`rounded-lg`)
      * - 너무 둥근 `rounded-xl`(12px) 사용 금지
      */
@@ -66,5 +69,11 @@ export const designSystem = {
     cardStackGap: "0.75rem",
     /** Tailwind: gap-3 */
     cardStackGapClass: "gap-3",
+    /**
+     * 하단 고정 액션 바 (직접 추가 / 사진으로 추가 등)
+     * - 버튼 위 구분선(border-t) 사용하지 않음
+     * - 탭 바(bottom-nav)의 border-t와 구분
+     */
+    bottomActionBarNoDivider: true,
   },
 } as const;

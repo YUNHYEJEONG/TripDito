@@ -19,6 +19,8 @@ function item(
     quantity: 1,
     memo: "",
     imageDataUrl: null,
+    giftTags: [],
+    plannedPurchaseDates: [],
     purchased: false,
     purchasedAt: null,
     sortOrder: 0,

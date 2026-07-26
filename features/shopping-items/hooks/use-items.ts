@@ -107,34 +107,54 @@ export function useTogglePurchased(tripId: string) {
     mutationFn: async (itemId: string) => itemRepository.togglePurchased(itemId),
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: itemKeys.byTrip(tripId) });
-      const previous = queryClient.getQueryData(
-        itemKeys.byTrip(tripId),
-      );
+      await queryClient.cancelQueries({ queryKey: itemKeys.detail(itemId) });
+      const previousList = queryClient.getQueryData(itemKeys.byTrip(tripId));
+      const previousDetail = queryClient.getQueryData(itemKeys.detail(itemId));
+
+      const applyToggle = <T extends { purchased: boolean; purchasedAt: string | null; updatedAt: string }>(
+        current: T,
+      ): T => {
+        const purchased = !current.purchased;
+        return {
+          ...current,
+          purchased,
+          purchasedAt: purchased ? new Date().toISOString() : null,
+          updatedAt: new Date().toISOString(),
+        };
+      };
+
       queryClient.setQueryData(
         itemKeys.byTrip(tripId),
         (old: ReturnType<typeof itemRepository.listByTrip> | undefined) => {
           if (!old) return old;
-          return old.map((item) => {
-            if (item.id !== itemId) return item;
-            const purchased = !item.purchased;
-            return {
-              ...item,
-              purchased,
-              purchasedAt: purchased ? new Date().toISOString() : null,
-              updatedAt: new Date().toISOString(),
-            };
-          });
+          return old.map((item) =>
+            item.id === itemId ? applyToggle(item) : item,
+          );
         },
       );
-      return { previous };
+      queryClient.setQueryData(
+        itemKeys.detail(itemId),
+        (old: ReturnType<typeof itemRepository.getById> | null | undefined) => {
+          if (!old) return old;
+          return applyToggle(old);
+        },
+      );
+      return { previousList, previousDetail, itemId };
     },
-    onError: (_error, _itemId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(itemKeys.byTrip(tripId), context.previous);
+    onError: (_error, itemId, context) => {
+      if (context?.previousList) {
+        queryClient.setQueryData(itemKeys.byTrip(tripId), context.previousList);
+      }
+      if (context?.previousDetail !== undefined) {
+        queryClient.setQueryData(
+          itemKeys.detail(itemId),
+          context.previousDetail,
+        );
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, itemId) => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.detail(itemId) });
     },
   });
 }

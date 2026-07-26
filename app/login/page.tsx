@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,17 +30,17 @@ export default function LoginPage() {
     let hasError = false;
 
     if (!nextEmail) {
-      setEmailError("이메일을 입력하세요");
+      setEmailError("이메일을 입력하세요.");
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
-      setEmailError("올바른 이메일 형식이 아닙니다");
+      setEmailError("올바른 이메일 형식이 아닙니다.");
       hasError = true;
     } else {
       setEmailError(null);
     }
 
     if (!nextPassword) {
-      setPasswordError("비밀번호를 입력하세요");
+      setPasswordError("비밀번호를 입력하세요.");
       hasError = true;
     } else {
       setPasswordError(null);

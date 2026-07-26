@@ -5,12 +5,16 @@ import type { ShoppingItem } from "../schema";
 import type { Trip } from "@/features/trips/types";
 import type { GiftTagId } from "../constants/gift-tags";
 import { getTripStayLength } from "@/features/home/utils/trip-card-meta";
-import { addDaysIso } from "../utils/trip-day";
+import {
+  addDaysIso,
+  normalizePlannedPurchaseDates,
+} from "../utils/trip-day";
 
-const FLAG_KEY = `${appConfig.storagePrefix}:migrate:shopping-demo-fields-v1`;
+const FLAG_KEY = `${appConfig.storagePrefix}:migrate:shopping-demo-fields-v2`;
 
 /**
- * 기존 로컬 상품에 예상 구매일·선물 태그가 없으면 데모용으로 채웁니다.
+ * 기존 로컬 상품에 예상 구매일·선물 대상이 없으면 데모용으로 채웁니다.
+ * plannedPurchaseDate(단일) → plannedPurchaseDates(배열)도 정규화합니다.
  */
 export function migrateShoppingListDemoFields(): boolean {
   if (typeof window === "undefined") return false;
@@ -29,14 +33,16 @@ export function migrateShoppingListDemoFields(): boolean {
 
   const next = items.map((item, index) => {
     const trip = tripById.get(item.tripId);
-    let plannedPurchaseDate = item.plannedPurchaseDate ?? null;
+    let plannedPurchaseDates = normalizePlannedPurchaseDates(item);
     let giftTags = Array.isArray(item.giftTags) ? [...item.giftTags] : [];
-    let touched = false;
+    let touched =
+      Array.isArray(item.plannedPurchaseDates) === false ||
+      item.plannedPurchaseDate != null;
 
-    if (!plannedPurchaseDate && trip) {
+    if (plannedPurchaseDates.length === 0 && trip) {
       const { days } = getTripStayLength(trip.startDate, trip.endDate);
       const dayOffset = days > 0 ? index % days : 0;
-      plannedPurchaseDate = addDaysIso(trip.startDate, dayOffset);
+      plannedPurchaseDates = [addDaysIso(trip.startDate, dayOffset)];
       touched = true;
     }
 
@@ -45,11 +51,14 @@ export function migrateShoppingListDemoFields(): boolean {
       touched = true;
     }
 
-    if (!touched) return item;
+    if (!touched && plannedPurchaseDates === item.plannedPurchaseDates) {
+      return item;
+    }
     changed = true;
+    const { plannedPurchaseDate: _legacy, ...rest } = item;
     return {
-      ...item,
-      plannedPurchaseDate,
+      ...rest,
+      plannedPurchaseDates,
       giftTags,
     };
   });

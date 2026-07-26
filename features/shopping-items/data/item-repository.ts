@@ -2,13 +2,33 @@ import { createId } from "@/lib/storage/id";
 import { getJson, setJson } from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
 import type { ShoppingItem, ShoppingItemFormValues } from "../schema";
+import { normalizePlannedPurchaseDates } from "../utils/trip-day";
 
 function readItems(): ShoppingItem[] {
-  return getJson<ShoppingItem[]>(storageKeys.items, []);
+  return getJson<ShoppingItem[]>(storageKeys.items, []).map((item) => {
+    const plannedPurchaseDates = normalizePlannedPurchaseDates(item);
+    return {
+      ...item,
+      plannedPurchaseDates,
+      plannedPurchaseDate: undefined,
+      localName: item.localName ?? null,
+      expectedStores: item.expectedStores ?? [],
+    };
+  });
 }
 
 function writeItems(items: ShoppingItem[]) {
-  setJson(storageKeys.items, items);
+  setJson(
+    storageKeys.items,
+    items.map((item) => {
+      const plannedPurchaseDates = normalizePlannedPurchaseDates(item);
+      const { plannedPurchaseDate: _legacy, ...rest } = item;
+      return {
+        ...rest,
+        plannedPurchaseDates,
+      };
+    }),
+  );
 }
 
 export const itemRepository = {
@@ -31,8 +51,10 @@ export const itemRepository = {
       ...input,
       memo: input.memo ?? "",
       imageDataUrl: input.imageDataUrl ?? null,
-      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+      plannedPurchaseDates: normalizePlannedPurchaseDates(input),
       giftTags: input.giftTags ?? [],
+      localName: input.localName ?? null,
+      expectedStores: input.expectedStores ?? [],
       id: createId(),
       tripId,
       purchased: false,
@@ -48,15 +70,17 @@ export const itemRepository = {
   /** 다른 사람 쇼핑리스트 상품을 내 여행 리스트로 퍼가기 */
   copyToTrip(sourceItemId: string, targetTripId: string): ShoppingItem {
     const source = readItems().find((item) => item.id === sourceItemId);
-    if (!source) throw new Error("상품을 찾을 수 없습니다");
+    if (!source) throw new Error("상품을 찾을 수 없습니다.");
     return this.create(targetTripId, {
       name: source.name,
       estimatedPrice: source.estimatedPrice,
       quantity: source.quantity,
       memo: source.memo,
       imageDataUrl: source.imageDataUrl,
-      plannedPurchaseDate: source.plannedPurchaseDate ?? null,
+      plannedPurchaseDates: source.plannedPurchaseDates ?? [],
       giftTags: source.giftTags ?? [],
+      localName: source.localName ?? null,
+      expectedStores: source.expectedStores ?? [],
     });
   },
 
@@ -71,8 +95,10 @@ export const itemRepository = {
         ...input,
         memo: input.memo ?? "",
         imageDataUrl: input.imageDataUrl ?? null,
-        plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+        plannedPurchaseDates: normalizePlannedPurchaseDates(input),
         giftTags: input.giftTags ?? [],
+        localName: input.localName ?? null,
+        expectedStores: input.expectedStores ?? [],
         id: createId(),
         tripId,
         purchased: false,
@@ -90,14 +116,17 @@ export const itemRepository = {
   update(id: string, input: ShoppingItemFormValues): ShoppingItem {
     const items = readItems();
     const index = items.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error("상품을 찾을 수 없습니다");
+    if (index < 0) throw new Error("상품을 찾을 수 없습니다.");
     const updated: ShoppingItem = {
       ...items[index],
       ...input,
       memo: input.memo ?? "",
       imageDataUrl: input.imageDataUrl ?? null,
-      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+      plannedPurchaseDates: normalizePlannedPurchaseDates(input),
       giftTags: input.giftTags ?? [],
+      localName: input.localName ?? null,
+      expectedStores: input.expectedStores ?? [],
+      plannedPurchaseDate: undefined,
       updatedAt: new Date().toISOString(),
     };
     items[index] = updated;
@@ -108,7 +137,7 @@ export const itemRepository = {
   togglePurchased(id: string): ShoppingItem {
     const items = readItems();
     const index = items.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error("상품을 찾을 수 없습니다");
+    if (index < 0) throw new Error("상품을 찾을 수 없습니다.");
     const current = items[index];
     const purchased = !current.purchased;
     const updated: ShoppingItem = {

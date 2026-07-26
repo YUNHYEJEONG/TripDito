@@ -3,7 +3,13 @@ export const appConfig = {
   name: "트립디토",
   /** 영문 브랜드명 (필요 시 사용) */
   nameEn: "Trip Ditto",
-  tagline: "복잡함 없이, 여행 쇼핑",
+  /** 메타 description 등 공통용 한 줄 */
+  tagline: "오늘부터 트립디토, 사진만 찍으면 쇼핑리스트 완성!",
+  /** 스플래시 전용 두 줄 */
+  splashLines: [
+    "오늘부터 트립디토",
+    "사진만 찍으면 쇼핑리스트 완성!",
+  ] as const,
   storagePrefix: "trip-shopping",
   storageVersion: 1,
   defaultCurrency: "JPY" as const,

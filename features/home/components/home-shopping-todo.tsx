@@ -4,10 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Package, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CurrencyText } from "@/components/common/currency-text";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   itemKeys,
   useItems,
@@ -17,25 +17,29 @@ import type { ShoppingItem } from "@/features/shopping-items/types";
 import { lineTotal } from "@/features/budget/utils/calculate-budget";
 import {
   getTripDayFilterOptions,
-  getTripDayNumber,
+  getTripDayNumbers,
 } from "@/features/shopping-items/utils/trip-day";
 import { useMouseDragScroll } from "@/features/shots/hooks/use-mouse-drag-scroll";
 import { migrateShoppingListDemoFields } from "@/features/shopping-items/data/migrate-shopping-demo-fields";
-import {
-  GIFT_TAG_OPTIONS,
-  type GiftTagId,
-} from "@/features/shopping-items/constants/gift-tags";
+import { AddFromImagesSheet } from "@/features/image-upload/components/add-from-images-sheet";
+import { ItemDetailSheet } from "@/features/shopping-items/components/item-detail-sheet";
+import { ItemStatusTags } from "@/features/shopping-items/components/item-status-tags";
+import { SeeMoreLink } from "@/components/common/see-more-control";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_LIMIT = 5;
 
 export function HomeShoppingTodo({
   tripId,
+  city,
+  country,
   currency,
   startDate,
   endDate,
 }: {
   tripId: string;
+  city: string;
+  country: string;
   currency: string;
   startDate: string;
   endDate: string;
@@ -44,6 +48,9 @@ export function HomeShoppingTodo({
   const { data: items = [], isLoading } = useItems(tripId);
   const togglePurchased = useTogglePurchased(tripId);
   const [dayFilter, setDayFilter] = useState<number | "all">("all");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<ShoppingItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const filterScrollerRef = useRef<HTMLDivElement>(null);
 
   useMouseDragScroll(filterScrollerRef, true, { snap: false, wheel: true });
@@ -55,6 +62,14 @@ export function HomeShoppingTodo({
     }
   }, [queryClient]);
 
+  useEffect(() => {
+    if (!detailItem) return;
+    const next = items.find((entry) => entry.id === detailItem.id);
+    if (next && next.updatedAt !== detailItem.updatedAt) {
+      setDetailItem(next);
+    }
+  }, [items, detailItem]);
+
   const dayOptions = useMemo(
     () => getTripDayFilterOptions(startDate, endDate),
     [startDate, endDate],
@@ -63,12 +78,12 @@ export function HomeShoppingTodo({
   const filtered = useMemo(() => {
     if (dayFilter === "all") return items;
     return items.filter((item) => {
-      const day = getTripDayNumber(
+      const days = getTripDayNumbers(
         startDate,
         endDate,
-        item.plannedPurchaseDate,
+        item.plannedPurchaseDates,
       );
-      return day === dayFilter;
+      return days.includes(dayFilter);
     });
   }, [items, dayFilter, startDate, endDate]);
 
@@ -126,20 +141,19 @@ export function HomeShoppingTodo({
         <div className="px-4 py-6 text-center">
           <p className="text-[13px] text-muted-foreground">
             {items.length === 0
-              ? "쇼핑 리스트가 비어 있어요. 상품을 추가해 보세요."
+              ? "쇼핑리스트가 비어 있어요. 상품을 추가해 보세요."
               : "해당 일차에 예정된 쇼핑이 없어요."}
           </p>
           {items.length === 0 ? (
-            <Link
-              href={`/trips/${tripId}/items/new`}
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "mt-3",
-              )}
+            <Button
+              type="button"
+              size="sm"
+              className="mt-3"
+              onClick={() => setUploadOpen(true)}
             >
               <Plus />
-              상품 추가
-            </Link>
+              사진으로 추가
+            </Button>
           ) : null}
         </div>
       ) : (
@@ -152,12 +166,14 @@ export function HomeShoppingTodo({
               <ShoppingRow
                 item={item}
                 currency={currency}
-                startDate={startDate}
-                endDate={endDate}
                 toggling={
                   togglePurchased.isPending &&
                   togglePurchased.variables === item.id
                 }
+                onSelect={() => {
+                  setDetailItem(item);
+                  setDetailOpen(true);
+                }}
                 onToggle={() => {
                   togglePurchased.mutate(item.id, {
                     onError: () => toast.error("상태 변경에 실패했습니다"),
@@ -168,18 +184,66 @@ export function HomeShoppingTodo({
           ))}
           {remaining > 0 ? (
             <li className="px-4">
-              <div className="border-t border-border/80" aria-hidden />
-              <Link
-                href={`/trips/${tripId}`}
-                className="block py-2.5 text-center text-[12px] font-medium text-muted-foreground"
-              >
-                +{remaining}개 더 보기
-              </Link>
+              <SeeMoreLink href={`/trips/${tripId}`}>
+                +{remaining}개 더보기
+              </SeeMoreLink>
             </li>
           ) : null}
         </ul>
       )}
+
+      <AddFromImagesSheet
+        tripId={tripId}
+        city={city}
+        country={country}
+        currency={currency}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+      />
+
+      <ItemDetailSheet
+        item={detailItem}
+        currency={currency}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
+
+      {/* 사진으로 추가 FAB */}
+      <button
+        type="button"
+        aria-label="사진으로 추가"
+        onClick={() => setUploadOpen(true)}
+        className={cn(
+          "fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md",
+          "bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))]",
+          "md:right-[max(1rem,calc((100vw-720px)/2+1rem))]",
+          "lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]",
+          "transition-transform active:scale-95",
+        )}
+      >
+        <CameraPlusIcon className="size-7" />
+      </button>
     </section>
+  );
+}
+
+/** 카메라 본체 + 렌즈 대신 + */
+function CameraPlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <path d="M12 10.5v5" />
+      <path d="M9.5 13h5" />
+    </svg>
   );
 }
 
@@ -209,62 +273,34 @@ function DayChip({
   );
 }
 
-function GiftTags({ tags }: { tags: GiftTagId[] }) {
-  if (!tags.length) return null;
-  return (
-    <div className="mb-1 flex flex-wrap gap-1">
-      {tags.map((id) => {
-        const option = GIFT_TAG_OPTIONS.find((tag) => tag.id === id);
-        if (!option) return null;
-        return (
-          <span
-            key={id}
-            className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-[#191F28]"
-            style={{ backgroundColor: option.bg }}
-          >
-            {option.label}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
 function ShoppingRow({
   item,
   currency,
-  startDate,
-  endDate,
   onToggle,
+  onSelect,
   toggling,
 }: {
   item: ShoppingItem;
   currency: string;
-  startDate: string;
-  endDate: string;
   onToggle: () => void;
+  onSelect: () => void;
   toggling?: boolean;
 }) {
   const quantity = item.quantity >= 1 ? item.quantity : 1;
-  const giftTags = item.giftTags ?? [];
-  const dayNumber = getTripDayNumber(
-    startDate,
-    endDate,
-    item.plannedPurchaseDate,
-  );
 
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="flex items-start gap-3 py-3">
       <Checkbox
         checked={item.purchased}
         disabled={toggling}
         onCheckedChange={() => onToggle()}
         aria-label="구매 완료"
-        className="size-5 border border-border bg-background shadow-none data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground"
+        className="mt-0.5 size-5"
       />
-      <Link
-        href={`/trips/${item.tripId}/items/${item.id}/edit`}
-        className="flex min-w-0 flex-1 items-center gap-3"
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+        onClick={onSelect}
       >
         <div className="bg-muted flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg">
           {item.imageDataUrl ? (
@@ -278,28 +314,30 @@ function ShoppingRow({
             <Package className="size-4 text-muted-foreground" />
           )}
         </div>
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <GiftTags tags={giftTags} />
+        <div className="min-w-0 flex-1">
+          <ItemStatusTags
+            purchased={item.purchased}
+            giftTags={item.giftTags ?? []}
+          />
           <p
             className={cn(
-              "block truncate text-[14px] font-medium text-foreground",
+              "break-words text-[14px] font-medium leading-snug text-foreground",
               item.purchased && "line-through text-muted-foreground",
             )}
           >
             {item.name}
           </p>
-          <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+          {item.localName?.trim() ? (
+            <p className="mt-0.5 break-words text-[10px] leading-snug text-muted-foreground">
+              {item.localName.trim()}
+            </p>
+          ) : null}
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
             <CurrencyText amount={lineTotal(item)} currency={currency} />
             {` · ${quantity}개`}
-            {dayNumber != null ? ` · ${dayNumber}일차` : null}
           </p>
         </div>
-      </Link>
-      {item.purchased ? (
-        <span className="shrink-0 self-center rounded bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success">
-          구매완료
-        </span>
-      ) : null}
+      </button>
     </div>
   );
 }

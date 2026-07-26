@@ -1,7 +1,7 @@
 "use client";
 
 import { Link2, MessageCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/common/toast-alert";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 

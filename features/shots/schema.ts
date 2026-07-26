@@ -29,11 +29,11 @@ export type ShotComment = z.infer<typeof shotCommentSchema>;
 export const shotFormSchema = z
   .object({
     channel: shotChannelSchema,
-    tripId: z.string().min(1, "여행을 선택하세요"),
+    tripId: z.string().min(1, "여행을 선택하세요."),
     images: z
       .array(z.string().min(1))
-      .min(1, "이미지를 1장 이상 등록하세요")
-      .max(10, "이미지는 최대 10장까지 가능합니다"),
+      .min(1, "이미지를 1장 이상 등록하세요.")
+      .max(10, "이미지는 최대 10장까지 가능합니다."),
     body: z.string().max(2000).optional(),
     pins: z.array(imagePinSchema),
     shoppingItemIds: z.array(z.string()),
@@ -42,7 +42,7 @@ export const shotFormSchema = z
     if (data.channel === "community" && data.shoppingItemIds.length > 0) {
       ctx.addIssue({
         code: "custom",
-        message: "커뮤니티 업로드에는 쇼핑리스트를 연결할 수 없습니다",
+        message: "커뮤니티 업로드에는 쇼핑리스트를 연결할 수 없습니다.",
         path: ["shoppingItemIds"],
       });
     }

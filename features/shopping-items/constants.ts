@@ -6,6 +6,8 @@ export const defaultItemFormValues: ShoppingItemFormValues = {
   quantity: 1,
   memo: "",
   imageDataUrl: null,
-  plannedPurchaseDate: null,
+  plannedPurchaseDates: [],
   giftTags: [],
+  localName: null,
+  expectedStores: [],
 };

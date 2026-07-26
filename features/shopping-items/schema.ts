@@ -4,22 +4,34 @@ import { GIFT_TAG_IDS } from "./constants/gift-tags";
 export const giftTagSchema = z.enum(GIFT_TAG_IDS);
 
 export const shoppingItemFormSchema = z.object({
-  name: z.string().trim().min(1, "상품명을 입력하세요"),
-  estimatedPrice: z.number().min(0, "가격은 0 이상이어야 합니다"),
-  quantity: z.number().int().min(1, "수량은 1 이상이어야 합니다"),
+  name: z.string().trim().min(1, "상품명을 입력하세요."),
+  estimatedPrice: z.number().min(0, "가격은 0 이상이어야 합니다."),
+  quantity: z.number().int().min(1, "수량은 1 이상이어야 합니다."),
   memo: z.string().trim(),
   imageDataUrl: z.string().nullable(),
-  /** 예상 구매일 (YYYY-MM-DD). 미입력이면 null */
-  plannedPurchaseDate: z.string().nullable(),
-  giftTags: z.array(giftTagSchema).default([]),
+  /** 예상 구매일들 (YYYY-MM-DD). 복수 선택 가능 */
+  plannedPurchaseDates: z.array(z.string()),
+  giftTags: z.array(giftTagSchema),
+  /** 현지 언어 상품명 (화면 비표시 메타) */
+  localName: z.string().nullable(),
+  /** 예상 구매처 (AI는 최대 3곳 제안, 사용자 입력은 제한 없음) */
+  expectedStores: z.array(z.string().trim().min(1)),
 });
 
 export type ShoppingItemFormValues = z.infer<typeof shoppingItemFormSchema>;
 
-export type ShoppingItem = Omit<ShoppingItemFormValues, "giftTags"> & {
+export type ShoppingItem = Omit<
+  ShoppingItemFormValues,
+  "giftTags" | "localName" | "expectedStores" | "plannedPurchaseDates"
+> & {
   id: string;
   tripId: string;
   giftTags: z.infer<typeof giftTagSchema>[];
+  plannedPurchaseDates: string[];
+  /** @deprecated 레거시 단일 필드 — 읽기 시 plannedPurchaseDates로 정규화 */
+  plannedPurchaseDate?: string | null;
+  localName?: string | null;
+  expectedStores?: string[];
   purchased: boolean;
   purchasedAt: string | null;
   sortOrder: number;
