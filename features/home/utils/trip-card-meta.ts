@@ -67,8 +67,18 @@ const CITY_BACKGROUNDS: BackgroundRule[] = [
   { match: /런던|london/i, src: "/trip-backgrounds/london.jpg" },
   { match: /두바이|dubai/i, src: "/trip-backgrounds/dubai.jpg" },
   // 국내
-  { match: /제주|jeju/i, src: "/trip-backgrounds/jeju.jpg" },
+  { match: /서울|seoul/i, src: "/trip-backgrounds/seoul.jpg" },
   { match: /부산|busan|pusan/i, src: "/trip-backgrounds/busan.jpg" },
+  { match: /제주|jeju/i, src: "/trip-backgrounds/jeju.jpg" },
+  { match: /강릉|gangneung/i, src: "/trip-backgrounds/gangneung.jpg" },
+  { match: /경주|gyeongju/i, src: "/trip-backgrounds/gyeongju.jpg" },
+  { match: /전주|jeonju/i, src: "/trip-backgrounds/jeonju.jpg" },
+  { match: /여수|yeosu/i, src: "/trip-backgrounds/yeosu.jpg" },
+  { match: /속초|sokcho/i, src: "/trip-backgrounds/sokcho.jpg" },
+  { match: /인천|incheon/i, src: "/trip-backgrounds/incheon.jpg" },
+  { match: /대구|daegu/i, src: "/trip-backgrounds/daegu.jpg" },
+  { match: /광주|gwangju/i, src: "/trip-backgrounds/gwangju.jpg" },
+  { match: /통영|tongyeong/i, src: "/trip-backgrounds/tongyeong.jpg" },
 ];
 
 const COUNTRY_BACKGROUNDS: BackgroundRule[] = [
@@ -100,7 +110,7 @@ const COUNTRY_BACKGROUNDS: BackgroundRule[] = [
   },
   {
     match: /한국|korea|대한민국/i,
-    src: "/trip-backgrounds/jeju.jpg",
+    src: "/trip-backgrounds/korea.jpg",
   },
 ];
 

@@ -27,6 +27,7 @@ export function ConfirmDialog({
   loading,
   onConfirm,
   confirmVariant = "destructive",
+  hideCancel = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,6 +38,8 @@ export function ConfirmDialog({
   loading?: boolean;
   onConfirm: () => void;
   confirmVariant?: "destructive" | "default";
+  /** true면 확인 버튼만 (Alert) */
+  hideCancel?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,20 +66,22 @@ export function ConfirmDialog({
         </div>
 
         {description ? (
-          <DialogDescription className="text-center text-[14px] leading-relaxed text-[#3C4043]">
+          <DialogDescription className="whitespace-pre-line text-center text-[14px] leading-relaxed text-[#3C4043]">
             {description}
           </DialogDescription>
         ) : null}
 
         <DialogFooter className="flex-row gap-2 sm:justify-stretch">
-          <Button
-            variant="outline"
-            className="h-11 flex-1"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            {cancelLabel}
-          </Button>
+          {hideCancel ? null : (
+            <Button
+              variant="outline"
+              className="h-11 flex-1"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              {cancelLabel}
+            </Button>
+          )}
           <Button
             variant={confirmVariant}
             className="h-11 flex-1"

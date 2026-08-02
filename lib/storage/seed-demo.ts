@@ -139,7 +139,7 @@ export function seedDemoData() {
     toothpaste: createId(),
   };
 
-  const items: ShoppingItem[] = [
+  const rawItems = [
     {
       id: itemIds.snack,
       tripId,
@@ -150,6 +150,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(14)],
       giftTags: ["friend"],
+      favorited: false,
       purchased: false,
       purchasedAt: null,
       sortOrder: 1,
@@ -166,6 +167,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(14)],
       giftTags: [],
+      favorited: false,
       purchased: true,
       purchasedAt: now,
       sortOrder: 2,
@@ -182,6 +184,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(15)],
       giftTags: ["acquaintance"],
+      favorited: false,
       purchased: false,
       purchasedAt: null,
       sortOrder: 3,
@@ -198,6 +201,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(16)],
       giftTags: ["colleague"],
+      favorited: false,
       purchased: false,
       purchasedAt: null,
       sortOrder: 4,
@@ -214,6 +218,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(-20)],
       giftTags: ["friend"],
+      favorited: false,
       purchased: true,
       purchasedAt: hoursAgo(180),
       sortOrder: 1,
@@ -230,6 +235,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(-19)],
       giftTags: [],
+      favorited: false,
       purchased: true,
       purchasedAt: hoursAgo(175),
       sortOrder: 2,
@@ -246,6 +252,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(-12)],
       giftTags: ["acquaintance", "colleague"],
+      favorited: false,
       purchased: true,
       purchasedAt: hoursAgo(100),
       sortOrder: 1,
@@ -262,6 +269,7 @@ export function seedDemoData() {
       imageDataUrl: null,
       plannedPurchaseDates: [daysFromNow(-11)],
       giftTags: [],
+      favorited: false,
       purchased: true,
       purchasedAt: hoursAgo(98),
       sortOrder: 2,
@@ -269,6 +277,13 @@ export function seedDemoData() {
       updatedAt: hoursAgo(98),
     },
   ];
+
+  const items: ShoppingItem[] = rawItems.map((item) => ({
+    ...item,
+    coupangCompareStatus: "done" as const,
+    coupangCompareRunAfter: null,
+    coupangDeal: null,
+  })) as ShoppingItem[];
 
   const profile: LocalProfile = {
     id: DEFAULT_PROFILE_ID,

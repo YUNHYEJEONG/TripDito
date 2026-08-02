@@ -7,6 +7,7 @@ import {
   PageHeader,
   HeaderCancelButton,
 } from "@/components/layout/page-header";
+import type { TripRegion } from "@/features/destinations/constants";
 import { formatTripStayLabel } from "@/features/home/utils/trip-card-meta";
 import { useCreateTrip } from "../hooks/use-trips";
 import { countryToCurrency } from "../lib/country-currency";
@@ -20,11 +21,13 @@ import {
   TripDetailsStep,
   type TripDetailsValues,
 } from "./trip-details-step";
+import { TripRegionStep } from "./trip-region-step";
 
 export function NewTripWizard() {
   const router = useRouter();
   const createTrip = useCreateTrip();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [region, setRegion] = useState<TripRegion | null>(null);
   const [destination, setDestination] = useState<TripDestination | null>(null);
   const [tripTags, setTripTags] = useState<TripTagId[]>([]);
   const [details, setDetails] = useState<TripDetailsValues>({
@@ -38,6 +41,12 @@ export function NewTripWizard() {
     endDate?: string;
     budget?: string;
   }>({});
+
+  function selectRegion(next: TripRegion) {
+    setRegion(next);
+    setDestination(null);
+    setStep(2);
+  }
 
   function validateDetails(): boolean {
     const next: typeof errors = {};
@@ -94,16 +103,24 @@ export function NewTripWizard() {
       />
 
       {step === 1 ? (
+        <TripRegionStep value={region} onChange={selectRegion} />
+      ) : null}
+
+      {step === 2 && region ? (
         <TripDestinationStep
+          region={region}
           value={destination}
           onChange={setDestination}
           tripTags={tripTags}
           onTripTagsChange={setTripTags}
+          onBack={() => setStep(1)}
           onNext={() => {
-            if (destination) setStep(2);
+            if (destination) setStep(3);
           }}
         />
-      ) : destination ? (
+      ) : null}
+
+      {step === 3 && destination ? (
         <TripDetailsStep
           destination={destination}
           values={details}
@@ -112,7 +129,7 @@ export function NewTripWizard() {
           }
           errors={errors}
           isSubmitting={createTrip.isPending}
-          onBack={() => setStep(1)}
+          onBack={() => setStep(2)}
           onSubmit={() => {
             void handleSubmit();
           }}

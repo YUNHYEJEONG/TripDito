@@ -8,6 +8,7 @@ export const itemKeys = {
   all: ["items"] as const,
   byTrip: (tripId: string) => ["items", tripId] as const,
   detail: (id: string) => ["items", "detail", id] as const,
+  favorited: ["items", "favorited"] as const,
 };
 
 export function useItems(tripId: string) {
@@ -85,6 +86,7 @@ export function useCreateManyItems(tripId: string) {
       itemRepository.createMany(tripId, inputs),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.favorited });
     },
   });
 }
@@ -159,6 +161,26 @@ export function useTogglePurchased(tripId: string) {
   });
 }
 
+export function useToggleFavorited(tripId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) =>
+      itemRepository.toggleFavorited(itemId),
+    onSuccess: (_data, itemId) => {
+      void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.detail(itemId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.favorited });
+    },
+  });
+}
+
+export function useFavoritedItems() {
+  return useQuery({
+    queryKey: itemKeys.favorited,
+    queryFn: () => itemRepository.listFavorited(),
+  });
+}
+
 export function useDeleteItem(tripId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -168,6 +190,7 @@ export function useDeleteItem(tripId: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: itemKeys.favorited });
     },
   });
 }

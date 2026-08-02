@@ -1,14 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { FieldLabel } from "@/components/common/field-label";
+import {
+  DatePickerField,
+  type DatePickerFieldHandle,
+} from "@/components/common/date-picker-field";
 import { SearchInput } from "@/components/common/search-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCurrency } from "@/config/currencies";
-import { FLIGHT_DESTINATIONS } from "@/features/destinations/constants";
+import {
+  destinationsForRegion,
+  popularDestinationsForRegion,
+  regionFromCountry,
+  type TripRegion,
+} from "@/features/destinations/constants";
 import { formatTripStayLabel } from "@/features/home/utils/trip-card-meta";
+import { todayIsoDate } from "@/features/home/utils/get-upcoming-trip";
 import { searchDestinations } from "@/features/shots/utils/shot-query";
 import { cn } from "@/lib/utils";
 import { defaultTripFormValues } from "../constants";
@@ -46,6 +56,9 @@ export function TripForm({
   const { data: trips = [] } = useTrips();
   const initial = { ...defaultTripFormValues, ...defaultValues };
 
+  const [region, setRegion] = useState<TripRegion>(() =>
+    regionFromCountry(initial.country || "일본"),
+  );
   const [destinationQuery, setDestinationQuery] = useState("");
   const [country, setCountry] = useState(initial.country);
   const [city, setCity] = useState(initial.city);
@@ -65,14 +78,21 @@ export function TripForm({
     endDate?: string;
     budget?: string;
   }>({});
+  const endDateRef = useRef<DatePickerFieldHandle>(null);
 
   const currency = countryToCurrency(country);
   const currencyLabel = getCurrency(currency).label;
   const currencyUnit = currencyLabel.split(" ")[0] ?? currency;
 
+  const catalog = useMemo(() => destinationsForRegion(region), [region]);
+  const popular = useMemo(
+    () => popularDestinationsForRegion(region),
+    [region],
+  );
+
   const destinationResults = useMemo(
-    () => searchDestinations(FLIGHT_DESTINATIONS, destinationQuery),
-    [destinationQuery],
+    () => searchDestinations(catalog, destinationQuery),
+    [catalog, destinationQuery],
   );
 
   const datesComplete =
@@ -84,6 +104,15 @@ export function TripForm({
     return findOverlappingTrip(trips, startDate, endDate, tripId);
   }, [datesComplete, endDate, startDate, tripId, trips]);
   const hasOverlap = Boolean(overlappingTrip);
+
+  function selectRegion(next: TripRegion) {
+    if (next === region) return;
+    setRegion(next);
+    setCity("");
+    setCountry("");
+    setDestinationQuery("");
+    setErrors((prev) => ({ ...prev, destination: undefined }));
+  }
 
   function selectDestination(next: { city: string; country: string }) {
     setCity(next.city);
@@ -146,9 +175,47 @@ export function TripForm({
 
   const dateError = errors.startDate || errors.endDate;
   const hasDestination = Boolean(city && country);
+  const today = todayIsoDate();
+  const endDateMin =
+    startDate && startDate > today ? startDate : today;
 
   return (
     <div className="flex flex-col gap-5 pb-24">
+      <div className="flex flex-col gap-1.5">
+        <FieldLabel required>여행 구분</FieldLabel>
+        <div
+          role="radiogroup"
+          aria-label="해외 또는 국내"
+          className="grid grid-cols-2 gap-2"
+        >
+          {(
+            [
+              { value: "overseas" as const, label: "해외" },
+              { value: "domestic" as const, label: "국내" },
+            ] as const
+          ).map((option) => {
+            const selected = region === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className={cn(
+                  "h-10 rounded-lg border text-[14px] font-medium transition-colors",
+                  selected
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-[#E5E8EB] bg-background text-foreground hover:bg-[#F2F4F6]",
+                )}
+                onClick={() => selectRegion(option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <FieldLabel required>내 여행지</FieldLabel>
         {hasDestination ? (
@@ -157,7 +224,7 @@ export function TripForm({
           </p>
         ) : (
           <p className="text-[13px] text-muted-foreground">
-            검색으로 여행지를 선택하세요.
+            검색 또는 인기 지역에서 여행지를 선택하세요.
           </p>
         )}
         {errors.destination ? (
@@ -168,11 +235,47 @@ export function TripForm({
       <SearchInput
         value={destinationQuery}
         onChange={setDestinationQuery}
-        placeholder="여행지를 검색해보세요"
+        placeholder={
+          region === "domestic"
+            ? "국내 여행지를 검색해보세요"
+            : "여행지를 검색해보세요"
+        }
         className="[&_input]:rounded-full [&_input]:bg-[#F2F4F6]"
       />
 
-      {destinationQuery.trim() ? (
+      {!destinationQuery.trim() ? (
+        <div>
+          <h3 className="mb-3 text-[14px] font-bold text-foreground">
+            {region === "domestic" ? "인기 국내 여행지" : "인기 지역"}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {popular.map((dest) => {
+              const selected =
+                city === dest.city && country === dest.country;
+              return (
+                <button
+                  key={`${dest.country}-${dest.city}`}
+                  type="button"
+                  onClick={() =>
+                    selectDestination({
+                      city: dest.city,
+                      country: dest.country,
+                    })
+                  }
+                  className={cn(
+                    "rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-[#E5E8EB] bg-background text-foreground hover:bg-[#F2F4F6]",
+                  )}
+                >
+                  {dest.city}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
         <ul className="flex flex-col">
           {destinationResults.length === 0 ? (
             <li className="py-8 text-center text-[13px] text-muted-foreground">
@@ -213,7 +316,7 @@ export function TripForm({
             })
           )}
         </ul>
-      ) : null}
+      )}
 
       <div>
         <h3 className="mb-1 text-[14px] font-bold text-foreground">
@@ -251,17 +354,19 @@ export function TripForm({
       <div className="flex flex-col gap-1.5">
         <FieldLabel required>여행 기간</FieldLabel>
         <div className="flex items-center gap-2">
-          <Input
-            type="date"
+          <DatePickerField
             aria-label="시작일"
-            className="min-w-0 flex-1"
+            placeholder="시작일"
+            min={today}
             value={startDate}
-            onChange={(e) => {
-              const next = e.target.value;
+            onChange={(next) => {
               setStartDate(next);
               if (endDate && next && endDate < next) {
                 setEndDate(next);
               }
+            }}
+            onConfirm={() => {
+              window.setTimeout(() => endDateRef.current?.open(), 0);
             }}
           />
           <span
@@ -270,13 +375,13 @@ export function TripForm({
           >
             ~
           </span>
-          <Input
-            type="date"
+          <DatePickerField
+            ref={endDateRef}
             aria-label="종료일"
-            className="min-w-0 flex-1"
-            min={startDate || undefined}
+            placeholder="종료일"
+            min={endDateMin}
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={setEndDate}
           />
         </div>
         {dateError ? (

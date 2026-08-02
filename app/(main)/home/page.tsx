@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { CardStack } from "@/components/layout/card-stack";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { HomeAdBanner } from "@/features/home/components/home-ad-banner";
+import { HomeAnalysisBanner } from "@/features/home/components/home-analysis-banner";
 import { HomeCouponBanner } from "@/features/home/components/home-coupon-banner";
 import { HomeCreateTripCta } from "@/features/home/components/home-create-trip-cta";
 import { HomeFxCard } from "@/features/home/components/home-fx-card";
@@ -18,6 +19,10 @@ import { filterCouponsByDestination } from "@/features/coupons/lib/filter-coupon
 import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { useTrips } from "@/features/trips/hooks/use-trips";
 import { calculateBudget } from "@/features/budget/utils/calculate-budget";
+import {
+  useAnalysisJob,
+  useClearAnalysisJob,
+} from "@/features/image-analysis/hooks/use-analysis-job";
 import { appConfig } from "@/config/app";
 
 function UpcomingTripWithStats({
@@ -45,6 +50,9 @@ function UpcomingTripWithStats({
 export default function HomePage() {
   const { data: trips = [], isLoading } = useTrips();
   const { data: couponData } = useTaxFreeCoupons();
+  const { data: analysisJob } = useAnalysisJob();
+  const clearJob = useClearAnalysisJob();
+  const [reviewOpen, setReviewOpen] = useState(false);
   const upcoming = getUpcomingTrip(trips);
   const destinationCoupons = useMemo(() => {
     if (!upcoming || !couponData?.coupons) return [];
@@ -53,6 +61,13 @@ export default function HomePage() {
       country: upcoming.country,
     });
   }, [upcoming, couponData?.coupons]);
+
+  const showAnalysisBanner =
+    analysisJob &&
+    (analysisJob.status === "running" ||
+      analysisJob.status === "done" ||
+      analysisJob.status === "failed") &&
+    (!upcoming || analysisJob.tripId === upcoming.id);
 
   return (
     <AppShell withBottomNav>
@@ -85,6 +100,14 @@ export default function HomePage() {
                 couponCount={destinationCoupons.length}
               />
 
+              {showAnalysisBanner && analysisJob ? (
+                <HomeAnalysisBanner
+                  job={analysisJob}
+                  onOpenResult={() => setReviewOpen(true)}
+                  onDismissFailed={() => clearJob.mutate()}
+                />
+              ) : null}
+
               <HomeShoppingTodo
                 tripId={upcoming.id}
                 city={upcoming.city}
@@ -92,9 +115,13 @@ export default function HomePage() {
                 currency={upcoming.currency}
                 startDate={upcoming.startDate}
                 endDate={upcoming.endDate}
+                reviewOpen={reviewOpen}
+                onReviewOpenChange={setReviewOpen}
               />
 
-              <HomeFxCard currency={upcoming.currency} />
+              {upcoming.currency !== "KRW" ? (
+                <HomeFxCard currency={upcoming.currency} />
+              ) : null}
             </>
           ) : (
             <>

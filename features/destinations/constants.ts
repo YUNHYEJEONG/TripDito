@@ -14,11 +14,25 @@ export type Destination = {
   currency: CurrencyCode;
 };
 
+/** 새 여행 등록: 해외 / 국내 */
+export type TripRegion = "overseas" | "domestic";
+
+export const DOMESTIC_COUNTRY = "한국";
+
+export function isDomesticCountry(country: string): boolean {
+  const key = country.trim();
+  return /^(한국|대한민국)$/i.test(key) || /korea/i.test(key);
+}
+
+export function regionFromCountry(country: string): TripRegion {
+  return isDomesticCountry(country) ? "domestic" : "overseas";
+}
+
 function dest(city: string, country: string): Destination {
   return { city, country, currency: countryToCurrency(country) };
 }
 
-/** 인기 지역 칩 (검색 없이 노출) */
+/** 해외 인기 지역 칩 (검색 없이 노출) */
 export const POPULAR_DESTINATIONS: Destination[] = [
   dest("도쿄", "일본"),
   dest("오사카", "일본"),
@@ -188,9 +202,26 @@ const EXTRA_DESTINATIONS: Destination[] = [
   dest("도하", "카타르"),
   dest("텔아비브", "이스라엘"),
   dest("아디스아바바", "에티오피아"),
-  // 국내
-  dest("제주", "한국"),
-  dest("부산", "한국"),
+];
+
+/** 국내 주요 관광 시 — 인기 칩 */
+export const POPULAR_DOMESTIC_DESTINATIONS: Destination[] = [
+  dest("서울", DOMESTIC_COUNTRY),
+  dest("부산", DOMESTIC_COUNTRY),
+  dest("제주", DOMESTIC_COUNTRY),
+  dest("강릉", DOMESTIC_COUNTRY),
+  dest("경주", DOMESTIC_COUNTRY),
+  dest("전주", DOMESTIC_COUNTRY),
+  dest("여수", DOMESTIC_COUNTRY),
+  dest("속초", DOMESTIC_COUNTRY),
+];
+
+/** 국내 검색용 추가 도시 */
+const EXTRA_DOMESTIC_DESTINATIONS: Destination[] = [
+  dest("인천", DOMESTIC_COUNTRY),
+  dest("대구", DOMESTIC_COUNTRY),
+  dest("광주", DOMESTIC_COUNTRY),
+  dest("통영", DOMESTIC_COUNTRY),
 ];
 
 function dedupeKey(d: Destination) {
@@ -212,8 +243,42 @@ function mergeDestinations(
   });
 }
 
-/** 검색·필터용 전체 취항 도시 (인기 포함) */
-export const FLIGHT_DESTINATIONS: Destination[] = mergeDestinations(
+/** 해외 취항·여행 도시 (인기 포함) */
+export const OVERSEAS_DESTINATIONS: Destination[] = mergeDestinations(
   POPULAR_DESTINATIONS,
   EXTRA_DESTINATIONS,
 );
+
+/** 국내 주요 관광 시 (인기 포함) */
+export const DOMESTIC_DESTINATIONS: Destination[] = mergeDestinations(
+  POPULAR_DOMESTIC_DESTINATIONS,
+  EXTRA_DOMESTIC_DESTINATIONS,
+);
+
+/** 검색·필터용 전체 도시 (해외 + 국내) */
+export const FLIGHT_DESTINATIONS: Destination[] = mergeDestinations(
+  OVERSEAS_DESTINATIONS,
+  DOMESTIC_DESTINATIONS,
+);
+
+export function destinationsForRegion(region: TripRegion): Destination[] {
+  return region === "domestic" ? DOMESTIC_DESTINATIONS : OVERSEAS_DESTINATIONS;
+}
+
+export function popularDestinationsForRegion(
+  region: TripRegion,
+): Destination[] {
+  return region === "domestic"
+    ? POPULAR_DOMESTIC_DESTINATIONS
+    : POPULAR_DESTINATIONS;
+}
+
+/** 회원가입·필터용 국가 목록 (목적지 카탈로그 기반) */
+export function listDestinationCountries(): string[] {
+  const countries = new Set<string>();
+  for (const d of FLIGHT_DESTINATIONS) {
+    countries.add(d.country);
+  }
+  countries.add(DOMESTIC_COUNTRY);
+  return [...countries].sort((a, b) => a.localeCompare(b, "ko"));
+}

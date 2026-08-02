@@ -20,5 +20,7 @@ export type LocalAccount = {
   /** SHA-256 hex */
   passwordHash: string;
   nickname: string;
+  /** 거주지(사는 국가). 목적지 카탈로그 국가명과 동일 */
+  homeCountry: string;
   createdAt: string;
 };

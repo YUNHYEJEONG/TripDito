@@ -211,7 +211,7 @@ export function ShoppingListSheet({
                         <ItemMeta
                           name={item.name}
                           price={item.estimatedPrice}
-                          currency={trip?.currency ?? "JPY"}
+                          currency={trip?.currency ?? "KRW"}
                         />
                       </div>
                     ) : (
@@ -240,7 +240,7 @@ export function ShoppingListSheet({
                         <ItemMeta
                           name={item.name}
                           price={item.estimatedPrice}
-                          currency={trip?.currency ?? "JPY"}
+                          currency={trip?.currency ?? "KRW"}
                         />
                       </button>
                     )}

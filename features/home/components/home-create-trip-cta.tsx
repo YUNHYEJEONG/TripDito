@@ -16,7 +16,7 @@ export function HomeCreateTripCta() {
       <GrayCard>
         <GrayCardTitle>새 여행 등록하기</GrayCardTitle>
         <GrayCardDescription>
-          다가오는 여행이 없어요. 일정을 만들면 쇼핑리스트와 환율을 한눈에 볼 수
+          다가오는 여행이 없어요. 일정을 만들면 쇼핑리스트를 한눈에 볼 수
           있어요.
         </GrayCardDescription>
         <Link

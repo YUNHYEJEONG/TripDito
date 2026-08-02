@@ -4,7 +4,10 @@ import { hashPassword, normalizeEmail } from "../lib/password";
 import type { LocalAccount } from "../types";
 
 function readAccounts(): LocalAccount[] {
-  return getJson<LocalAccount[]>(storageKeys.accounts, []);
+  return getJson<LocalAccount[]>(storageKeys.accounts, []).map((account) => ({
+    ...account,
+    homeCountry: account.homeCountry?.trim() || "한국",
+  }));
 }
 
 function writeAccounts(accounts: LocalAccount[]) {
@@ -31,11 +34,13 @@ export const accountRepository = {
     email: string;
     password: string;
     nickname: string;
+    homeCountry: string;
   }): Promise<LocalAccount> {
     const email = normalizeEmail(input.email);
     if (!email) throw new Error("이메일을 입력하세요.");
     if (!input.password) throw new Error("비밀번호를 입력하세요.");
     if (!input.nickname.trim()) throw new Error("닉네임을 입력하세요.");
+    if (!input.homeCountry.trim()) throw new Error("국가를 선택하세요.");
     if (this.isEmailTaken(email)) {
       throw new Error("이미 사용 중인 이메일입니다.");
     }
@@ -44,6 +49,7 @@ export const accountRepository = {
       email,
       passwordHash: await hashPassword(input.password),
       nickname: input.nickname.trim(),
+      homeCountry: input.homeCountry.trim(),
       createdAt: new Date().toISOString(),
     };
     writeAccounts([...readAccounts(), account]);

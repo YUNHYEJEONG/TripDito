@@ -4,8 +4,11 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { SearchInput } from "@/components/common/search-input";
 import { Button } from "@/components/ui/button";
-import { POPULAR_DESTINATIONS } from "@/features/destinations/constants";
-import { FLIGHT_DESTINATIONS } from "@/features/destinations/constants";
+import {
+  popularDestinationsForRegion,
+  destinationsForRegion,
+  type TripRegion,
+} from "@/features/destinations/constants";
 import { searchDestinations } from "@/features/shots/utils/shot-query";
 import { cn } from "@/lib/utils";
 import {
@@ -20,23 +23,32 @@ export type TripDestination = {
 };
 
 export function TripDestinationStep({
+  region,
   value,
   onChange,
   tripTags,
   onTripTagsChange,
   onNext,
+  onBack,
 }: {
+  region: TripRegion;
   value: TripDestination | null;
   onChange: (destination: TripDestination) => void;
   tripTags: TripTagId[];
   onTripTagsChange: (tags: TripTagId[]) => void;
   onNext: () => void;
+  onBack?: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const catalog = useMemo(() => destinationsForRegion(region), [region]);
+  const popular = useMemo(
+    () => popularDestinationsForRegion(region),
+    [region],
+  );
 
   const results = useMemo(
-    () => searchDestinations(FLIGHT_DESTINATIONS, query),
-    [query],
+    () => searchDestinations(catalog, query),
+    [catalog, query],
   );
 
   function toggleTag(id: TripTagId) {
@@ -53,17 +65,21 @@ export function TripDestinationStep({
       <SearchInput
         value={query}
         onChange={setQuery}
-        placeholder="여행지를 검색해보세요"
+        placeholder={
+          region === "domestic"
+            ? "국내 여행지를 검색해보세요"
+            : "여행지를 검색해보세요"
+        }
         className="[&_input]:rounded-full [&_input]:bg-[#F2F4F6]"
       />
 
       {!query.trim() ? (
         <div>
           <h3 className="mb-3 text-[14px] font-bold text-foreground">
-            인기 지역
+            {region === "domestic" ? "인기 국내 여행지" : "인기 지역"}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {POPULAR_DESTINATIONS.map((dest) => {
+            {popular.map((dest) => {
               const selected =
                 value?.city === dest.city && value?.country === dest.country;
               return (
@@ -159,10 +175,20 @@ export function TripDestinationStep({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 bg-canvas px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[480px] md:max-w-[720px] lg:max-w-[960px]">
+        <div className="mx-auto flex w-full max-w-[480px] gap-2 md:max-w-[720px] lg:max-w-[960px]">
+          {onBack ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={onBack}
+            >
+              이전
+            </Button>
+          ) : null}
           <Button
             type="button"
-            className="w-full"
+            className="flex-1"
             disabled={!value}
             onClick={onNext}
           >

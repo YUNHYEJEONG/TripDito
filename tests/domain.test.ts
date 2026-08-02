@@ -21,11 +21,15 @@ function item(
     imageDataUrl: null,
     giftTags: [],
     plannedPurchaseDates: [],
+    favorited: false,
     purchased: false,
     purchasedAt: null,
     sortOrder: 0,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
+    coupangCompareStatus: "done",
+    coupangCompareRunAfter: null,
+    coupangDeal: null,
     ...partial,
   };
 }

@@ -71,6 +71,7 @@ export function useEmailSignup() {
       nickname: string;
       email: string;
       password: string;
+      homeCountry: string;
     }) => {
       const account = await accountRepository.create(input);
       // 최초 회원가입 후 프로필은 미등록 상태

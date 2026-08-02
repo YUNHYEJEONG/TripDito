@@ -24,7 +24,9 @@ import { migrateShoppingListDemoFields } from "@/features/shopping-items/data/mi
 import { AddFromImagesSheet } from "@/features/image-upload/components/add-from-images-sheet";
 import { ItemDetailSheet } from "@/features/shopping-items/components/item-detail-sheet";
 import { ItemStatusTags } from "@/features/shopping-items/components/item-status-tags";
+import { CoupangDealToggle } from "@/features/shopping-items/components/coupang-deal-toggle";
 import { SeeMoreLink } from "@/components/common/see-more-control";
+import { useAnalysisJob } from "@/features/image-analysis/hooks/use-analysis-job";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_LIMIT = 5;
@@ -36,6 +38,8 @@ export function HomeShoppingTodo({
   currency,
   startDate,
   endDate,
+  reviewOpen = false,
+  onReviewOpenChange,
 }: {
   tripId: string;
   city: string;
@@ -43,15 +47,25 @@ export function HomeShoppingTodo({
   currency: string;
   startDate: string;
   endDate: string;
+  reviewOpen?: boolean;
+  onReviewOpenChange?: (open: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const { data: items = [], isLoading } = useItems(tripId);
+  const { data: analysisJob } = useAnalysisJob();
   const togglePurchased = useTogglePurchased(tripId);
   const [dayFilter, setDayFilter] = useState<number | "all">("all");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<ShoppingItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const filterScrollerRef = useRef<HTMLDivElement>(null);
+
+  const hideUpload =
+    analysisJob?.status === "running" || analysisJob?.status === "done";
+  const jobForThisTrip =
+    analysisJob?.status === "done" && analysisJob.tripId === tripId
+      ? analysisJob
+      : null;
 
   useMouseDragScroll(filterScrollerRef, true, { snap: false, wheel: true });
 
@@ -144,7 +158,7 @@ export function HomeShoppingTodo({
               ? "쇼핑리스트가 비어 있어요. 상품을 추가해 보세요."
               : "해당 일차에 예정된 쇼핑이 없어요."}
           </p>
-          {items.length === 0 ? (
+          {items.length === 0 && !hideUpload ? (
             <Button
               type="button"
               size="sm"
@@ -201,6 +215,19 @@ export function HomeShoppingTodo({
         onOpenChange={setUploadOpen}
       />
 
+      {jobForThisTrip ? (
+        <AddFromImagesSheet
+          tripId={tripId}
+          city={city}
+          country={country}
+          currency={currency}
+          open={reviewOpen}
+          onOpenChange={(open) => onReviewOpenChange?.(open)}
+          reviewProposed={jobForThisTrip.proposed}
+          fromBackgroundJob
+        />
+      ) : null}
+
       <ItemDetailSheet
         item={detailItem}
         currency={currency}
@@ -208,26 +235,26 @@ export function HomeShoppingTodo({
         onOpenChange={setDetailOpen}
       />
 
-      {/* 사진으로 추가 FAB */}
-      <button
-        type="button"
-        aria-label="사진으로 추가"
-        onClick={() => setUploadOpen(true)}
-        className={cn(
-          "fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md",
-          "bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))]",
-          "md:right-[max(1rem,calc((100vw-720px)/2+1rem))]",
-          "lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]",
-          "transition-transform active:scale-95",
-        )}
-      >
-        <CameraPlusIcon className="size-7" />
-      </button>
+      {!hideUpload ? (
+        <button
+          type="button"
+          aria-label="사진으로 추가"
+          onClick={() => setUploadOpen(true)}
+          className={cn(
+            "fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md",
+            "bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))]",
+            "md:right-[max(1rem,calc((100vw-720px)/2+1rem))]",
+            "lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]",
+            "transition-transform active:scale-95",
+          )}
+        >
+          <CameraPlusIcon className="size-7" />
+        </button>
+      ) : null}
     </section>
   );
 }
 
-/** 카메라 본체 + 렌즈 대신 + */
 function CameraPlusIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -289,55 +316,62 @@ function ShoppingRow({
   const quantity = item.quantity >= 1 ? item.quantity : 1;
 
   return (
-    <div className="flex items-start gap-3 py-3">
-      <Checkbox
-        checked={item.purchased}
-        disabled={toggling}
-        onCheckedChange={() => onToggle()}
-        aria-label="구매 완료"
-        className="mt-0.5 size-5"
-      />
-      <button
-        type="button"
-        className="flex min-w-0 flex-1 items-start gap-3 text-left"
-        onClick={onSelect}
-      >
-        <div className="bg-muted flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg">
-          {item.imageDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.imageDataUrl}
-              alt=""
-              className="size-full object-cover"
-            />
-          ) : (
-            <Package className="size-4 text-muted-foreground" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <ItemStatusTags
-            purchased={item.purchased}
-            giftTags={item.giftTags ?? []}
-          />
-          <p
-            className={cn(
-              "break-words text-[14px] font-medium leading-snug text-foreground",
-              item.purchased && "line-through text-muted-foreground",
+    <div className="py-3">
+      <div className="flex items-start gap-3">
+        <Checkbox
+          checked={item.purchased}
+          disabled={toggling}
+          onCheckedChange={() => onToggle()}
+          aria-label="구매 완료"
+          className="mt-0.5 size-5"
+        />
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-start gap-3 text-left"
+          onClick={onSelect}
+        >
+          <div className="bg-muted flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+            {item.imageDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.imageDataUrl}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : (
+              <Package className="size-4 text-muted-foreground" />
             )}
-          >
-            {item.name}
-          </p>
-          {item.localName?.trim() ? (
-            <p className="mt-0.5 break-words text-[10px] leading-snug text-muted-foreground">
-              {item.localName.trim()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <ItemStatusTags
+              purchased={item.purchased}
+              giftTags={item.giftTags ?? []}
+            />
+            <p
+              className={cn(
+                "break-words text-[14px] font-medium leading-snug text-foreground",
+                item.purchased && "line-through text-muted-foreground",
+              )}
+            >
+              {item.name}
             </p>
-          ) : null}
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            <CurrencyText amount={lineTotal(item)} currency={currency} />
-            {` · ${quantity}개`}
-          </p>
+            {item.localName?.trim() ? (
+              <p className="mt-0.5 break-words text-[10px] leading-snug text-muted-foreground">
+                {item.localName.trim()}
+              </p>
+            ) : null}
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
+              <CurrencyText amount={lineTotal(item)} currency={currency} />
+              {` · ${quantity}개`}
+            </p>
+          </div>
+        </button>
+      </div>
+      {item.coupangDeal ? (
+        <div className="pl-8">
+          <CoupangDealToggle deal={item.coupangDeal} />
         </div>
-      </button>
+      ) : null}
     </div>
   );
 }

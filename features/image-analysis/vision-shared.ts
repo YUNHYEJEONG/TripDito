@@ -22,6 +22,15 @@ export function buildVisionPrompt(
   lensCandidates: LensShoppingCandidate[] = [],
 ) {
   const lensBlock = formatLensCandidatesForPrompt(lensCandidates);
+  const isKorea =
+    /한국|korea|대한민국/i.test(context.country) ||
+    context.currency.toUpperCase() === "KRW";
+  const storeExamples = isKorea
+    ? "올리브영, 다이소, 롯데백화점, 이마트"
+    : "돈키호테, 마츠모토키요시, 현지 드러그스토어";
+  const localNameHint = isKorea
+    ? "한국어 상품명과 같거나 영문 브랜드명"
+    : "현지 언어 상품명(일본이면 일본어 등)";
 
   return `
 당신은 여행 쇼핑 리스트용 상품 인식 AI입니다.
@@ -49,7 +58,7 @@ ${lensBlock}
 반드시 아래 JSON 객체만 출력하세요. 마크다운/설명 금지.
 {
   "nameKo": "한국어 상품명",
-  "nameLocal": "현지 언어 상품명(일본이면 일본어 등). 모르면 빈 문자열",
+  "nameLocal": "${localNameHint}. 모르면 빈 문자열",
   "estimatedPrice": 1개당 예상 가격(숫자, ${context.currency} 기준),
   "expectedStores": ["예상구매처1", "예상구매처2", "예상구매처3"],
   "similarMatchCount": 5,
@@ -60,7 +69,7 @@ ${lensBlock}
 규칙:
 - nameKo는 "{브랜드} {상품명}" 형식, 브랜드가 맨 앞. (예: "Wpc. 멜론 크림소다 비닐우산")
 - 멜론소다 컨셉 우산은 Felissimo와 Wpc. 혼동에 주의. 로고 근거 없는 Felissimo/YOU+MORE 확정 금지.
-- expectedStores는 최대 3개. OCR/Lens에 매장명이 있으면 우선 사용. 없으면 ${context.city}/${context.country}에서 팔 법한 매장(예: 돈키호테, 마츠모토키요시).
+- expectedStores는 최대 3개. OCR/Lens에 매장명이 있으면 우선 사용. 없으면 ${context.city}/${context.country}에서 팔 법한 매장(예: ${storeExamples}).
 - similarMatchCount는 Lens 후보 수와 시각 비교를 반영해 1~8.
 - evidence: OCR이 결정적이면 "ocr", Lens가 결정적이면 "lens", 시각만이면 "visual", 둘 이상 합치면 "mixed".
 - 전혀 모르면 nameKo를 "미확인 상품"으로.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Star, X } from "lucide-react";
 import { toast } from "@/components/common/toast-alert";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -11,6 +11,7 @@ import { lineTotal } from "@/features/budget/utils/calculate-budget";
 import {
   useDeleteItem,
   useItem,
+  useToggleFavorited,
   useUpdateItem,
 } from "../hooks/use-items";
 import {
@@ -22,6 +23,8 @@ import { ItemForm } from "./item-form";
 import { ItemImageFrame } from "./item-image-frame";
 import { ItemStatusTags } from "./item-status-tags";
 import { useTrip } from "@/features/trips/hooks/use-trips";
+import { getTripPhase } from "@/features/home/utils/get-upcoming-trip";
+import { cn } from "@/lib/utils";
 
 function DetailRow({
   label,
@@ -44,11 +47,13 @@ export function ItemDetailSheet({
   currency,
   open,
   onOpenChange,
+  showFavorite,
 }: {
   item: ShoppingItem | null;
   currency: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showFavorite?: boolean;
 }) {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const itemId = item?.id ?? "";
@@ -65,7 +70,10 @@ export function ItemDetailSheet({
   }, [item, freshItem]);
   const updateItem = useUpdateItem(tripId, itemId);
   const deleteItem = useDeleteItem(tripId);
+  const toggleFavorited = useToggleFavorited(tripId);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const tripEnded = trip ? getTripPhase(trip) === "ended" : false;
+  const canFavorite = showFavorite ?? tripEnded;
 
   useEffect(() => {
     if (!open) setMode("view");
@@ -100,10 +108,34 @@ export function ItemDetailSheet({
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[#D1D5DB]" />
         <SheetHeader className="relative shrink-0 px-4 pt-3 pb-1">
-          <SheetTitle className="pr-24 text-left text-[16px] font-bold">
+          <SheetTitle className="pr-32 text-left text-[16px] font-bold">
             {mode === "edit" ? "상품 정보 수정" : "상품 정보"}
           </SheetTitle>
           <div className="absolute top-1.5 right-2 flex items-center">
+            {displayItem && mode === "view" && canFavorite ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                aria-label={
+                  displayItem.favorited ? "즐겨찾기 해제" : "즐겨찾기"
+                }
+                onClick={() => {
+                  toggleFavorited.mutate(displayItem.id, {
+                    onError: () => toast.error("즐겨찾기 변경에 실패했습니다"),
+                  });
+                }}
+              >
+                <Star
+                  className={cn(
+                    "size-5",
+                    displayItem.favorited && "fill-primary text-primary",
+                  )}
+                  strokeWidth={2}
+                />
+              </Button>
+            ) : null}
             {displayItem && mode === "view" ? (
               <Button
                 type="button"

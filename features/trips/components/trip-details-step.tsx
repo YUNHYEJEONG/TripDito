@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { FieldLabel } from "@/components/common/field-label";
+import {
+  DatePickerField,
+  type DatePickerFieldHandle,
+} from "@/components/common/date-picker-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCurrency } from "@/config/currencies";
+import { todayIsoDate } from "@/features/home/utils/get-upcoming-trip";
 import { cn } from "@/lib/utils";
 import { useTrips } from "../hooks/use-trips";
 import { countryToCurrency } from "../lib/country-currency";
@@ -45,9 +50,13 @@ export function TripDetailsStep({
   onSubmit: () => void;
 }) {
   const { data: trips = [] } = useTrips();
+  const endDateRef = useRef<DatePickerFieldHandle>(null);
   const currency = countryToCurrency(destination.country);
   const currencyLabel = getCurrency(currency).label;
   const dateError = errors.startDate || errors.endDate;
+  const today = todayIsoDate();
+  const endDateMin =
+    values.startDate && values.startDate > today ? values.startDate : today;
 
   const datesComplete =
     Boolean(values.startDate) &&
@@ -76,18 +85,20 @@ export function TripDetailsStep({
       <div className="flex flex-col gap-1.5">
         <FieldLabel required>여행 기간</FieldLabel>
         <div className="flex items-center gap-2">
-          <Input
-            type="date"
+          <DatePickerField
             aria-label="시작일"
-            className="min-w-0 flex-1"
+            placeholder="시작일"
+            min={today}
             value={values.startDate}
-            onChange={(e) => {
-              const next = e.target.value;
+            onChange={(next) => {
               const patch: Partial<typeof values> = { startDate: next };
               if (values.endDate && next && values.endDate < next) {
                 patch.endDate = next;
               }
               onChange(patch);
+            }}
+            onConfirm={() => {
+              window.setTimeout(() => endDateRef.current?.open(), 0);
             }}
           />
           <span
@@ -96,13 +107,13 @@ export function TripDetailsStep({
           >
             ~
           </span>
-          <Input
-            type="date"
+          <DatePickerField
+            ref={endDateRef}
             aria-label="종료일"
-            className="min-w-0 flex-1"
-            min={values.startDate || undefined}
+            placeholder="종료일"
+            min={endDateMin}
             value={values.endDate}
-            onChange={(e) => onChange({ endDate: e.target.value })}
+            onChange={(next) => onChange({ endDate: next })}
           />
         </div>
         {dateError ? (

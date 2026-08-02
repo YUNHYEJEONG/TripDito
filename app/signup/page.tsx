@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldActionRow } from "@/components/ui/field-action-row";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { listDestinationCountries } from "@/features/destinations/constants";
 import { accountRepository } from "@/features/auth/data/account-repository";
 import { FieldError } from "@/features/auth/components/field-error";
 import { useEmailSignup } from "@/features/auth/hooks/use-auth";
@@ -18,10 +26,12 @@ import { normalizeEmail } from "@/features/auth/lib/password";
 export default function SignupPage() {
   const router = useRouter();
   const signup = useEmailSignup();
+  const countries = useMemo(() => listDestinationCountries(), []);
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [homeCountry, setHomeCountry] = useState("한국");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [nicknameError, setNicknameError] = useState<string | null>(null);
@@ -32,6 +42,7 @@ export default function SignupPage() {
   const [passwordConfirmError, setPasswordConfirmError] = useState<
     string | null
   >(null);
+  const [homeCountryError, setHomeCountryError] = useState<string | null>(null);
 
   function checkEmailDuplicate() {
     const normalized = normalizeEmail(email);
@@ -63,6 +74,7 @@ export default function SignupPage() {
     event.preventDefault();
     const nextNickname = nickname.trim();
     const nextEmail = normalizeEmail(email);
+    const nextHomeCountry = homeCountry.trim();
     let hasError = false;
 
     if (!nextNickname) {
@@ -84,6 +96,13 @@ export default function SignupPage() {
       setEmailOk(null);
       setEmailChecked(false);
       hasError = true;
+    }
+
+    if (!nextHomeCountry) {
+      setHomeCountryError("국가를 선택하세요.");
+      hasError = true;
+    } else {
+      setHomeCountryError(null);
     }
 
     if (password.length < 6) {
@@ -110,6 +129,7 @@ export default function SignupPage() {
         nickname: nextNickname,
         email: nextEmail,
         password,
+        homeCountry: nextHomeCountry,
       });
       router.replace("/signup/complete");
     } catch (error) {
@@ -121,6 +141,8 @@ export default function SignupPage() {
         setEmailChecked(false);
       } else if (message.includes("닉네임")) {
         setNicknameError(message);
+      } else if (message.includes("국가")) {
+        setHomeCountryError(message);
       } else if (message.includes("비밀번호")) {
         setPasswordError(message);
       } else {
@@ -159,7 +181,7 @@ export default function SignupPage() {
             />
             <FieldError message={nicknameError} />
           </div>
-            <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">이메일</Label>
             <FieldActionRow>
               <Input
@@ -193,6 +215,37 @@ export default function SignupPage() {
             ) : emailOk ? (
               <p className="text-[12px] leading-snug text-primary">{emailOk}</p>
             ) : null}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="homeCountry">사는 국가</Label>
+            <Select
+              value={homeCountry}
+              onValueChange={(value) => {
+                if (value) {
+                  setHomeCountry(value);
+                  if (homeCountryError) setHomeCountryError(null);
+                }
+              }}
+            >
+              <SelectTrigger
+                id="homeCountry"
+                aria-invalid={Boolean(homeCountryError)}
+                className="w-full"
+              >
+                <SelectValue placeholder="국가 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[12px] text-muted-foreground">
+              현재 거주 중인 국가예요. 여행지와는 별개입니다.
+            </p>
+            <FieldError message={homeCountryError} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">비밀번호</Label>

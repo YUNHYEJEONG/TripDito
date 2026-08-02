@@ -48,7 +48,7 @@ export function ItemForm({
   /** 메모 필드 아래 (예: 상품 삭제) */
   children?: React.ReactNode;
 }) {
-  const currencyMeta = getCurrency(currency ?? "JPY");
+  const currencyMeta = getCurrency(currency ?? "KRW");
   const initialDates = normalizePlannedPurchaseDates({
     plannedPurchaseDates: defaultValues?.plannedPurchaseDates,
     plannedPurchaseDate: defaultValues?.plannedPurchaseDate,
@@ -61,6 +61,7 @@ export function ItemForm({
       ...defaultValues,
       plannedPurchaseDates: initialDates,
       giftTags: defaultValues?.giftTags ?? defaultItemFormValues.giftTags,
+      favorited: defaultValues?.favorited ?? defaultItemFormValues.favorited,
     },
   });
 

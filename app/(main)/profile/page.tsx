@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Bookmark, Camera, Heart, Ticket } from "lucide-react";
+import { Bookmark, Camera, Heart, Star, Ticket } from "lucide-react";
 import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
@@ -25,6 +25,7 @@ import { ProfileMenuLink } from "@/features/profile/components/profile-menu-link
 import { useScraps } from "@/features/shots/hooks/use-scraps";
 import { useShots } from "@/features/shots/hooks/use-shots";
 import { useReceivedCoupons } from "@/features/coupons/hooks/use-received-coupons";
+import { useFavoritedItems } from "@/features/shopping-items/hooks/use-items";
 import { compressImageFile } from "@/features/image-upload/utils/compress-image";
 import { useIsLoggedIn, useLogout, useAuthSession } from "@/features/auth/hooks/use-auth";
 import {
@@ -41,6 +42,7 @@ export default function ProfilePage() {
   const { data: scraps = [] } = useScraps();
   const { data: shots = [] } = useShots();
   const { data: receivedCoupons = [] } = useReceivedCoupons();
+  const { data: favoritedItems = [] } = useFavoritedItems();
   const { data: authSession, isLoading: authLoading } = useAuthSession();
   const { isLoggedIn } = useIsLoggedIn();
   const logout = useLogout();
@@ -233,6 +235,12 @@ export default function ProfilePage() {
           </GrayCard>
 
           <div className="flex flex-col gap-2">
+            <ProfileMenuLink
+              href="/profile/favorites"
+              icon={Star}
+              title="즐겨찾기한 상품"
+              description={`${favoritedItems.length}개`}
+            />
             <ProfileMenuLink
               href="/profile/coupons"
               icon={Ticket}

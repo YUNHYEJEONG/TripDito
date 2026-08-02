@@ -29,6 +29,8 @@ import { calculateBudget } from "@/features/budget/utils/calculate-budget";
 import { useTrip } from "@/features/trips/hooks/use-trips";
 import { AddFromImagesSheet } from "@/features/image-upload/components/add-from-images-sheet";
 import { formatTripStayWithPeriod } from "@/features/home/utils/trip-card-meta";
+import { getTripPhase } from "@/features/home/utils/get-upcoming-trip";
+import { useAnalysisJob } from "@/features/image-analysis/hooks/use-analysis-job";
 import { cn } from "@/lib/utils";
 
 export default function TripDetailPage({
@@ -40,12 +42,17 @@ export default function TripDetailPage({
   const router = useRouter();
   const { data: trip, isLoading: tripLoading } = useTrip(tripId);
   const { data: items = [], isLoading: itemsLoading } = useItems(tripId);
+  const { data: analysisJob } = useAnalysisJob();
   const togglePurchased = useTogglePurchased(tripId);
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ItemPurchaseFilter>("all");
   const [sort, setSort] = useState<ItemSort>("createdAt_desc");
   const [uploadOpen, setUploadOpen] = useState(false);
+
+  const analysisBlocking =
+    (analysisJob?.status === "running" || analysisJob?.status === "done") &&
+    analysisJob.tripId === tripId;
 
   if (tripLoading) {
     return (
@@ -72,9 +79,11 @@ export default function TripDetailPage({
 
   const summary = calculateBudget(trip.budget, items);
   const visibleItems = sortItems(filterItems(items, filter, query), sort);
+  const tripEnded = getTripPhase(trip) === "ended";
+  const showBottomActions = !tripEnded;
 
   return (
-    <AppShell className="pb-28">
+    <AppShell className={showBottomActions ? "pb-28" : undefined}>
       <PageHeader title="쇼핑리스트" backHref="/my-trips" />
 
       <div className="flex flex-col gap-4">
@@ -104,12 +113,20 @@ export default function TripDetailPage({
             title={items.length === 0 ? "쇼핑리스트가 비어 있어요" : "결과가 없어요"}
             description={
               items.length === 0
-                ? "사진으로 추가하거나 상품을 직접 등록해 보세요."
+                ? tripEnded
+                  ? "이 여행의 쇼핑리스트가 비어 있어요."
+                  : "사진으로 추가하거나 상품을 직접 등록해 보세요."
                 : "검색어나 필터를 바꿔 보세요."
             }
-            actionLabel={items.length === 0 ? "사진으로 추가" : undefined}
+            actionLabel={
+              items.length === 0 && showBottomActions && !analysisBlocking
+                ? "사진으로 추가"
+                : undefined
+            }
             onAction={
-              items.length === 0 ? () => setUploadOpen(true) : undefined
+              items.length === 0 && showBottomActions && !analysisBlocking
+                ? () => setUploadOpen(true)
+                : undefined
             }
           />
         ) : (
@@ -119,6 +136,7 @@ export default function TripDetailPage({
                 key={item.id}
                 item={item}
                 currency={trip.currency}
+                showFavorite={tripEnded}
                 onToggle={() => {
                   togglePurchased.mutate(item.id, {
                     onError: () => toast.error("상태 변경에 실패했습니다"),
@@ -130,28 +148,31 @@ export default function TripDetailPage({
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 bg-canvas/95 px-4 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl gap-2">
-          <Link
-            href={`/trips/${tripId}/items/new`}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "w-auto shrink-0 px-3",
-            )}
-          >
-            <Plus />
-            직접입력
-          </Link>
-          <Button
-            size="lg"
-            className="min-w-0 flex-1"
-            onClick={() => setUploadOpen(true)}
-          >
-            <Camera />
-            사진으로 추가
-          </Button>
+      {showBottomActions ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 bg-canvas/95 px-4 py-3 backdrop-blur-md">
+          <div className="mx-auto flex max-w-3xl gap-2">
+            <Link
+              href={`/trips/${tripId}/items/new`}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "w-auto shrink-0 px-3",
+              )}
+            >
+              <Plus />
+              직접입력
+            </Link>
+            <Button
+              size="lg"
+              className="min-w-0 flex-1"
+              disabled={analysisBlocking}
+              onClick={() => setUploadOpen(true)}
+            >
+              <Camera />
+              사진으로 추가
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <AddFromImagesSheet
         tripId={tripId}

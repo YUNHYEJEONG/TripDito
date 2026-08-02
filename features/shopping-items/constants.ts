@@ -10,4 +10,5 @@ export const defaultItemFormValues: ShoppingItemFormValues = {
   giftTags: [],
   localName: null,
   expectedStores: [],
+  favorited: false,
 };

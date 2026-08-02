@@ -16,13 +16,28 @@ export const shoppingItemFormSchema = z.object({
   localName: z.string().nullable(),
   /** 예상 구매처 (AI는 최대 3곳 제안, 사용자 입력은 제한 없음) */
   expectedStores: z.array(z.string().trim().min(1)),
+  /** 종료 여행에서 즐겨찾기 */
+  favorited: z.boolean(),
 });
 
 export type ShoppingItemFormValues = z.infer<typeof shoppingItemFormSchema>;
 
+export type CoupangCompareStatus =
+  | "pending"
+  | "checking"
+  | "done"
+  | "failed";
+
+export type CoupangDeal = {
+  title: string;
+  unitPriceKrw: number;
+  url: string;
+  checkedAt: string;
+};
+
 export type ShoppingItem = Omit<
   ShoppingItemFormValues,
-  "giftTags" | "localName" | "expectedStores" | "plannedPurchaseDates"
+  "giftTags" | "localName" | "expectedStores" | "plannedPurchaseDates" | "favorited"
 > & {
   id: string;
   tripId: string;
@@ -32,11 +47,18 @@ export type ShoppingItem = Omit<
   plannedPurchaseDate?: string | null;
   localName?: string | null;
   expectedStores?: string[];
+  favorited: boolean;
   purchased: boolean;
   purchasedAt: string | null;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  /** 쿠팡 저가 비교 상태 */
+  coupangCompareStatus: CoupangCompareStatus;
+  /** 비교 실행 시각 (ISO). 생성 시 now+1h */
+  coupangCompareRunAfter: string | null;
+  /** 예상가보다 저렴한 쿠팡 딜 (없으면 null) */
+  coupangDeal: CoupangDeal | null;
 };
 
 export type ItemPurchaseFilter = "all" | "pending" | "purchased";

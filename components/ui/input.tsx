@@ -42,10 +42,12 @@ function Input({
   className,
   type,
   variant = "default",
+  ref,
   ...props
 }: React.ComponentProps<"input"> & VariantProps<typeof inputVariants>) {
   return (
     <InputPrimitive
+      ref={ref}
       type={type}
       data-slot="input"
       className={cn(inputVariants({ variant }), className)}
