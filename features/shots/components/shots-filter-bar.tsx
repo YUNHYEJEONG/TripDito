@@ -23,6 +23,7 @@ export function ShotsFilterBar({
   onSortChange,
   destinationOpen,
   onDestinationOpenChange,
+  showSort = true,
 }: {
   shots: Shot[];
   /** 여행지 Sheet로 선택한 값 — 인기 칩과 분리 */
@@ -35,6 +36,8 @@ export function ShotsFilterBar({
   onSortChange: (value: ShotSort) => void;
   destinationOpen?: boolean;
   onDestinationOpenChange?: (open: boolean) => void;
+  /** 정렬 칩 표시 (잇템 랭킹 등에서는 false) */
+  showSort?: boolean;
 }) {
   const [internalDestOpen, setInternalDestOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -65,14 +68,16 @@ export function ShotsFilterBar({
           <ChevronDown className="size-3.5 opacity-70" />
         </FilterChip>
 
-        <FilterChip
-          scrollerRef={scrollerRef}
-          active={sort !== "newest"}
-          onClick={() => setSortOpen(true)}
-        >
-          {SHOT_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "정렬"}
-          <ChevronDown className="size-3.5 opacity-70" />
-        </FilterChip>
+        {showSort ? (
+          <FilterChip
+            scrollerRef={scrollerRef}
+            active={sort !== "newest"}
+            onClick={() => setSortOpen(true)}
+          >
+            {SHOT_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "정렬"}
+            <ChevronDown className="size-3.5 opacity-70" />
+          </FilterChip>
+        ) : null}
 
         {hot.map((dest) => {
           const active =
@@ -103,12 +108,14 @@ export function ShotsFilterBar({
         value={sheetDestination}
         onSelect={onSheetDestinationChange}
       />
-      <SortFilterSheet
-        open={sortOpen}
-        onOpenChange={setSortOpen}
-        value={sort}
-        onSelect={onSortChange}
-      />
+      {showSort ? (
+        <SortFilterSheet
+          open={sortOpen}
+          onOpenChange={setSortOpen}
+          value={sort}
+          onSelect={onSortChange}
+        />
+      ) : null}
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
 } from "@/features/shots/components/shots-channel-tabs";
 import { ShotsFilterBar } from "@/features/shots/components/shots-filter-bar";
 import { ShotPostCard } from "@/features/shots/components/shot-post-card";
+import { ItemRankingMock } from "@/features/shots/components/item-ranking-mock";
 import type { DestinationValue } from "@/features/shots/components/destination-filter-sheet";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
@@ -88,6 +89,8 @@ export default function ShotsPage() {
             description="곧 여행 이야기를 나눌 수 있는 커뮤니티가 열려요."
           />
         </div>
+      ) : tab === "item-ranking" ? (
+        <ItemRankingMock />
       ) : (
         <>
           <div className="px-4 sm:px-5 md:px-6 lg:px-8">
