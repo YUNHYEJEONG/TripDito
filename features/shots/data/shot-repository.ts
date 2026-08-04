@@ -1,6 +1,7 @@
 import { createId } from "@/lib/storage/id";
 import { getJson, setJson } from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
+import { ensureDemoShotsSeed } from "@/lib/storage/seed-demo";
 import { tripRepository } from "@/features/trips/data/trip-repository";
 import { profileRepository } from "@/features/profile/data/profile-repository";
 import { authRepository } from "@/features/auth/data/auth-repository";
@@ -26,6 +27,7 @@ function writeShots(shots: Shot[]) {
 
 export const shotRepository = {
   list(): Shot[] {
+    ensureDemoShotsSeed();
     return readShots().sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

@@ -4,13 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { toast } from "@/components/common/toast-alert";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
-import { migrateDemoShotImages } from "@/lib/storage/seed-demo";
+import { migrateDemoShotImages, ensureDemoShotsSeed } from "@/lib/storage/seed-demo";
 import { shotKeys, useShots } from "@/features/shots/hooks/use-shots";
 import type { ShotSort } from "@/features/shots/schema";
 import { queryShots } from "@/features/shots/utils/shot-query";
@@ -51,10 +50,10 @@ export default function ShotsPage() {
   );
 
   useEffect(() => {
-    const updated = migrateDemoShotImages();
-    if (!updated) return;
+    const seeded = ensureDemoShotsSeed();
+    const migrated = migrateDemoShotImages();
+    if (!seeded && !migrated) return;
     void queryClient.invalidateQueries({ queryKey: shotKeys.all });
-    toast.success("데모 때샷 이미지를 업데이트했습니다");
   }, [queryClient]);
 
   function handleSheetDestinationChange(value: DestinationValue) {
