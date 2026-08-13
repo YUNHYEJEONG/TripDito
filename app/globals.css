@@ -1,3 +1,5 @@
+/* Hallmark · final critique: P5 H5 E5 S5 R5 V5 */
+/* Hallmark · genre: playful · macrostructure: mode-canvas mobile app · designed-as-app */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,11 +10,41 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-canvas: var(--canvas);
-  --font-sans: var(--font-roboto), var(--font-noto-sans-kr), "Noto Sans KR",
-    Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-heading: var(--font-noto-sans-kr), var(--font-roboto), "Noto Sans KR",
-    Roboto, sans-serif;
+  --color-paper: var(--color-paper);
+  --color-paper-2: var(--color-paper-2);
+  --color-paper-3: var(--color-paper-3);
+  --color-ink: var(--color-ink);
+  --color-ink-2: var(--color-ink-2);
+  --color-ink-3: var(--color-ink-3);
+  --color-rule: var(--color-rule);
+  --color-accent-text: var(--color-accent-text);
+  --color-control: var(--color-control);
+  --color-focus: var(--color-focus);
+  --color-affect: var(--color-affect);
+  --color-success-text: var(--color-success-text);
+  --color-danger: var(--color-danger);
+  --color-star: var(--color-star);
+  --color-mode: var(--mode-accent);
+  --color-mode-canvas: var(--mode-canvas);
+  --color-prep: var(--prep);
+  --color-prep-deep: var(--prep-deep);
+  --color-prep-tint: var(--prep-tint);
+  --color-live: var(--live);
+  --color-live-accent: var(--live-accent);
+  --color-live-deep: var(--live-deep);
+  --color-live-sub: var(--live-sub);
+  --color-live-tint: var(--live-tint);
+  --color-live-ink: var(--live-ink);
+  --color-after: var(--after);
+  --color-after-deep: var(--after-deep);
+  --color-after-ink-2: var(--after-ink-2);
+  --color-after-tint: var(--after-tint);
+  --color-gift-acq: var(--gift-acq);
+  --color-gift-col: var(--gift-col);
+  --color-gift-fri: var(--gift-fri);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -57,134 +89,182 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.25);
-  --radius-2xl: calc(var(--radius) * 1.5);
-  --radius-3xl: calc(var(--radius) * 1.75);
-  --radius-4xl: calc(var(--radius) * 2);
-  --breakpoint-tablet: 48rem;
-  --breakpoint-desktop: 64rem;
-  --shadow-neu: var(--neu-shadow);
-  --shadow-neu-inset: var(--neu-shadow-inset);
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-s);
+  --radius-md: var(--r-btn-s);
+  --radius-lg: var(--r-m);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+  --radius-3xl: var(--r-3xl);
+  --radius-4xl: var(--r-3xl);
+  --shadow-neu: var(--lift-card);
+  --shadow-neu-inset: var(--lift-inset);
+  --shadow-card: var(--lift-card);
+  --shadow-float: var(--lift-float);
 }
 
 :root {
-  /* Brand reference palette (accent use) */
-  --sky-blue-light: #8ecae6;
-  --blue-green: #219ebc;
-  --deep-space-blue: #191f28;
-  --amber-flame: #ffb703;
-  --princeton-orange: #fb8500;
+  /* Mobile app core paper & ink palette. */
+  --color-paper: #ffffff;
+  --color-paper-2: #f2f4f6;
+  --color-paper-3: #e9edf2;
+  --color-ink: #191f28;
+  --color-ink-2: #4e5968;
+  --color-ink-3: #8b95a1;
+  --color-rule: #e5e8eb;
 
-  /* Toss / 오늘의집 계열: 화이트 베이스 + 강한 블루 CTA */
-  --background: #ffffff;
-  --foreground: #191f28;
-  --canvas: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #191f28;
-  --popover: #ffffff;
-  --popover-foreground: #191f28;
-  --primary: #3182f6;
-  --primary-foreground: #ffffff;
-  --secondary: #f2f4f6;
-  --secondary-foreground: #191f28;
-  --muted: #f2f4f6;
-  --muted-foreground: #8b95a1;
-  --accent: #ffb703;
-  --accent-foreground: #191f28;
-  --highlight: #fb8500;
-  --highlight-foreground: #ffffff;
-  --brand-soft: #e8f3ff;
-  /* 서비스 설명용 회색 카드 (추가 에셋) */
-  --surface-gray: #f2f4f6;
-  --surface-gray-foreground: #191f28;
-  --destructive: #f04452;
-  --info: #3182f6;
-  --info-foreground: #ffffff;
-  --success: #03b26c;
-  --success-foreground: #ecfdf5;
-  --warning: #ffb703;
-  --warning-foreground: #191f28;
-  --error: #f04452;
-  --error-foreground: #fef2f2;
-  --wait: var(--muted-foreground);
-  --wait-foreground: var(--background);
-  --border: #e5e8eb;
-  --input: #f2f4f6;
-  --ring: #3182f6;
-  --chart-1: #8ecae6;
-  --chart-2: #3182f6;
-  --chart-3: #191f28;
-  --chart-4: #ffb703;
-  --chart-5: #fb8500;
-  --radius: 0.75rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #191f28;
-  --sidebar-primary: #3182f6;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f2f4f6;
-  --sidebar-accent-foreground: #191f28;
-  --sidebar-border: #e5e8eb;
-  --sidebar-ring: #3182f6;
+  /* Semantic colors stay constant across travel modes. */
+  --color-accent: #3182f6;
+  --color-accent-text: #1b64da;
+  --color-affect: #ff385c;
+  --color-success: #03b26c;
+  --color-success-text: #037a4b;
+  --color-danger: #f04452;
+  --color-star: #ffb703;
+  --color-focus: #3182f6;
+  --color-control: #8b95a1;
 
-  /* 밀도 높은 앱 UI: 그림자보다 경계/대비 우선 (토스·오늘의집) */
-  --neu-shadow: 0 1px 2px rgba(25, 31, 40, 0.04),
-    0 2px 8px rgba(25, 31, 40, 0.04);
-  --neu-shadow-inset: inset 0 0 0 1px rgba(25, 31, 40, 0.04);
+  /* Home-only travel mode layer. */
+  --mode-canvas: var(--color-paper);
+  --mode-accent: var(--color-accent);
+  --prep: #eef5ff;
+  --prep-deep: #1b64da;
+  --prep-tint: #dbeafe;
+  --live: #e0f5f1;
+  --live-accent: #0d9488;
+  --live-deep: #0f766e;
+  --live-sub: #446e63;
+  --live-tint: #c2e9e1;
+  --live-ink: #12312b;
+  --after: #fff6e8;
+  --after-deep: #a55200;
+  --after-ink-2: #8a6a3a;
+  --after-tint: #ffe9c7;
+
+  /* Gift tags. */
+  --gift-acq: #8ecae6;
+  --gift-col: #ffb703;
+  --gift-fri: #fb8500;
+
+  /* Brand-provider colors live here instead of component-level hex values. */
+  --brand-kakao: #fee500;
+  --brand-kakao-ink: #191919;
+  --brand-naver: #03c75a;
+  --brand-naver-ink: var(--color-ink);
+
+  --font-body: "Pretendard Variable", Pretendard,
+    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR",
+    sans-serif;
+  --font-display: var(--font-body);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Fixed radius ladder; never derive radii by multiplication. */
+  --r-xs: 4px;
+  --r-s: 8px;
+  --r-btn-s: 10px;
+  --r-m: 12px;
+  --r-l: 14px;
+  --r-xl: 16px;
+  --r-2xl: 20px;
+  --r-3xl: 24px;
+  --r-full: 999px;
+  --radius: var(--r-m);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Shared mobile application geometry. */
+  --app-rail-max: 30rem;
+  /* 이전 planning 호출부도 모바일 전용 앱 레일을 벗어나지 않는다. */
+  --app-planning-max: var(--app-rail-max);
+  --app-gutter: 1rem;
+  --app-bar-height: 3.5rem;
+  --tab-bar-height: 4rem;
+  --app-bottom-gap: 1rem;
+
+  --lift-flat: none;
+  --lift-card: 0 0 0 1px rgb(25 31 40 / 0.02),
+    0 2px 6px rgb(25 31 40 / 0.04),
+    0 4px 8px rgb(25 31 40 / 0.08);
+  --lift-float: 0 2px 8px rgb(25 31 40 / 0.16);
+  --lift-inset: inset 0 0 0 1px rgb(25 31 40 / 0.04);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  /* shadcn semantic aliases */
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --canvas: var(--color-paper);
+  --card: var(--color-paper);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-paper);
+  --popover-foreground: var(--color-ink);
+  /* Filled controls pair white text with the accessible deep accent. */
+  --primary: var(--color-accent-text);
+  --primary-foreground: var(--color-paper);
+  --secondary: var(--color-paper-2);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-paper-2);
+  --muted-foreground: var(--color-ink-2);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-paper);
+  --highlight: var(--color-star);
+  --highlight-foreground: var(--color-ink);
+  --brand-soft: var(--prep);
+  --surface-gray: var(--color-paper-2);
+  --surface-gray-foreground: var(--color-ink);
+  --destructive: var(--color-danger);
+  --info: var(--color-accent);
+  --info-foreground: var(--color-paper);
+  --success: var(--color-success);
+  --success-foreground: var(--color-paper);
+  --warning: var(--color-star);
+  --warning-foreground: var(--color-ink);
+  --error: var(--color-danger);
+  --error-foreground: var(--color-paper);
+  --wait: var(--color-ink-3);
+  --wait-foreground: var(--color-paper);
+  --border: var(--color-rule);
+  --input: var(--color-paper-2);
+  --ring: var(--color-focus);
+  --chart-1: var(--gift-acq);
+  --chart-2: var(--color-accent);
+  --chart-3: var(--color-ink);
+  --chart-4: var(--color-star);
+  --chart-5: var(--gift-fri);
+  --sidebar: var(--color-paper);
+  --sidebar-foreground: var(--color-ink);
+  --sidebar-primary: var(--color-accent);
+  --sidebar-primary-foreground: var(--color-paper);
+  --sidebar-accent: var(--color-paper-2);
+  --sidebar-accent-foreground: var(--color-ink);
+  --sidebar-border: var(--color-rule);
+  --sidebar-ring: var(--color-focus);
 }
 
-.dark {
-  --background: #17171c;
-  --foreground: #f2f4f6;
-  --canvas: #17171c;
-  --card: #212129;
-  --card-foreground: #f2f4f6;
-  --popover: #212129;
-  --popover-foreground: #f2f4f6;
-  --primary: #4593fc;
-  --primary-foreground: #ffffff;
-  --secondary: #2c2c34;
-  --secondary-foreground: #f2f4f6;
-  --muted: #2c2c34;
-  --muted-foreground: #8b95a1;
-  --accent: #ffb703;
-  --accent-foreground: #191f28;
-  --highlight: #fb8500;
-  --highlight-foreground: #ffffff;
-  --brand-soft: #1c2e4a;
-  --surface-gray: #2c2c34;
-  --surface-gray-foreground: #f2f4f6;
-  --destructive: #f04452;
-  --info: #4593fc;
-  --info-foreground: #ffffff;
-  --success: #03b26c;
-  --success-foreground: #064e3b;
-  --warning: #ffb703;
-  --warning-foreground: #191f28;
-  --error: #f04452;
-  --error-foreground: #450a0a;
-  --wait: var(--muted-foreground);
-  --wait-foreground: var(--background);
-  --border: #ffffff14;
-  --input: #2c2c34;
-  --ring: #4593fc;
-  --chart-1: #8ecae6;
-  --chart-2: #4593fc;
-  --chart-3: #f2f4f6;
-  --chart-4: #ffb703;
-  --chart-5: #fb8500;
-  --sidebar: #212129;
-  --sidebar-foreground: #f2f4f6;
-  --sidebar-primary: #4593fc;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2c2c34;
-  --sidebar-accent-foreground: #f2f4f6;
-  --sidebar-border: #ffffff14;
-  --sidebar-ring: #4593fc;
-  --neu-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.25);
-  --neu-shadow-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+[data-mode="prep"] {
+  --mode-canvas: var(--prep);
+  --canvas: var(--mode-canvas);
+}
+
+[data-mode="live"] {
+  --mode-canvas: var(--live);
+  --mode-accent: var(--live-accent);
+  --canvas: var(--mode-canvas);
+}
+
+[data-mode="after"] {
+  --mode-canvas: var(--after);
+  --mode-accent: var(--after-deep);
+  --canvas: var(--mode-canvas);
 }
 
 @layer base {
@@ -195,39 +275,63 @@
   html {
     @apply font-sans antialiased;
     font-weight: 400;
-    min-width: 320px;
+    min-height: 100%;
+    overflow-x: clip;
   }
 
   body {
-    @apply bg-canvas text-foreground text-sm;
+    @apply bg-canvas text-[15px] text-foreground;
+    min-height: 100dvh;
     font-weight: 400;
-    line-height: 1.45;
-    letter-spacing: -0.01em;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    font-variant-numeric: tabular-nums;
+    overflow-x: clip;
+    overscroll-behavior-y: none;
+  }
+
+  a,
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1,
   h2,
   h3 {
     @apply font-heading text-foreground;
-    font-weight: 600;
-    letter-spacing: -0.025em;
+    min-width: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
   }
 
   strong,
   b {
-    font-weight: 600;
+    font-weight: 700;
+  }
+}
+
+@media (min-width: 30.0625rem) {
+  body.bg-canvas {
+    background: var(--color-paper-2);
+  }
+
+  .app-rail {
+    box-shadow: 0 0 0 1px var(--color-rule),
+      0 16px 40px rgb(25 31 40 / 0.08);
   }
 }
 
 @layer utilities {
   .neu-raised {
     background: var(--background);
-    box-shadow: var(--neu-shadow);
+    box-shadow: var(--lift-card);
   }
 
   .neu-inset {
     background: var(--muted);
-    box-shadow: var(--neu-shadow-inset);
+    box-shadow: var(--lift-inset);
   }
 
   .surface-gray {
@@ -246,6 +350,42 @@
   }
   .text-weight-bold {
     font-weight: 700;
+  }
+
+  .shadow-card {
+    box-shadow: var(--lift-card);
+  }
+
+  .shadow-float {
+    box-shadow: var(--lift-float);
+  }
+
+  .duration-120 {
+    transition-duration: var(--dur-fast);
+  }
+
+  /* Shared tactile overlay for filled mobile controls. */
+  .press-overlay {
+    position: relative;
+    isolation: isolate;
+  }
+  .press-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background: var(--color-ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  .press-overlay:active::after {
+    opacity: 0.1;
+  }
+  .press-overlay:disabled::after,
+  .press-overlay[aria-disabled="true"]::after {
+    opacity: 0;
   }
 
   /* 스크롤 기능 유지, 스크롤바 UI만 숨김 */
@@ -269,12 +409,23 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
 /* Sonner: 화면 안쪽 마진 + 중앙 정렬 (모바일 width:100% 오버플로우 보정) */
 [data-sonner-toaster][data-x-position="center"] {
   left: 50% !important;
   right: auto !important;
-  width: min(22rem, calc(100vw - 2rem)) !important;
-  max-width: calc(100vw - 2rem) !important;
+  width: min(22rem, calc(100dvw - 2rem)) !important;
+  max-width: calc(100dvw - 2rem) !important;
   transform: translateX(-50%) !important;
   box-sizing: border-box !important;
   /* 시트(z-50)보다 위에 표시 — 상세 시트와 겹치지 않도록 상단 토스트 */
@@ -297,8 +448,8 @@
   [data-sonner-toaster][data-x-position="center"] {
     left: 50% !important;
     right: auto !important;
-    width: min(22rem, calc(100vw - 2rem)) !important;
-    max-width: calc(100vw - 2rem) !important;
+    width: min(22rem, calc(100dvw - 2rem)) !important;
+    max-width: calc(100dvw - 2rem) !important;
     transform: translateX(-50%) !important;
   }
 
@@ -310,21 +461,21 @@
   }
 }
 
-/* 공통 토스트 얼럿 (파란 배경 / 흰 글씨 / 자동 닫힘) */
+/* 공통 토스트 얼럿: 높은 대비의 잉크 배경. */
 [data-sonner-toast].toast-alert {
-  --normal-bg: var(--primary);
-  --normal-text: #ffffff;
+  --normal-bg: var(--color-ink);
+  --normal-text: var(--color-paper);
   --normal-border: transparent;
-  background: var(--primary) !important;
-  color: #ffffff !important;
+  background: var(--color-ink) !important;
+  color: var(--color-paper) !important;
   border: none !important;
-  box-shadow: 0 8px 24px rgb(49 130 246 / 0.28) !important;
+  box-shadow: var(--lift-float) !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
   min-height: 3rem !important;
-  padding: 0.875rem 1.125rem !important;
-  border-radius: 0.875rem !important;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: var(--r-l) !important;
   font-size: 0.9375rem !important;
   font-weight: 500 !important;
   line-height: 1.45 !important;
@@ -336,13 +487,6 @@
   white-space: normal !important;
   overflow-wrap: anywhere !important;
   word-break: keep-all !important;
-}
-
-@media (min-width: 768px) {
-  [data-sonner-toast].toast-alert {
-    padding: 1rem 1.5rem !important;
-    font-size: 1rem !important;
-  }
 }
 
 [data-sonner-toast].toast-alert [data-icon],
@@ -359,7 +503,7 @@
 
 [data-sonner-toast].toast-alert [data-title],
 [data-sonner-toast].toast-alert [data-description] {
-  color: #ffffff !important;
+  color: var(--color-paper) !important;
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -368,18 +512,6 @@
   overflow-wrap: anywhere !important;
   word-break: keep-all !important;
   line-height: 1.45 !important;
-}
-
-/* 스크롤은 유지하고 스크롤바 UI만 숨김 (전역) */
-html,
-body {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  display: none;
 }
 
 .hide-scrollbar {

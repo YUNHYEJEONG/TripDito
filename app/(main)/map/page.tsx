@@ -1,32 +1,50 @@
-"use client";
-
+import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/page-header";
-import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { GoogleMapExplorer } from "@/features/map/components/google-map-explorer";
+import { DemoMapExplorer } from "@/features/map/components/demo-map-explorer";
+import { getSafeReturnTo } from "@/lib/navigation/return-to";
 
-export default function MapPage() {
+export const metadata: Metadata = { title: "지도" };
+
+export default async function MapPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string | string[];
+    placeId?: string | string[];
+    returnTo?: string | string[];
+  }>;
+}) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const params = await searchParams;
+  const initialQuery = Array.isArray(params.q) ? params.q[0] : params.q;
+  const initialPlaceId = Array.isArray(params.placeId)
+    ? params.placeId[0]
+    : params.placeId;
+  const returnTo = getSafeReturnTo(params.returnTo);
 
   return (
-    <div className="flex h-dvh w-full min-w-[320px] flex-col overflow-hidden">
-      <div className="mx-auto w-full max-w-[480px] shrink-0 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5 md:max-w-[720px] md:px-6 lg:max-w-[960px] lg:px-8">
+    <div className="mx-auto flex h-dvh w-full max-w-[var(--app-planning-max)] flex-col overflow-hidden bg-paper">
+      <div className="w-full shrink-0 px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <PageHeader
           title="지도"
-          actions={<HeaderNavActions />}
+          backHref={returnTo}
+          sticky={false}
           className="mb-0"
         />
       </div>
 
       <div className="relative min-h-0 w-full flex-1">
-        <GoogleMapExplorer apiKey={apiKey} />
+        {apiKey ? (
+          <GoogleMapExplorer
+            apiKey={apiKey}
+            initialQuery={initialQuery ?? ""}
+            initialPlaceId={initialPlaceId ?? ""}
+          />
+        ) : (
+          <DemoMapExplorer initialQuery={initialQuery ?? ""} />
+        )}
       </div>
-
-      {/* 고정 하단 네비 높이 확보 */}
-      <div
-        className="shrink-0"
-        style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
-        aria-hidden
-      />
     </div>
   );
 }

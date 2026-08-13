@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, MessageCircle } from "lucide-react";
+import { Link2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
@@ -31,15 +31,15 @@ export function ShareSheet({
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("링크를 복사했습니다");
+      toast.success("링크를 복사했어요");
       finishShare();
     } catch {
-      toast.error("링크 복사에 실패했습니다");
+      toast.error("링크를 복사하지 못했어요. 다시 시도해 주세요.");
     }
   }
 
-  async function shareKakao() {
-    const text = `${nickname} 님의 때샷 — 트립디토`;
+  async function shareFromDevice() {
+    const text = `${nickname}님의 때샷 — 트립디토`;
     try {
       if (navigator.share) {
         await navigator.share({ title: text, text, url: shareUrl });
@@ -47,7 +47,8 @@ export function ShareSheet({
         return;
       }
     } catch {
-      // user cancel or unsupported — fall through
+      // 공유 창을 닫은 경우 다른 창을 다시 열지 않는다.
+      return;
     }
 
     const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`;
@@ -60,9 +61,8 @@ export function ShareSheet({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="mx-auto max-w-[480px] rounded-t-2xl md:max-w-[720px] lg:max-w-[960px]"
+        className="mx-auto max-w-[480px] rounded-t-2xl"
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#D1D5DB]" />
         <SheetCloseHeader
           title="공유하기"
           onClose={() => onOpenChange(false)}
@@ -71,18 +71,18 @@ export function ShareSheet({
         <div className="mt-3 grid grid-cols-2 gap-3 px-4 pb-6">
           <button
             type="button"
-            onClick={() => void shareKakao()}
-            className="flex flex-col items-center gap-2 rounded-2xl bg-[#FEE500] px-3 py-4 text-[#191600] transition-opacity hover:opacity-90"
+            onClick={() => void shareFromDevice()}
+            className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-paper-2 px-3 py-4 text-ink outline-none transition-colors duration-120 hover:bg-paper-3 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <MessageCircle className="size-6" />
-            <span className="text-[13px] font-semibold">카카오톡</span>
+            <Share2 className="size-6" strokeWidth={1.8} />
+            <span className="text-[13px] font-semibold">공유하기</span>
           </button>
           <button
             type="button"
             onClick={() => void copyLink()}
-            className="flex flex-col items-center gap-2 rounded-2xl bg-[#F2F4F6] px-3 py-4 text-foreground transition-colors hover:bg-[#E8ECF0]"
+            className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-paper-2 px-3 py-4 text-ink outline-none transition-colors duration-120 hover:bg-paper-3 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <Link2 className="size-6" />
+            <Link2 className="size-6" strokeWidth={1.8} />
             <span className="text-[13px] font-semibold">링크 복사</span>
           </button>
         </div>

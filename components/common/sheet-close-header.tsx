@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /**
  * 바텀시트 공통 헤더
  * - 타이틀 좌측 정렬
- * - 우측 큰 X(size-10 버튼 / size-6 아이콘)
+ * - 우측 44px X 버튼 / size-6 아이콘
  */
 export function SheetCloseHeader({
   title,
@@ -42,7 +42,7 @@ export function SheetCloseHeader({
         type="button"
         variant="ghost"
         size="icon"
-        className="absolute top-1.5 right-2 size-10"
+        className="absolute top-1 right-2 size-11"
         aria-label="닫기"
         onClick={onClose}
       >

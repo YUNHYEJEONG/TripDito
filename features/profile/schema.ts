@@ -11,7 +11,7 @@ export const localProfileSchema = z.object({
 export type LocalProfile = z.infer<typeof localProfileSchema>;
 
 export const localProfileFormSchema = z.object({
-  nickname: z.string().trim().min(1, "닉네임을 입력하세요").max(20),
+  nickname: z.string().trim().min(1, "닉네임을 입력해 주세요").max(20),
   avatarDataUrl: z.string().nullable().optional(),
 });
 

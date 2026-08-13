@@ -5,7 +5,7 @@ import { useEffect, type RefObject } from "react";
 type MouseDragScrollOptions = {
   /** 캐러셀용 슬라이드 스냅 (기본 true) */
   snap?: boolean;
-  /** 세로 휠을 가로 스크롤로 매핑 (필터 칩 바용) */
+  /** 가로 트랙패드·Shift+휠을 지원 (필터 칩 바용) */
   wheel?: boolean;
 };
 
@@ -25,8 +25,12 @@ export function useMouseDragScroll(
   const wheel = options.wheel ?? false;
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el || !enabled) return;
+    const currentElement = ref.current;
+    if (!currentElement || !enabled) return;
+    const el: HTMLElement = currentElement;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
 
     let dragging = false;
     let capturing = false;
@@ -40,7 +44,10 @@ export function useMouseDragScroll(
       const width = slide?.getBoundingClientRect().width ?? el.clientWidth;
       if (!width) return;
       const index = Math.round(el.scrollLeft / width);
-      el.scrollTo({ left: index * width, behavior: "smooth" });
+      el.scrollTo({
+        left: index * width,
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+      });
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -104,8 +111,11 @@ export function useMouseDragScroll(
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 0) return;
 
-      const mostlyVertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
-      const delta = mostlyVertical ? e.deltaY : e.deltaX;
+      const delta = e.shiftKey
+        ? e.deltaY
+        : Math.abs(e.deltaX) > Math.abs(e.deltaY)
+          ? e.deltaX
+          : 0;
       if (delta === 0) return;
 
       const next = Math.min(max, Math.max(0, el.scrollLeft + delta));

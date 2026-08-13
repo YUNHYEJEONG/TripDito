@@ -1,34 +1,36 @@
-import type { AnalyzableImage, ImageAnalyzer, ProposedItem } from "./port";
+import type {
+  AnalyzableImage,
+  ImageAnalysisContext,
+  ImageAnalyzer,
+  ProposedItem,
+} from "./port";
 
-const MOCK_CATALOG = [
-  { name: "돈키호테 스낵 세트", price: 1280 },
-  { name: "약국 비타민", price: 980 },
-  { name: "캐릭터 파우치", price: 1500 },
-  { name: "핸드크림", price: 890 },
-  { name: "여행용 어댑터", price: 2200 },
-  { name: "로컬 초콜릿", price: 650 },
-  { name: "립밤", price: 420 },
-  { name: "키링", price: 780 },
-];
-
-function pickCatalog(index: number) {
-  return MOCK_CATALOG[index % MOCK_CATALOG.length];
-}
-
-export const mockImageAnalyzer: ImageAnalyzer = {
-  async analyze(images: AnalyzableImage[]): Promise<ProposedItem[]> {
-    await new Promise((resolve) => setTimeout(resolve, 700));
+/**
+ * 이미지 인식기가 연결되기 전 사용하는 정직한 로컬 초안 생성기입니다.
+ * 픽셀을 분석하거나 가격을 추정하지 않고 파일명만 상품명 초안으로 옮깁니다.
+ */
+export const imageDraftBuilder = {
+  async analyze(
+    images: AnalyzableImage[],
+    _context?: ImageAnalysisContext,
+  ): Promise<ProposedItem[]> {
+    void _context;
     return images.map((image, index) => {
-      const catalog = pickCatalog(index);
       const fromName = image.fileName?.replace(/\.[^.]+$/, "").trim();
       return {
-        name: fromName && fromName.length > 1 ? fromName : catalog.name,
-        estimatedPrice: catalog.price,
+        name: fromName || `상품 ${index + 1}`,
+        localName: "",
+        estimatedPrice: 0,
         quantity: 1,
-        memo: "데모 분석 결과",
+        expectedStores: [],
+        similarMatchCount: 0,
+        memo: "사진 파일명에서 만든 초안",
         sourceImageId: image.id,
         imageDataUrl: image.dataUrl,
       };
     });
   },
-};
+} satisfies ImageAnalyzer;
+
+/** @deprecated 새 코드에서는 오해 없는 imageDraftBuilder 이름을 사용하세요. */
+export const mockImageAnalyzer = imageDraftBuilder;

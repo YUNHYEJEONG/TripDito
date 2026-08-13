@@ -1,4 +1,4 @@
-import { isBrowser } from "./local-storage";
+import { isBrowser, resolveLocalStorageKey } from "./local-storage";
 import { storageKeys } from "./keys";
 
 const WARN_BYTES = 4 * 1024 * 1024; // ~4MB
@@ -22,8 +22,9 @@ export function getStorageUsage(): StorageUsage {
   const keys = Object.values(storageKeys);
   let usedBytes = 0;
   for (const key of keys) {
-    const value = window.localStorage.getItem(key);
-    if (value) usedBytes += byteLength(key) + byteLength(value);
+    const resolvedKey = resolveLocalStorageKey(key);
+    const value = window.localStorage.getItem(resolvedKey);
+    if (value) usedBytes += byteLength(resolvedKey) + byteLength(value);
   }
 
   const usedLabel =

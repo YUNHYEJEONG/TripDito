@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { ArrowLeft, ImageOff, X } from "lucide-react";
 import { toast } from "sonner";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { CurrencyText } from "@/components/common/currency-text";
@@ -41,6 +43,7 @@ export function ShoppingListSheet({
   tripId,
   destinationCity,
   itemIds,
+  shotId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,6 +52,7 @@ export function ShoppingListSheet({
   tripId: string;
   destinationCity?: string;
   itemIds: string[];
+  shotId: string;
 }) {
   const router = useRouter();
   const { data: profile } = useLocalProfile();
@@ -59,16 +63,11 @@ export function ShoppingListSheet({
 
   const isOwnList = Boolean(profile?.id && profile.id === shotAuthorId);
 
-  const items = useMemo(() => {
-    return itemIds
-      .map((id) => itemRepository.getById(id))
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
-  }, [itemIds, open]);
+  const items = itemIds
+    .map((id) => itemRepository.getById(id))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
-  const trip = useMemo(
-    () => tripRepository.getById(tripId),
-    [tripId, open],
-  );
+  const trip = tripRepository.getById(tripId);
 
   const placeName = trip?.city ?? destinationCity ?? "";
   const stayLabel =
@@ -84,12 +83,13 @@ export function ShoppingListSheet({
     items.length > 0 && selectedIds.length === items.length;
   const selectedCount = selectedIds.length;
 
-  useEffect(() => {
-    if (!open) {
+  function handleSheetOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
       setSelectedIds([]);
       setPickOpen(false);
     }
-  }, [open]);
+    onOpenChange(nextOpen);
+  }
 
   function toggleItem(id: string) {
     setSelectedIds((prev) =>
@@ -112,14 +112,16 @@ export function ShoppingListSheet({
         sourceItemIds: selectedIds,
         targetTripId,
       });
-      setPickOpen(false);
-      setSelectedIds([]);
       const target = tripRepository.getById(targetTripId);
       const count = created.length;
+      const needsReview = created.some(
+        (item) => item.priceNeedsReview || item.scheduleNeedsReview,
+      );
+      handleSheetOpenChange(false);
       toast.success(
         target
-          ? `${target.city} 쇼핑리스트에 ${count}개 담았어요`
-          : `내 쇼핑리스트에 ${count}개 담았어요`,
+          ? `${target.city} 리스트에 ${count}개 담았어요${needsReview ? ". 표시된 가격·구매일만 확인해 주세요" : ""}`
+          : `내 리스트에 ${count}개 담았어요${needsReview ? ". 표시된 가격·구매일만 확인해 주세요" : ""}`,
         {
           action: {
             label: "바로가기",
@@ -128,22 +130,19 @@ export function ShoppingListSheet({
         },
       );
     } catch {
-      toast.error("퍼가기에 실패했습니다");
+      toast.error("상품을 담지 못했어요. 다시 시도해 주세요.");
     }
   }
 
-  function handlePergagi() {
+  function handleAddToList() {
     if (selectedIds.length === 0) {
-      toast.error("퍼갈 상품을 선택해 주세요");
+      toast.error("담을 상품을 먼저 선택해 주세요");
       return;
     }
     if (trips.length === 0) {
-      toast.error("담을 여행이 없어요. 여행을 먼저 만들어 주세요.", {
-        action: {
-          label: "여행 만들기",
-          onClick: () => router.push("/trips/new"),
-        },
-      });
+      const params = new URLSearchParams({ returnTo: `/shots#${shotId}` });
+      selectedIds.forEach((id) => params.append("copyItemId", id));
+      router.push(`/trips/new?${params.toString()}`);
       return;
     }
     if (trips.length === 1) {
@@ -154,164 +153,196 @@ export function ShoppingListSheet({
   }
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className="mx-auto flex max-h-[80vh] max-w-[480px] flex-col rounded-t-2xl md:max-w-[720px] lg:max-w-[960px]"
-        >
-          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[#D1D5DB]" />
-          <SheetCloseHeader
-            className="shrink-0"
-            title={`${nickname} 님의 쇼핑리스트 목록`}
-            description={tripMeta || undefined}
-            onClose={() => onOpenChange(false)}
-          />
-
-          {!isOwnList && items.length > 0 ? (
-            <div className="flex shrink-0 items-center justify-between px-4 pt-2 pb-1">
-              <button
-                type="button"
-                onClick={toggleAll}
-                className="flex items-center gap-2 text-[13px] text-foreground"
-              >
-                <span
-                  className={cn(
-                    "flex size-5 items-center justify-center rounded border text-[11px]",
-                    allSelected
-                      ? "border-primary bg-primary text-white"
-                      : "border-[#CFD4DA] bg-white",
-                  )}
-                  aria-hidden
-                >
-                  {allSelected ? "✓" : ""}
-                </span>
-                전체 선택
-              </button>
-              <span className="text-[12px] text-muted-foreground">
-                {selectedCount}개 선택
-              </span>
-            </div>
-          ) : null}
-
-          <ul className="mt-1 min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3">
-            {items.length === 0 ? (
-              <li className="py-8 text-center text-[13px] text-muted-foreground">
-                연결된 상품이 없습니다
-              </li>
-            ) : (
-              items.map((item) => {
-                const checked = selectedIds.includes(item.id);
-                return (
-                  <li key={item.id}>
-                    {isOwnList ? (
-                      <div className="flex items-center gap-3 rounded-xl bg-[#F2F4F6] px-3 py-2.5">
-                        <ItemThumb src={item.imageDataUrl} />
-                        <ItemMeta
-                          name={item.name}
-                          price={item.estimatedPrice}
-                          currency={trip?.currency ?? "JPY"}
-                        />
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => toggleItem(item.id)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                          checked
-                            ? "border-primary bg-primary/10"
-                            : "border-transparent bg-[#F2F4F6]",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex size-5 shrink-0 items-center justify-center rounded border text-[11px]",
-                            checked
-                              ? "border-primary bg-primary text-white"
-                              : "border-[#CFD4DA] bg-white",
-                          )}
-                          aria-hidden
-                        >
-                          {checked ? "✓" : ""}
-                        </span>
-                        <ItemThumb src={item.imageDataUrl} />
-                        <ItemMeta
-                          name={item.name}
-                          price={item.estimatedPrice}
-                          currency={trip?.currency ?? "JPY"}
-                        />
-                      </button>
-                    )}
-                  </li>
-                );
-              })
-            )}
-          </ul>
-
-          {!isOwnList && items.length > 0 ? (
-            <div className="shrink-0 border-t border-[#EAEDED] px-4 py-3">
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className="mx-auto flex max-h-[80dvh] max-w-[480px] flex-col rounded-t-2xl"
+      >
+        {pickOpen ? (
+          <>
+            <div className="flex min-h-14 shrink-0 items-center gap-1 px-2 pt-1">
               <Button
                 type="button"
-                className="w-full"
-                disabled={selectedCount === 0 || copyItems.isPending}
-                onClick={handlePergagi}
+                variant="ghost"
+                size="icon"
+                aria-label="쇼핑리스트로 돌아가기"
+                onClick={() => setPickOpen(false)}
               >
-                퍼가기
-                {selectedCount > 0 ? ` · ${selectedCount}개` : ""}
+                <ArrowLeft className="size-5" aria-hidden />
+              </Button>
+              <SheetTitle className="min-w-0 flex-1 truncate text-center text-[16px] font-bold">
+                담을 여행 선택
+              </SheetTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="닫기"
+                onClick={() => handleSheetOpenChange(false)}
+              >
+                <X className="size-5" aria-hidden />
               </Button>
             </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+            <p className="px-4 pb-2 text-[13px] leading-5 text-ink-2">
+              {selectedCount}개 상품을 담을 여행을 선택해 주세요.
+            </p>
+            <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-4">
+              {trips.map((targetTrip) => (
+                <li key={targetTrip.id}>
+                  <button
+                    type="button"
+                    disabled={copyItems.isPending}
+                    onClick={() => void copyToTrip(targetTrip.id)}
+                    className="flex min-h-14 w-full items-center gap-3 rounded-xl bg-paper-2 px-3 py-3 text-left outline-none transition-colors duration-120 hover:bg-paper-3 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:text-ink-3"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold">
+                        {targetTrip.city}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[12px] text-ink-2 tabular-nums">
+                        {formatTripOptionLabel(
+                          targetTrip.startDate,
+                          targetTrip.name,
+                        )}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[12px] font-semibold text-accent-text">
+                      선택
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <>
+            <SheetCloseHeader
+              className="shrink-0"
+              title={`${nickname}님의 쇼핑리스트`}
+              description={tripMeta || undefined}
+              onClose={() => handleSheetOpenChange(false)}
+            />
 
-      <Sheet open={pickOpen} onOpenChange={setPickOpen}>
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className="mx-auto max-h-[70vh] max-w-[480px] rounded-t-2xl md:max-w-[720px] lg:max-w-[960px]"
-        >
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#D1D5DB]" />
-          <SheetCloseHeader
-            title="담을 여행 선택"
-            description={`${selectedCount}개 상품을 퍼갈 여행을 골라 주세요.`}
-            onClose={() => setPickOpen(false)}
-          />
-          <ul className="mt-3 flex max-h-[50vh] flex-col gap-2 overflow-y-auto px-4 pb-6">
-            {trips.map((t) => (
-              <li key={t.id}>
+            {!isOwnList && items.length > 0 ? (
+              <div className="flex shrink-0 items-center justify-between px-4 pt-2 pb-1">
                 <button
                   type="button"
-                  disabled={copyItems.isPending}
-                  onClick={() => void copyToTrip(t.id)}
-                  className="flex w-full items-center rounded-xl border border-transparent bg-[#F2F4F6] px-3 py-3 text-left transition-colors hover:bg-[#E8ECF0] disabled:opacity-50"
+                  aria-pressed={allSelected}
+                  onClick={toggleAll}
+                  className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-[13px] text-ink outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus"
                 >
-                  <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">
-                    {formatTripOptionLabel(t.startDate, t.city)}
+                  <span
+                    className={cn(
+                      "flex size-5 items-center justify-center rounded border text-[11px]",
+                      allSelected
+                        ? "border-accent-text bg-accent-text text-paper"
+                        : "border-paper-3 bg-paper",
+                    )}
+                    aria-hidden
+                  >
+                    {allSelected ? "✓" : ""}
                   </span>
-                  <span className="shrink-0 text-[12px] text-muted-foreground">
-                    {t.name}
-                  </span>
+                  전체 선택
                 </button>
-              </li>
-            ))}
-          </ul>
-        </SheetContent>
-      </Sheet>
-    </>
+                <span className="text-[12px] text-ink-2 tabular-nums">
+                  {selectedCount}개 선택
+                </span>
+              </div>
+            ) : null}
+
+            <ul className="mt-1 min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3">
+              {items.length === 0 ? (
+                <li className="py-8 text-center text-[13px] text-ink-2">
+                  연결된 상품이 없어요
+                </li>
+              ) : (
+                items.map((item) => {
+                  const checked = selectedIds.includes(item.id);
+                  return (
+                    <li key={item.id}>
+                      {isOwnList ? (
+                        <div className="flex items-center gap-3 rounded-xl bg-paper-2 px-3 py-3">
+                          <ItemThumb src={item.imageDataUrl} name={item.name} />
+                          <ItemMeta
+                            name={item.name}
+                            price={item.estimatedPrice}
+                            currency={trip?.currency ?? "JPY"}
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-pressed={checked}
+                          onClick={() => toggleItem(item.id)}
+                          className={cn(
+                            "flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left outline-none transition-colors duration-120 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+                            checked
+                              ? "border-accent bg-accent/10 hover:bg-accent/15 active:bg-accent/20"
+                              : "border-transparent bg-paper-2 hover:bg-paper-3 active:bg-paper-3",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex size-5 shrink-0 items-center justify-center rounded border text-[11px]",
+                              checked
+                                ? "border-accent-text bg-accent-text text-paper"
+                                : "border-paper-3 bg-paper",
+                            )}
+                            aria-hidden
+                          >
+                            {checked ? "✓" : ""}
+                          </span>
+                          <ItemThumb src={item.imageDataUrl} name={item.name} />
+                          <ItemMeta
+                            name={item.name}
+                            price={item.estimatedPrice}
+                            currency={trip?.currency ?? "JPY"}
+                          />
+                        </button>
+                      )}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+
+            {!isOwnList && items.length > 0 ? (
+              <div className="shrink-0 border-t border-rule px-4 py-3">
+                <Button
+                  type="button"
+                  className="w-full"
+                  disabled={selectedCount === 0 || copyItems.isPending}
+                  onClick={handleAddToList}
+                >
+                  내 리스트에 담기
+                  {selectedCount > 0 ? ` · ${selectedCount}개` : ""}
+                </Button>
+              </div>
+            ) : null}
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
 
-function ItemThumb({ src }: { src: string | null }) {
+function ItemThumb({ src, name }: { src: string | null; name: string }) {
   return (
-    <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-background">
+    <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-paper">
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" className="size-full object-cover" />
+        <Image
+          src={src}
+          alt={`${name} 상품 이미지`}
+          fill
+          unoptimized
+          sizes="48px"
+          className="object-cover"
+        />
       ) : (
-        <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
-          No img
+        <div className="flex size-full items-center justify-center text-ink-3">
+          <ImageOff className="size-4" aria-hidden />
+          <span className="sr-only">상품 이미지 없음</span>
         </div>
       )}
     </div>
@@ -330,7 +361,7 @@ function ItemMeta({
   return (
     <div className="min-w-0 flex-1">
       <p className="truncate text-[14px] font-semibold">{name}</p>
-      <p className="mt-0.5 text-[12px] text-muted-foreground">
+      <p className="mt-1 text-[12px] text-ink-2">
         <CurrencyText amount={price} currency={currency} />
       </p>
     </div>

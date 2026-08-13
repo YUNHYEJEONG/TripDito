@@ -1,83 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, MapPinned, Menu, Plus, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { BrandLogo } from "@/components/brand/brand-logo";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Bell, MapPinned } from "lucide-react";
 import { headerIconButtonClassName } from "@/components/layout/page-header";
+import { useUnreadNotificationCount } from "@/features/notifications/hooks/use-notifications";
+import { withReturnTo } from "@/lib/navigation/return-to";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { href: "/home", label: "홈", icon: Home },
-  { href: "/map", label: "지도", icon: MapPinned },
-  { href: "/trips/new", label: "새 여행", icon: Plus },
-] as const;
-
+/** 홈 헤더에는 지도 진입만 둔다. 여행 전환과 생성은 상태 대문이 맡는다. */
 export function HeaderNavActions() {
+  return (
+    <Suspense fallback={<HeaderLinks returnTo="/home" />}>
+      <CurrentPageHeaderLinks />
+    </Suspense>
+  );
+}
+
+function CurrentPageHeaderLinks() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [hash, setHash] = useState("");
+  const search = searchParams.toString();
+
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
+
+  const returnTo = `${pathname}${search ? `?${search}` : ""}${hash}`;
+
+  return <HeaderLinks returnTo={returnTo} />;
+}
+
+function HeaderLinks({ returnTo }: { returnTo: string }) {
+  const { data: unread = 0 } = useUnreadNotificationCount();
 
   return (
-    <div className="flex h-9 items-center gap-0.5">
-      <Link href="/map" aria-label="지도" className={headerIconButtonClassName}>
+    <div className="flex items-center gap-1">
+      <Link
+        href={withReturnTo("/map", returnTo)}
+        aria-label="지도 열기"
+        className={headerIconButtonClassName}
+      >
         <MapPinned />
       </Link>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger className={headerIconButtonClassName} aria-label="메뉴">
-          <Menu />
-        </SheetTrigger>
-        <SheetContent
-          side="right"
-          className="w-[min(20rem,85vw)] p-0"
-          showCloseButton={false}
-        >
-          <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-4 py-3.5 text-left">
-            <SheetTitle className="sr-only">메뉴</SheetTitle>
-            <BrandLogo variant="full" size="sm" href={null} />
-            <button
-              type="button"
-              aria-label="닫기"
-              className={headerIconButtonClassName}
-              onClick={() => setOpen(false)}
-            >
-              <X />
-            </button>
-          </SheetHeader>
-          <nav className="flex flex-col gap-0.5 p-3">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-              const active =
-                href === "/home"
-                  ? pathname === "/home" || pathname === "/"
-                  : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-medium transition-colors",
-                    active
-                      ? "bg-secondary text-foreground"
-                      : "text-foreground hover:bg-secondary/70",
-                  )}
-                >
-                  <Icon className="size-5 shrink-0 text-muted-foreground" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </SheetContent>
-      </Sheet>
+      <Link
+        href={withReturnTo("/notifications", returnTo)}
+        aria-label={unread > 0 ? `알림 ${unread}개 읽지 않음` : "알림 열기"}
+        className={cn(headerIconButtonClassName, "relative")}
+      >
+        <Bell />
+        {unread > 0 ? (
+          <span
+            className="absolute top-2 right-2 size-2 rounded-full border-2 border-paper bg-danger"
+            aria-hidden
+          />
+        ) : null}
+      </Link>
     </div>
   );
 }

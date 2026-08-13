@@ -14,11 +14,13 @@ export function ShoppingSection({
   id?: string;
 }) {
   return (
-    <section id={id} className={cn("flex flex-col gap-2.5", className)}>
-      <div className="px-0.5">
-        <h2 className="text-[15px] font-bold text-foreground">{title}</h2>
+    <section id={id} className={cn("flex flex-col gap-3", className)}>
+      <div>
+        <h2 className="text-[19px] font-bold leading-7 tracking-[-0.02em] text-ink">
+          {title}
+        </h2>
         {description ? (
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <p className="mt-0.5 text-[12px] leading-5 text-ink-2">
             {description}
           </p>
         ) : null}

@@ -1,4 +1,5 @@
 import type { TaxFreeCoupon } from "../types";
+import { getCouponCanonicalId } from "../lib/coupon-identity";
 
 /** taxfreecoupon.com/70 모음 페이지 */
 export const TAXFREE_COUPON_SOURCE_URL = "https://taxfreecoupon.com/70";
@@ -158,4 +159,4 @@ export const TAXFREE_COUPONS_FALLBACK: TaxFreeCoupon[] = [
     active: true,
     merchant: "스카이트리",
   },
-];
+].map((coupon) => ({ ...coupon, id: getCouponCanonicalId(coupon) }));

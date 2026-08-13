@@ -1,19 +1,19 @@
-import Link from "next/link";
 import type { ComponentProps } from "react";
 import { ArrowLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { SafeBackLink } from "@/components/common/safe-back-link";
 import { cn } from "@/lib/utils";
 
-/** 헤더 아이콘 버튼 — 타이틀·취소와 같은 36px 밴드에 세로 가운데 */
+/** 헤더 아이콘 버튼 — 44px 터치 타깃 */
 export const headerIconButtonClassName = cn(
   buttonVariants({ variant: "ghost", size: "icon-sm" }),
-  "size-9 shrink-0 active:translate-y-0 [&_svg:not([class*='size-'])]:size-5",
+  "size-11 shrink-0 [&_svg:not([class*='size-'])]:size-5",
 );
 
-/** 헤더 '취소' — 타이틀(16px)보다 작은 13px, 회색→클릭 시 블랙, 볼드 없음 */
+/** 헤더 '취소' — 타이틀보다 작은 13px 보조 액션 */
 export const headerCancelClassName =
-  "inline-flex h-9 shrink-0 items-center justify-center px-1.5 text-[13px] font-normal leading-none text-[#848C94] transition-colors hover:bg-transparent hover:text-foreground active:translate-y-0 active:bg-transparent active:text-foreground";
+  "inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-2 text-[13px] font-medium leading-none text-ink-2 transition-colors duration-120 hover:bg-paper-2 hover:text-foreground active:bg-paper-3 active:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 export function HeaderCancelButton({
   children = "취소",
@@ -53,19 +53,20 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "z-20 -mx-4 mb-3 flex h-12 items-center gap-1.5 border-b border-border bg-canvas/95 px-4 backdrop-blur-md sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
-        sticky && "sticky top-0",
+        "z-20 -mx-[var(--app-gutter)] -mt-3 mb-4 flex h-[var(--app-bar-height)] items-center gap-2 border-b border-rule bg-paper px-[var(--app-gutter)]",
+        sticky &&
+          "sticky top-[env(safe-area-inset-top)] before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-[env(safe-area-inset-top)] before:bg-paper",
         className,
       )}
     >
       {backHref ? (
-        <Link
+        <SafeBackLink
           href={backHref}
           aria-label="뒤로"
           className={headerIconButtonClassName}
         >
           <ArrowLeft />
-        </Link>
+        </SafeBackLink>
       ) : null}
 
       {brand ? (
@@ -82,10 +83,10 @@ export function PageHeader({
           <div
             className={cn(
               "flex min-w-0 flex-col justify-center",
-              description ? "gap-0.5 py-0.5" : "h-9",
+              description ? "gap-1" : "h-9",
             )}
           >
-            <h1 className="truncate text-left text-base font-semibold leading-none tracking-tight text-foreground">
+            <h1 className="truncate text-left text-[18px] font-semibold leading-none tracking-[-0.02em] text-foreground">
               {title}
             </h1>
             {description ? (
@@ -98,7 +99,7 @@ export function PageHeader({
       )}
 
       {actions ? (
-        <div className="flex h-9 shrink-0 items-center gap-0.5">
+        <div className="flex h-11 shrink-0 items-center gap-1">
           {actions}
         </div>
       ) : null}

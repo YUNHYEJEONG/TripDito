@@ -1,14 +1,21 @@
-import { getCurrency } from "@/config/currencies";
+import { getCurrency, ZERO_DECIMAL_CURRENCIES } from "@/config/currencies";
 
 export function formatCurrency(amount: number, currencyCode: string) {
-  const currency = getCurrency(currencyCode);
+  const code = currencyCode.trim().toUpperCase();
+  const currency = getCurrency(code);
+
   try {
+    const fractionOptions = ZERO_DECIMAL_CURRENCIES.has(code)
+      ? { maximumFractionDigits: 0 }
+      : { maximumFractionDigits: 2 };
+
     return new Intl.NumberFormat(currency.locale, {
       style: "currency",
-      currency: currency.code,
-      maximumFractionDigits: currency.code === "JPY" || currency.code === "KRW" ? 0 : 2,
+      currency: code,
+      ...fractionOptions,
     }).format(amount);
   } catch {
-    return `${amount.toLocaleString()} ${currencyCode}`;
+    const suffix = code || currencyCode.trim() || "통화 미지정";
+    return `${amount.toLocaleString("ko-KR")} ${suffix}`;
   }
 }

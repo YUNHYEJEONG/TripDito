@@ -1,23 +1,12 @@
 /**
- * Trip Ditto 디자인 시스템
- * - 레퍼런스: 오늘의집(1), 토스(2)
- * - 화이트 베이스 + 강한 블루 CTA + 회색 설명 카드
+ * Trip Ditto 디자인 시스템의 코드 소비용 별칭입니다.
+ * 정본은 DESIGN.md v5.7과 app/globals.css이며, 여기서는 반복 사용하는
+ * 타입·라운드·최소 터치 타깃·레이아웃 값을 같은 이름으로 노출합니다.
  */
 export const designSystem = {
-  brand: {
-    skyBlueLight: "#8ECAE6",
-    blueGreen: "#219EBC",
-    deepSpaceBlue: "#191F28",
-    amberFlame: "#FFB703",
-    princetonOrange: "#FB8500",
-    /** 주요 액션 (토스형 강한 블루) */
-    actionBlue: "#3182F6",
-    /** 서비스 설명용 회색 카드 */
-    surfaceGray: "#F2F4F6",
-  },
   typography: {
-    korean: "Noto Sans KR",
-    english: "Roboto",
+    /** 본문과 제목 모두 동일한 한글 산세리프 스택을 사용합니다. */
+    fontFamily: "var(--font-body)",
     weights: {
       regular: 400,
       medium: 500,
@@ -26,30 +15,31 @@ export const designSystem = {
     },
   },
   radius: {
-    /**
-     * 폼 컨트롤 (Input / Textarea / Select / Button)
-     * - 값: 8px (`rounded-lg`)
-     * - 너무 둥근 `rounded-xl`(12px) 사용 금지
-     */
-    control: "0.5rem",
-    /** Tailwind 클래스 — 입력·선택·버튼에 공통 적용 */
+    /** 입력 컨트롤 12px (`--r-m`, Tailwind `rounded-lg`). */
+    control: "0.75rem",
     controlClass: "rounded-lg",
-    /** 입력란·옆 액션 버튼 공통 높이 */
-    fieldHeightClass: "h-10",
+    /** 입력란·옆 액션 버튼 공통 높이이자 최소 터치 타깃(44px). */
+    fieldHeightClass: "h-11",
     /** 입력+액션 조합 시 버튼 size */
     fieldActionSize: "fieldAction",
+    /** 일반 카드 16px (`--r-xl`). */
     surface: "1rem",
+    /** 바텀시트 20px (`--r-2xl`). */
+    sheet: "1.25rem",
     pill: "9999px",
   },
+  interaction: {
+    /** WCAG 타깃 바닥값: 가로·세로 44px. */
+    targetMin: "2.75rem",
+    targetMinClass: "min-h-11 min-w-11",
+  },
   breakpoints: {
-    min: 320,
-    mobileMax: 767,
-    tabletMin: 768,
-    tabletMax: 1023,
-    desktopMin: 1024,
-    contentMaxMobile: 480,
-    contentMaxTablet: 720,
-    contentMaxDesktop: 960,
+    /** 지원하는 최소 모바일 viewport. */
+    supportedMin: 320,
+    /** 더 큰 viewport에서도 이 모바일 앱 너비를 넘지 않습니다. */
+    appRailMax: 480,
+    /** 이 너비부터는 레이아웃 확장이 아니라 중앙 preview 배경만 적용합니다. */
+    previewMin: 481,
   },
   cards: {
     /** 기존 흰 카드 */
@@ -62,7 +52,7 @@ export const designSystem = {
    * - cardStack: 홈 등 세로로 쌓인 섹션/카드 사이 간격
    */
   layout: {
-    /** 카드 스택 간격 (기존 gap-6=24px의 절반) */
+    /** 카드 스택 간격(4pt 그리드의 12px). */
     cardStackGap: "0.75rem",
     /** Tailwind: gap-3 */
     cardStackGapClass: "gap-3",

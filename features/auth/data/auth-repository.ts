@@ -1,4 +1,8 @@
-import { getJson, setJson } from "@/lib/storage/local-storage";
+import {
+  getJson,
+  initializeAccountStorageScope,
+  setJson,
+} from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
 import {
   DEFAULT_AUTH_SESSION,
@@ -18,20 +22,26 @@ export const authRepository = {
       isLoggedIn: Boolean(session.isLoggedIn),
       provider: session.provider ?? null,
       email: session.email ?? null,
+      accountId: session.accountId ?? null,
     };
   },
 
   login(input?: {
     provider?: AuthProvider;
     email?: string | null;
+    accountId?: string | null;
   }): AuthSession {
     const session: AuthSession = {
       isLoggedIn: true,
       loggedInAt: new Date().toISOString(),
       provider: input?.provider ?? "email",
       email: input?.email ?? null,
+      accountId: input?.accountId ?? null,
     };
     setJson(storageKeys.auth, session);
+    if (typeof window !== "undefined") {
+      initializeAccountStorageScope(window.localStorage);
+    }
     return session;
   },
 

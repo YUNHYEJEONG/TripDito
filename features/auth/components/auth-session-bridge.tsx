@@ -6,8 +6,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authRepository } from "../data/auth-repository";
 import { profileRepository } from "@/features/profile/data/profile-repository";
 import { hasRegisteredProfile } from "@/features/profile/constants";
-import { authKeys } from "../hooks/use-auth";
-import { profileKeys } from "@/features/profile/hooks/use-local-profile";
 import type { AuthProvider } from "../types";
 
 function resolveProvider(provider?: string | null): AuthProvider {
@@ -25,15 +23,32 @@ export function AuthSessionBridge() {
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
 
-    const key = `${session.user.email ?? ""}:${session.provider ?? ""}`;
+    const key = `${session.user.email ?? ""}:${session.provider ?? ""}:${session.accountId ?? ""}`;
     if (syncedKey.current === key && authRepository.get().isLoggedIn) return;
 
     const providerId = session.provider ?? null;
-    const wasLoggedIn = authRepository.get().isLoggedIn;
+    const localSession = authRepository.get();
+    const wasLoggedIn = localSession.isLoggedIn;
+    const provider = resolveProvider(providerId);
+    const email = session.user.email?.trim().toLowerCase() ?? null;
+    const accountId = session.accountId ?? null;
+    const sameAccount =
+      localSession.isLoggedIn &&
+      localSession.provider === provider &&
+      (localSession.email?.trim().toLowerCase() ?? null) === email &&
+      (localSession.accountId ?? null) === accountId;
+
+    // A cross-tab reload must not rewrite loggedInAt for an unchanged OAuth
+    // identity, otherwise two open tabs can reload each other indefinitely.
+    if (sameAccount) {
+      syncedKey.current = key;
+      return;
+    }
 
     authRepository.login({
-      provider: resolveProvider(providerId),
-      email: session.user.email ?? null,
+      provider,
+      email,
+      accountId,
     });
 
     // 소셜 최초 로그인 시에만 프로필을 비움 (이미 등록된 프로필은 유지)
@@ -42,8 +57,9 @@ export function AuthSessionBridge() {
     }
 
     syncedKey.current = key;
-    void queryClient.invalidateQueries({ queryKey: authKeys.all });
-    void queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    // OAuth can replace an already active local account. Reset every cached
+    // repository view together to avoid briefly exposing the prior account.
+    void queryClient.resetQueries();
   }, [queryClient, session, status]);
 
   return null;

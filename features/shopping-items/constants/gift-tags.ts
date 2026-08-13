@@ -1,5 +1,3 @@
-import { designSystem } from "@/config/design-system";
-
 export const GIFT_TAG_IDS = [
   "acquaintance",
   "colleague",
@@ -11,26 +9,22 @@ export type GiftTagId = (typeof GIFT_TAG_IDS)[number];
 export const GIFT_TAG_OPTIONS: {
   id: GiftTagId;
   label: string;
-  bg: string;
-  text: string;
+  className: string;
 }[] = [
   {
     id: "acquaintance",
     label: "지인",
-    bg: designSystem.brand.skyBlueLight,
-    text: designSystem.brand.deepSpaceBlue,
+    className: "bg-gift-acq text-ink",
   },
   {
     id: "colleague",
     label: "동료",
-    bg: designSystem.brand.amberFlame,
-    text: designSystem.brand.deepSpaceBlue,
+    className: "bg-gift-col text-ink",
   },
   {
     id: "friend",
     label: "친구",
-    bg: designSystem.brand.princetonOrange,
-    text: designSystem.brand.deepSpaceBlue,
+    className: "bg-gift-fri text-ink",
   },
 ];
 

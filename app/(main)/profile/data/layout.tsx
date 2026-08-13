@@ -1,0 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "데이터 관리" };
+
+export default function DataLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}

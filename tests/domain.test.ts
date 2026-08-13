@@ -19,6 +19,8 @@ function item(
     quantity: 1,
     memo: "",
     imageDataUrl: null,
+    plannedPurchaseDate: null,
+    giftTags: [],
     purchased: false,
     purchasedAt: null,
     sortOrder: 0,
@@ -83,6 +85,21 @@ describe("filterItems / sortItems", () => {
     assert.equal(filterItems(items, "all", "비타")[0]?.id, "2");
   });
 
+  it("filters gifts and searches production metadata", () => {
+    const rich = [
+      item({
+        id: "meta",
+        name: "초콜릿",
+        giftTags: ["friend"],
+        localName: "抹茶チョコレート",
+        expectedStores: ["돈키호테 시부야점"],
+      }),
+    ];
+    assert.equal(filterItems(rich, "gift", "")[0]?.id, "meta");
+    assert.equal(filterItems(rich, "all", "抹茶")[0]?.id, "meta");
+    assert.equal(filterItems(rich, "all", "시부야")[0]?.id, "meta");
+  });
+
   it("sorts by price and createdAt", () => {
     assert.deepEqual(
       sortItems(items, "price_desc").map((row) => row.id),
@@ -91,6 +108,25 @@ describe("filterItems / sortItems", () => {
     assert.deepEqual(
       sortItems(items, "createdAt_desc").map((row) => row.id),
       ["1", "2", "3"],
+    );
+  });
+
+  it("sorts multi-day items by their first canonical purchase date", () => {
+    const scheduled = [
+      item({
+        id: "late",
+        name: "B",
+        plannedPurchaseDates: ["2026-03-04"],
+      }),
+      item({
+        id: "early",
+        name: "A",
+        plannedPurchaseDates: ["2026-03-03", "2026-03-05"],
+      }),
+    ];
+    assert.deepEqual(
+      sortItems(scheduled, "day_asc").map((row) => row.id),
+      ["early", "late"],
     );
   });
 });

@@ -1,14 +1,15 @@
 "use client";
 
 import { use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/common/empty-state";
 import { ItemForm } from "@/features/shopping-items/components/item-form";
 import { useCreateItem } from "@/features/shopping-items/hooks/use-items";
+import { FormPageStatus } from "@/features/trips/components/form-page-status";
 import { useTrip } from "@/features/trips/hooks/use-trips";
+import { getSafeReturnTo, withReturnTo } from "@/lib/navigation/return-to";
 
 export default function NewItemPage({
   params,
@@ -17,44 +18,69 @@ export default function NewItemPage({
 }) {
   const { tripId } = use(params);
   const router = useRouter();
-  const { data: trip, isLoading } = useTrip(tripId);
+  const searchParams = useSearchParams();
+  const { data: trip, isLoading, isError, refetch } = useTrip(tripId);
   const createItem = useCreateItem(tripId);
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
+  const tripHref = withReturnTo(`/trips/${tripId}`, returnTo);
 
   if (isLoading) {
     return (
-      <AppShell>
-        <p className="py-16 text-center text-sm text-muted-foreground">
-          불러오는 중…
-        </p>
+      <AppShell surface="planning">
+        <PageHeader title="상품 추가" backHref={tripHref} />
+        <FormPageStatus
+          loading
+          title="여행 정보를 불러오고 있어요"
+          description="상품을 담을 쇼핑리스트를 확인하고 있어요."
+        />
+      </AppShell>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AppShell surface="planning">
+        <PageHeader title="상품 추가" backHref={tripHref} />
+        <FormPageStatus
+          announce="assertive"
+          title="쇼핑리스트를 불러오지 못했어요"
+          description="잠시 후 다시 시도해 주세요."
+          actionLabel="쇼핑리스트 다시 불러오기"
+          onAction={() => void refetch()}
+        />
       </AppShell>
     );
   }
 
   if (!trip) {
     return (
-      <AppShell>
-        <EmptyState
+      <AppShell surface="planning">
+        <PageHeader title="상품 추가" backHref={returnTo} />
+        <FormPageStatus
           title="여행을 찾을 수 없어요"
-          actionLabel="목록으로"
-          onAction={() => router.push("/")}
+          description="홈에서 상품을 담을 여행을 다시 선택해 주세요."
+          actionLabel="이전 화면으로 돌아가기"
+          onAction={() => router.push(returnTo)}
         />
       </AppShell>
     );
   }
 
   return (
-    <AppShell>
-      <PageHeader title="상품 추가" backHref={`/trips/${tripId}`} />
+    <AppShell surface="planning">
+      <PageHeader title="상품 추가" backHref={tripHref} />
       <ItemForm
-        submitLabel="추가"
-        onCancel={() => router.push(`/trips/${tripId}`)}
+        currency={trip.currency}
+        tripStartDate={trip.startDate}
+        tripEndDate={trip.endDate}
+        submitLabel="리스트에 상품 추가"
+        onCancel={() => router.push(tripHref)}
         onSubmit={async (values) => {
           try {
             await createItem.mutateAsync(values);
-            toast.success("상품을 추가했습니다");
-            router.push(`/trips/${tripId}`);
+            router.push(tripHref);
           } catch {
-            toast.error("저장에 실패했습니다");
+            toast.error("상품을 추가하지 못했어요. 다시 시도해 주세요");
           }
         }}
       />

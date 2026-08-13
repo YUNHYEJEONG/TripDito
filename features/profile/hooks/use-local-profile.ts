@@ -24,6 +24,7 @@ export function useUpdateLocalProfile() {
       profileRepository.update(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ["shots"] });
     },
   });
 }

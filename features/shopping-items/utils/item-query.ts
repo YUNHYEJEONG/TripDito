@@ -4,6 +4,7 @@ import type {
   ShoppingItem,
 } from "../types";
 import { lineTotal } from "@/features/budget/utils/calculate-budget";
+import { normalizePlannedPurchaseDates } from "./trip-day";
 
 export function filterItems(
   items: ShoppingItem[],
@@ -14,10 +15,15 @@ export function filterItems(
   return items.filter((item) => {
     if (filter === "pending" && item.purchased) return false;
     if (filter === "purchased" && !item.purchased) return false;
+    if (filter === "gift" && item.giftTags.length === 0) return false;
     if (!normalized) return true;
     return (
       item.name.toLowerCase().includes(normalized) ||
-      item.memo.toLowerCase().includes(normalized)
+      item.memo.toLowerCase().includes(normalized) ||
+      item.localName?.toLowerCase().includes(normalized) ||
+      item.expectedStores?.some((store) =>
+        store.toLowerCase().includes(normalized),
+      )
     );
   });
 }
@@ -25,6 +31,13 @@ export function filterItems(
 export function sortItems(items: ShoppingItem[], sort: ItemSort) {
   const next = [...items];
   switch (sort) {
+    case "day_asc":
+      return next.sort((a, b) => {
+        const aDate = normalizePlannedPurchaseDates(a)[0] ?? "9999-12-31";
+        const bDate = normalizePlannedPurchaseDates(b)[0] ?? "9999-12-31";
+        if (aDate !== bDate) return aDate.localeCompare(bDate);
+        return a.sortOrder - b.sortOrder;
+      });
     case "price_desc":
       return next.sort((a, b) => lineTotal(b) - lineTotal(a));
     case "price_asc":

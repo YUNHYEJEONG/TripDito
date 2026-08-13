@@ -2,28 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
-import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { StorageUsageBanner } from "@/components/common/storage-usage-banner";
 import { Button } from "@/components/ui/button";
 import {
-  GrayCard,
-  GrayCardDescription,
-  GrayCardTitle,
-} from "@/components/ui/gray-card";
-import { TripCard } from "@/features/trips/components/trip-card";
-import { tripKeys, useTrips } from "@/features/trips/hooks/use-trips";
-import { itemKeys, useItems } from "@/features/shopping-items/hooks/use-items";
-import { shotKeys } from "@/features/shots/hooks/use-shots";
-import { scrapKeys } from "@/features/shots/hooks/use-scraps";
-import { profileKeys } from "@/features/profile/hooks/use-local-profile";
+  TripCard,
+  type TripCardStatus,
+} from "@/features/trips/components/trip-card";
+import { useTrips } from "@/features/trips/hooks/use-trips";
+import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { calculateBudget } from "@/features/budget/utils/calculate-budget";
-import { seedDemoData } from "@/lib/storage/seed-demo";
-import { appConfig } from "@/config/app";
+import { replaceWithDemoData } from "@/features/demo";
+import { todayIsoDate } from "@/features/home/utils/get-upcoming-trip";
+import { withReturnTo } from "@/lib/navigation/return-to";
+import { createAccountScopedStorage } from "@/lib/storage/local-storage";
+import { useHydrated } from "@/lib/react/use-hydrated";
 
 function TripCardWithProgress({
   tripId,
@@ -38,76 +34,127 @@ function TripCardWithProgress({
 }
 
 export default function MyTripsPage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: trips = [], isLoading } = useTrips();
+  const today = todayIsoDate();
+  const tripSections: Array<{
+    status: TripCardStatus;
+    title: string;
+    trips: typeof trips;
+  }> = [
+    {
+      status: "live",
+      title: "진행 중",
+      trips: trips
+        .filter(
+          (trip) => trip.startDate <= today && trip.endDate >= today,
+        )
+        .sort((a, b) => a.endDate.localeCompare(b.endDate)),
+    },
+    {
+      status: "prep",
+      title: "예정",
+      trips: trips
+        .filter((trip) => trip.startDate > today)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate)),
+    },
+    {
+      status: "complete",
+      title: "완료",
+      trips: trips
+        .filter((trip) => trip.endDate < today)
+        .sort((a, b) => b.endDate.localeCompare(a.endDate)),
+    },
+  ];
 
   function handleSeedDemo() {
-    const { trip } = seedDemoData();
-    void queryClient.invalidateQueries({ queryKey: tripKeys.all });
-    void queryClient.invalidateQueries({ queryKey: itemKeys.all });
-    void queryClient.invalidateQueries({ queryKey: shotKeys.all });
-    void queryClient.invalidateQueries({ queryKey: scrapKeys.all });
-    void queryClient.invalidateQueries({ queryKey: profileKeys.all });
-    toast.success("데모 여행을 불러왔습니다");
-    router.push(`/trips/${trip.id}`);
+    const fixture = replaceWithDemoData(
+      createAccountScopedStorage(window.localStorage),
+    );
+    const trip = fixture.trips.find(
+      (candidate) => candidate.id === fixture.activeTripId,
+    );
+    if (!trip) return;
+    void queryClient.invalidateQueries();
+    router.push(withReturnTo(`/trips/${trip.id}`, "/my-trips"));
   }
 
   return (
     <AppShell withBottomNav>
-      <PageHeader title="내여행" actions={<HeaderNavActions />} />
+      <PageHeader title="전체 여행 관리" backHref="/home" />
 
-      <GrayCard className="mb-4" size="sm">
-        <div className="flex items-start gap-2.5">
-          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-background">
-            <Camera className="size-4 text-primary" />
+      <main className="flex flex-1 flex-col pb-20">
+        <StorageUsageBanner className="mb-4" />
+
+        {!hydrated || isLoading ? (
+          <p
+            className="py-10 text-center text-[13px] text-muted-foreground"
+            role="status"
+          >
+            여행을 불러오는 중…
+          </p>
+        ) : trips.length === 0 ? (
+          <EmptyState
+            title="아직 여행이 없어요"
+            description="첫 여행을 만들거나, 데모 데이터로 바로 체험해 보세요."
+            actionLabel="여행 만들기"
+            onAction={() =>
+              router.push(withReturnTo("/trips/new", "/my-trips"))
+            }
+            secondaryLabel="데모 불러오기"
+            onSecondary={handleSeedDemo}
+          />
+        ) : (
+          <div className="flex flex-col gap-8">
+            {tripSections.map((section) =>
+              section.trips.length > 0 ? (
+                <section
+                  key={section.status}
+                  aria-labelledby={`trip-section-${section.status}`}
+                >
+                  <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+                    <h2
+                      id={`trip-section-${section.status}`}
+                      className="text-[17px] font-semibold text-ink"
+                    >
+                      {section.title}
+                    </h2>
+                    <span className="text-[12px] font-medium text-ink-2">
+                      {section.trips.length}개
+                    </span>
+                  </div>
+                  <div className="grid gap-2">
+                    {section.trips.map((trip) => (
+                      <TripCardWithProgress key={trip.id} tripId={trip.id}>
+                        {(progress) => (
+                          <TripCard trip={trip} progress={progress} />
+                        )}
+                      </TripCardWithProgress>
+                    ))}
+                  </div>
+                </section>
+              ) : null,
+            )}
           </div>
-          <div className="min-w-0">
-            <GrayCardTitle className="text-[14px]">
-              사진으로 쇼핑 리스트 만들기
-            </GrayCardTitle>
-            <GrayCardDescription className="mt-0.5">
-              {appConfig.tagline}. 여행 중 산 물건을 찍어 바로 체크하세요.
-            </GrayCardDescription>
-          </div>
+        )}
+      </main>
+
+      {hydrated && !isLoading && trips.length > 0 ? (
+        <div className="fixed right-[max(1rem,calc((100dvw-480px)/2+1rem))] bottom-[calc(var(--tab-bar-height)+1rem+env(safe-area-inset-bottom))] z-30">
+          <Button
+            size="icon-lg"
+            aria-label="새 여행"
+            className="size-14 rounded-full shadow-float [&_svg:not([class*='size-'])]:size-7"
+            onClick={() =>
+              router.push(withReturnTo("/trips/new", "/my-trips"))
+            }
+          >
+            <Plus strokeWidth={2.5} />
+          </Button>
         </div>
-      </GrayCard>
-
-      <StorageUsageBanner className="mb-4" />
-
-      {isLoading ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
-      ) : trips.length === 0 ? (
-        <EmptyState
-          title="아직 여행이 없어요"
-          description="첫 여행을 만들거나, 데모 데이터로 바로 체험해 보세요."
-          actionLabel="여행 만들기"
-          onAction={() => router.push("/trips/new")}
-          secondaryLabel="데모 불러오기"
-          onSecondary={handleSeedDemo}
-        />
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {trips.map((trip) => (
-            <TripCardWithProgress key={trip.id} tripId={trip.id}>
-              {(progress) => <TripCard trip={trip} progress={progress} />}
-            </TripCardWithProgress>
-          ))}
-        </div>
-      )}
-
-      <div className="fixed right-4 bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] z-30 md:right-[max(1rem,calc((100vw-720px)/2+1rem))] lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]">
-        <Button
-          size="icon-lg"
-          aria-label="새 여행"
-          className="size-14 rounded-full shadow-md [&_svg:not([class*='size-'])]:size-7"
-          onClick={() => router.push("/trips/new")}
-        >
-          <Plus strokeWidth={2.5} />
-        </Button>
-      </div>
+      ) : null}
     </AppShell>
   );
 }

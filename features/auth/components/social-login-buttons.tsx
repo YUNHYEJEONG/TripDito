@@ -10,7 +10,13 @@ type SocialStatus = {
   naver: boolean;
 };
 
-export function SocialLoginButtons({ className }: { className?: string }) {
+export function SocialLoginButtons({
+  className,
+  callbackUrl = "/profile",
+}: {
+  className?: string;
+  callbackUrl?: string;
+}) {
   const [status, setStatus] = useState<SocialStatus | null>(null);
   const [pending, setPending] = useState<"kakao" | "naver" | null>(null);
 
@@ -34,41 +40,59 @@ export function SocialLoginButtons({ className }: { className?: string }) {
     if (!ready) {
       toast.error(
         provider === "kakao"
-          ? "카카오 로그인을 쓰려면 .env.local에 AUTH_KAKAO_ID, AUTH_KAKAO_SECRET을 설정하세요"
-          : "네이버 로그인을 쓰려면 .env.local에 AUTH_NAVER_ID, AUTH_NAVER_SECRET을 설정하세요",
+          ? "현재 카카오 로그인을 이용할 수 없어요. 이메일로 계속해 주세요."
+          : "현재 네이버 로그인을 이용할 수 없어요. 이메일로 계속해 주세요.",
       );
       return;
     }
 
     setPending(provider);
     try {
-      await signIn(provider, { callbackUrl: "/profile" });
+      await signIn(provider, { callbackUrl });
     } catch {
-      toast.error("소셜 로그인을 시작할 수 없습니다");
+      toast.error("소셜 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
       setPending(null);
     }
   }
 
+  const readyProviders = status
+    ? (["kakao", "naver"] as const).filter((provider) => status[provider])
+    : [];
+
+  if (readyProviders.length === 0) return null;
+
   return (
-    <div className={cn("flex flex-col gap-2.5", className)}>
-      <button
-        type="button"
-        disabled={pending != null}
-        onClick={() => void handleSocial("naver")}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#03C75A] text-[15px] font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-50"
-      >
-        <NaverMark />
-        네이버로 시작하기
-      </button>
-      <button
-        type="button"
-        disabled={pending != null}
-        onClick={() => void handleSocial("kakao")}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-[15px] font-semibold text-[#191919] transition-opacity hover:opacity-95 disabled:opacity-50"
-      >
-        <KakaoMark />
-        카카오로 시작하기
-      </button>
+    <div
+      className={cn("flex flex-col gap-3", className)}
+      aria-busy={pending != null}
+    >
+      {readyProviders.map((provider) => (
+        <button
+          key={provider}
+          type="button"
+          disabled={pending != null}
+          onClick={() => void handleSocial(provider)}
+          className={cn(
+            "flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-semibold transition-opacity duration-[var(--dur-fast)] hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-wait disabled:opacity-55",
+            provider === "kakao"
+              ? "bg-[var(--brand-kakao)] text-[var(--brand-kakao-ink)]"
+              : "bg-[var(--brand-naver)] text-[var(--brand-naver-ink)]",
+          )}
+        >
+          {provider === "kakao" ? <KakaoMark /> : <NaverMark />}
+          {pending === provider
+            ? `${provider === "kakao" ? "카카오" : "네이버"}로 연결 중…`
+            : `${provider === "kakao" ? "카카오" : "네이버"}로 계속`}
+        </button>
+      ))}
+
+      <div className="flex items-center gap-3" role="separator">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-[12px] font-medium text-ink-2">
+          이메일로 계속
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
     </div>
   );
 }
@@ -77,7 +101,7 @@ function NaverMark() {
   return (
     <span
       aria-hidden
-      className="flex size-5 items-center justify-center rounded-[3px] bg-white text-[11px] font-black leading-none text-[#03C75A]"
+      className="flex size-5 items-center justify-center rounded-xs bg-paper text-[11px] leading-none font-black text-[var(--brand-naver)]"
     >
       N
     </span>

@@ -17,6 +17,17 @@ describe("parseTaxFreeCouponHtml", () => {
     assert.equal(coupons[0]?.href, "https://taxfreecoupon.com/34");
     assert.equal(coupons[0]?.benefit, "17% OFF");
     assert.ok(coupons[1]?.regions.includes("도쿄"));
+
+    const reversed = parseTaxFreeCouponHtml(
+      html.replace(
+        /<li>([\s\S]*?)<\/li>\s*<li>([\s\S]*?)<\/li>/,
+        "<li>$2</li><li>$1</li>",
+      ),
+    ).coupons;
+    assert.equal(
+      coupons.find((coupon) => coupon.href.includes("/34"))?.id,
+      reversed.find((coupon) => coupon.href.includes("/34"))?.id,
+    );
   });
 });
 

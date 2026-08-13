@@ -15,28 +15,53 @@ export function PlaceBottomSheet({
   open,
   onClose,
   children,
+  footer,
 }: {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   const [snap, setSnap] = useState<Snap>("half");
   const sheetRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dragStartY = useRef<number | null>(null);
   const dragStartSnap = useRef<Snap>("half");
+  const handleWasDragged = useRef(false);
 
   useEffect(() => {
-    if (open) {
-      setSnap("half");
-      if (scrollRef.current) scrollRef.current.scrollTop = 0;
-    }
-  }, [open]);
+    if (!open) return;
+
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const frame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSnap("half");
+        if (scrollRef.current) scrollRef.current.scrollTop = 0;
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKeyDown);
+      previousFocus?.focus();
+    };
+  }, [onClose, open]);
+
+  const closeSheet = useCallback(() => {
+    setSnap("half");
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    onClose();
+  }, [onClose]);
 
   const onHandlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       dragStartY.current = e.clientY;
       dragStartSnap.current = snap;
+      handleWasDragged.current = false;
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
     [snap],
@@ -47,6 +72,7 @@ export function PlaceBottomSheet({
       if (dragStartY.current == null) return;
       const dy = e.clientY - dragStartY.current;
       dragStartY.current = null;
+      handleWasDragged.current = Math.abs(dy) > 8;
 
       if (dy < -48) {
         setSnap("full");
@@ -54,10 +80,10 @@ export function PlaceBottomSheet({
       }
       if (dy > 48) {
         if (dragStartSnap.current === "full") setSnap("half");
-        else onClose();
+        else closeSheet();
       }
     },
-    [onClose],
+    [closeSheet],
   );
 
   const onScroll = useCallback(() => {
@@ -76,12 +102,7 @@ export function PlaceBottomSheet({
         setSnap("full");
         return;
       }
-      if (
-        snap === "full" &&
-        e.deltaY < 0 &&
-        el &&
-        el.scrollTop <= 0
-      ) {
+      if (snap === "full" && e.deltaY < 0 && el && el.scrollTop <= 0) {
         setSnap("half");
       }
     },
@@ -93,41 +114,57 @@ export function PlaceBottomSheet({
       ref={sheetRef}
       role="dialog"
       aria-modal="false"
+      aria-label="장소 정보"
       aria-hidden={!open}
+      inert={!open}
       className={cn(
-        "absolute inset-x-0 bottom-0 z-30 flex w-full max-w-none flex-col bg-white shadow-[0_-8px_28px_rgba(0,0,0,0.18)]",
-        "rounded-t-[1.25rem] transition-[height,top,transform] duration-300 ease-out",
+        "absolute inset-x-0 bottom-0 z-30 flex w-full max-w-none flex-col bg-background shadow-float",
+        "rounded-t-2xl transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out)]",
         "touch-pan-y",
         open ? "translate-y-0" : "pointer-events-none translate-y-[110%]",
-        // full: 헤더와 시트 사이 소폭 여유 / half: 절반
         snap === "full" ? "top-3 h-auto" : "top-auto h-[52%]",
       )}
       style={{ colorScheme: "only light" }}
       onWheel={onWheel}
+      onTransitionEnd={(event) => {
+        if (event.target !== sheetRef.current || open) return;
+        setSnap("half");
+        if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      }}
     >
-      {/* grabber + close */}
-      <div
-        className="relative flex shrink-0 cursor-grab touch-none flex-col items-center active:cursor-grabbing"
-        onPointerDown={onHandlePointerDown}
-        onPointerUp={onHandlePointerUp}
-        onPointerCancel={() => {
-          dragStartY.current = null;
-        }}
-      >
-        <div className="flex w-full items-center justify-center pt-2.5 pb-1">
-          <div className="h-1 w-10 rounded-full bg-[#DADCE0]" aria-hidden />
-        </div>
+      <div className="relative flex min-h-12 shrink-0 items-center justify-center">
         <button
           type="button"
-          aria-label="닫기"
-          className="absolute top-2 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-[#F1F3F4] text-[#3C4043] transition-colors hover:bg-[#E8EAED]"
+          aria-label={snap === "half" ? "장소 정보 펼치기" : "장소 정보 접기"}
+          className="flex h-11 w-16 cursor-grab touch-none items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus active:cursor-grabbing"
+          onClick={() => {
+            if (handleWasDragged.current) {
+              handleWasDragged.current = false;
+              return;
+            }
+            setSnap((current) => (current === "half" ? "full" : "half"));
+          }}
+          onPointerDown={onHandlePointerDown}
+          onPointerUp={onHandlePointerUp}
+          onPointerCancel={() => {
+            dragStartY.current = null;
+            handleWasDragged.current = false;
+          }}
+        >
+          <span className="h-1 w-10 rounded-full bg-paper-3" aria-hidden />
+        </button>
+        <button
+          ref={closeButtonRef}
+          type="button"
+          aria-label="장소 정보 닫기"
+          className="absolute top-1 right-2 z-20 flex size-11 items-center justify-center rounded-full bg-secondary text-foreground transition-colors duration-[var(--dur-fast)] hover:bg-paper-3 active:bg-paper-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           onClick={(e) => {
             e.stopPropagation();
-            onClose();
+            closeSheet();
           }}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <X className="size-4" strokeWidth={2.25} />
+          <X className="size-5" strokeWidth={1.8} />
         </button>
       </div>
 
@@ -138,6 +175,11 @@ export function PlaceBottomSheet({
       >
         {children}
       </div>
+      {footer ? (
+        <div className="shrink-0 border-t border-rule bg-paper px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }

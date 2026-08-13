@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { appConfig } from "@/config/app";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +35,10 @@ export function BrandLogo({
   const showLogo = variant === "wordmark" || variant === "full";
 
   const content = (
-    <span className={cn("inline-flex items-center gap-0.5", className)}>
+    <span className={cn("inline-flex items-center gap-1", className)}>
       {showSymbol ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={appConfig.brand.symbolSrc}
+        <Image
+          src="/brand/symbol.png"
           alt=""
           width={SYMBOL_SIZE[size]}
           height={SYMBOL_SIZE[size]}
@@ -46,12 +46,13 @@ export function BrandLogo({
         />
       ) : null}
       {showLogo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={appConfig.brand.logoSrc}
-          alt={appConfig.name}
-          style={{ height: LOGO_HEIGHT[size] }}
-          className="w-auto max-w-[min(180px,52vw)] object-contain object-left"
+        <Image
+          src="/brand/logo.png"
+          alt=""
+          width={Math.round((LOGO_HEIGHT[size] * 821) / 324)}
+          height={LOGO_HEIGHT[size]}
+          loading="eager"
+          className="w-auto object-contain object-left"
         />
       ) : null}
       <span className="sr-only">{appConfig.name}</span>
@@ -63,7 +64,7 @@ export function BrandLogo({
   return (
     <Link
       href={href}
-      className="inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+      className="inline-flex min-h-11 items-center rounded-lg px-1 outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
       aria-label={appConfig.name}
     >
       {content}

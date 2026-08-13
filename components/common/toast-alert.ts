@@ -2,13 +2,13 @@
 
 import { toast } from "sonner";
 
-const TOAST_DURATION_MS = 2000;
+const TOAST_DURATION_MS = 5000;
 
 /**
  * 공통 액션 결과 토스트
  * - 상단 노출 (시트/상세와 겹치지 않음)
  * - 앞 아이콘 없음
- * - 닫기 버튼 없음, 약 2초 후 자동 사라짐
+ * - 충분히 읽을 수 있도록 5초 동안 유지
  */
 export function showToastAlert(message: string) {
   return toast(message, {

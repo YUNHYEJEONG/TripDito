@@ -41,6 +41,7 @@ export function useUpdateTrip(id: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: tripKeys.all });
       void queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 }
@@ -56,6 +57,7 @@ export function useDeleteTrip() {
       void queryClient.invalidateQueries({ queryKey: tripKeys.all });
       void queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
       void queryClient.invalidateQueries({ queryKey: ["items"] });
+      void queryClient.invalidateQueries({ queryKey: ["shots"] });
     },
   });
 }

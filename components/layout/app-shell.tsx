@@ -1,27 +1,38 @@
 import { cn } from "@/lib/utils";
 
+export type AppShellSurface = "compact" | "feed" | "planning";
+
 /**
- * 반응형 셸
- * - 최소 320px
- * - 모바일 ~767 / 태블릿 768~1023 / 데스크톱 1024+
- * - 콘텐츠 최대폭: 모바일 480 · 태블릿 720 · 데스크톱 960
+ * 모든 viewport에서 480px 모바일 앱 레일을 유지하는 공통 화면 셸.
+ * `surface`는 기존 호출부의 의미 표시에만 남기고 너비에는 영향을 주지 않는다.
  */
 export function AppShell({
   children,
   className,
   withBottomNav = false,
+  mode,
+  surface = "compact",
 }: {
   children: React.ReactNode;
   className?: string;
-  /** 하단 탭바(56px) + safe area 여유 패딩 */
+  /** 하단 탭바 + safe area 여유 패딩 */
   withBottomNav?: boolean;
+  /** 홈 전용 여행 단계. 다른 화면에는 전달하지 않는다. */
+  mode?: "idle" | "prep" | "live" | "after";
+  /** 기존 호출부 호환용 화면 성격 표식 */
+  surface?: AppShellSurface;
 }) {
+  const contextualMode = mode && mode !== "idle";
+
   return (
     <div
+      data-mode={contextualMode ? mode : undefined}
+      data-surface={surface}
       className={cn(
-        "mx-auto flex min-h-full w-full min-w-[320px] max-w-[480px] flex-1 flex-col px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5 md:max-w-[720px] md:px-6 lg:max-w-[960px] lg:px-8",
+        "app-rail mx-auto flex min-h-dvh w-full max-w-[var(--app-rail-max)] flex-1 flex-col bg-canvas px-[var(--app-gutter)] pt-[calc(env(safe-area-inset-top)+0.75rem)]",
+        contextualMode && "bg-mode-canvas transition-colors duration-200",
         withBottomNav
-          ? "pb-[calc(3.5rem+1.25rem+env(safe-area-inset-bottom))]"
+          ? "pb-[calc(var(--tab-bar-height)+var(--app-bottom-gap)+env(safe-area-inset-bottom))]"
           : "pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
         className,
       )}

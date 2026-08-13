@@ -18,8 +18,8 @@ function GrayCard({
       data-size={size}
       className={cn(
         "flex flex-col overflow-hidden rounded-2xl bg-surface-gray text-surface-gray-foreground",
-        size === "default" && "gap-2.5 p-4",
-        size === "sm" && "gap-1.5 p-3",
+        size === "default" && "gap-2 p-4",
+        size === "sm" && "gap-2 p-3",
         className,
       )}
       {...props}

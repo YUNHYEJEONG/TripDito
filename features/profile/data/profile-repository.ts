@@ -2,9 +2,37 @@ import { getJson, setJson } from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
 import { EMPTY_PROFILE } from "../constants";
 import type { LocalProfile } from "../schema";
+import type { Shot } from "@/features/shots/schema";
 
 function readProfile(): LocalProfile {
   return getJson<LocalProfile>(storageKeys.profile, EMPTY_PROFILE);
+}
+
+function syncProfileToShots(profile: LocalProfile) {
+  const shots = getJson<Shot[]>(storageKeys.shots, []);
+  let changed = false;
+  const next = shots.map((shot) => {
+    const ownShot = shot.authorId === profile.id;
+    const comments = (shot.comments ?? []).map((comment) => {
+      if (comment.authorId !== profile.id) return comment;
+      if (comment.authorNickname === profile.nickname) return comment;
+      changed = true;
+      return { ...comment, authorNickname: profile.nickname };
+    });
+    if (!ownShot && comments === shot.comments) return shot;
+    if (ownShot) changed = true;
+    return {
+      ...shot,
+      ...(ownShot
+        ? {
+            authorNickname: profile.nickname,
+            authorAvatarDataUrl: profile.avatarDataUrl,
+          }
+        : {}),
+      comments,
+    };
+  });
+  if (changed) setJson(storageKeys.shots, next);
 }
 
 export type ProfileUpdateInput = {
@@ -38,7 +66,7 @@ export const profileRepository = {
     const current = this.get();
     if (input.nickname !== undefined) {
       const next = input.nickname.trim();
-      if (!next) throw new Error("닉네임을 입력하세요");
+      if (!next) throw new Error("닉네임을 입력해 주세요");
     }
 
     const updated: LocalProfile = {
@@ -54,6 +82,7 @@ export const profileRepository = {
       updatedAt: new Date().toISOString(),
     };
     setJson(storageKeys.profile, updated);
+    syncProfileToShots(updated);
     return updated;
   },
 };

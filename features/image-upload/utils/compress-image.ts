@@ -17,7 +17,7 @@ function loadImage(file: File) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("이미지를 불러오지 못했습니다"));
+      reject(new Error("이미지를 불러오지 못했어요"));
     };
     img.src = url;
   });
@@ -34,7 +34,7 @@ export async function compressImageFile(file: File): Promise<CompressedImage> {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas를 사용할 수 없습니다");
+  if (!ctx) throw new Error("이미지 처리 기능을 사용할 수 없어요");
   ctx.drawImage(img, 0, 0, width, height);
 
   const dataUrl = canvas.toDataURL("image/jpeg", appConfig.imageQuality);

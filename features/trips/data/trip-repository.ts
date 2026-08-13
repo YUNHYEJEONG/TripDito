@@ -5,7 +5,12 @@ import type { Trip, TripFormValues } from "../schema";
 import { itemRepository } from "@/features/shopping-items/data/item-repository";
 
 function readTrips(): Trip[] {
-  return getJson<Trip[]>(storageKeys.trips, []);
+  return getJson<Trip[]>(storageKeys.trips, []).map((trip) => ({
+    ...trip,
+    budgetMode:
+      trip.budgetMode ?? (trip.budget > 0 ? "input" : "unknown"),
+    tripTags: Array.isArray(trip.tripTags) ? trip.tripTags : [],
+  }));
 }
 
 function writeTrips(trips: Trip[]) {
@@ -38,7 +43,16 @@ export const tripRepository = {
   update(id: string, input: TripFormValues): Trip {
     const trips = readTrips();
     const index = trips.findIndex((trip) => trip.id === id);
-    if (index < 0) throw new Error("여행을 찾을 수 없습니다");
+    if (index < 0) throw new Error("여행을 찾을 수 없어요");
+    const current = trips[index];
+    if (
+      current.currency !== input.currency &&
+      itemRepository.listByTrip(id).length > 0
+    ) {
+      throw new Error(
+        "상품이 있는 여행은 기준 통화를 바꿀 수 없어요. 상품을 먼저 정리해 주세요.",
+      );
+    }
     const updated: Trip = {
       ...trips[index],
       ...input,
@@ -46,6 +60,17 @@ export const tripRepository = {
     };
     trips[index] = updated;
     writeTrips(trips);
+    if (
+      current.startDate !== input.startDate ||
+      current.endDate !== input.endDate
+    ) {
+      itemRepository.rebasePlannedDates(
+        id,
+        current.startDate,
+        input.startDate,
+        input.endDate,
+      );
+    }
     return updated;
   },
 

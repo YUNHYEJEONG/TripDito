@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { authRepository } from "../data/auth-repository";
 import { accountRepository } from "../data/account-repository";
 import { profileRepository } from "@/features/profile/data/profile-repository";
@@ -21,9 +22,11 @@ export function useAuthSession() {
 
 export function useIsLoggedIn() {
   const { data, isLoading } = useAuthSession();
+  const { status } = useSession();
   return {
-    isLoggedIn: Boolean(data?.isLoggedIn),
-    isLoading,
+    isLoggedIn:
+      Boolean(data?.isLoggedIn) || status === "authenticated",
+    isLoading: isLoading || status === "loading",
   };
 }
 
@@ -33,15 +36,18 @@ export function useLogin() {
     mutationFn: async (input?: {
       provider?: AuthProvider;
       email?: string | null;
+      accountId?: string | null;
     }) => {
       return authRepository.login({
         provider: input?.provider,
         email: input?.email,
+        accountId: input?.accountId,
       });
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
-      void queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    onSuccess: async () => {
+      // Every local repository is account-scoped. Reset all cached user data
+      // together so a previous account never flashes in the next session.
+      await queryClient.resetQueries();
     },
   });
 }
@@ -71,17 +77,21 @@ export function useEmailSignup() {
       nickname: string;
       email: string;
       password: string;
+      homeCountry: string;
     }) => {
       const account = await accountRepository.create(input);
-      // 최초 회원가입 후 프로필은 미등록 상태
-      profileRepository.clear();
-      return login.mutateAsync({
+      // 먼저 계정 scope를 확정해 guest 여행을 한 번만 인계한 뒤, 새 계정의
+      // 프로필에 가입 시 약속한 닉네임을 기록한다.
+      const session = await login.mutateAsync({
         provider: "email",
         email: account.email,
       });
+      profileRepository.clear();
+      profileRepository.update({ nickname: account.nickname });
+      return session;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    onSuccess: async () => {
+      await queryClient.resetQueries({ queryKey: profileKeys.all });
     },
   });
 }
@@ -98,8 +108,8 @@ export function useLogout() {
       }
       return session;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.all });
+    onSuccess: async () => {
+      await queryClient.resetQueries();
     },
   });
 }

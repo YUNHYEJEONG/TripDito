@@ -8,7 +8,7 @@
 - Tailwind CSS + shadcn/ui
 - React Hook Form + Zod
 - TanStack Query
-- Local Storage (인증·DB 없음)
+- Local Storage 기반 PoC 데이터 + 이메일/선택적 OAuth 세션
 
 ## 시작
 
@@ -29,11 +29,23 @@ npm run dev
 1. 홈에서 **데모 불러오기** (또는 새 여행 생성)
 2. 쇼핑 리스트에서 체크박스로 구매 완료 토글
 3. 진행률·남은 예산 변화 확인
-4. **사진으로 추가** → 이미지 선택 → **데모 분석** → 리스트에 추가
+4. **사진으로 추가** → 이미지 선택 → 상품 분석 → 결과 검토 → 리스트에 추가
 5. 검색·필터·정렬로 목록 좁히기
 6. 여행/상품 수정·삭제
 
-데이터는 브라우저 Local Storage에만 저장됩니다.
+데이터는 브라우저 Local Storage에만 저장되며 로그인 계정별로 분리됩니다.
+
+## 운영 환경 변수
+
+- `AUTH_SECRET`: 운영 배포에서 반드시 설정할 NextAuth 암호화 키
+- `AUTH_KAKAO_ID`, `AUTH_KAKAO_SECRET`: 둘 다 있을 때만 카카오 버튼 노출
+- `AUTH_NAVER_ID`, `AUTH_NAVER_SECRET`: 둘 다 있을 때만 네이버 버튼 노출
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: 없거나 인증 실패 시 정직한 데모 지도 사용
+- `KOREAEXIM_AUTH_KEY`: 은행 고시 환율. 없으면 지원 통화에 한해 공개 환율 폴백
+- 이미지 분석·쿠팡 비교 키는 아래 설정 문서 참고
+
+`NEXT_PUBLIC_ENABLE_DEMO_DATA=true`는 명시적인 프리뷰 빌드에서만 사용하세요.
+일반 운영 방문자는 자동으로 데모 계정이나 여행이 만들어지지 않습니다.
 
 ## 주요 화면
 
@@ -54,7 +66,7 @@ npm run dev
 features/trips
 features/shopping-items
 features/image-upload
-features/image-analysis   # Mock AI (교체 가능)
+features/image-analysis   # Gemini/OpenAI/Lens + 정직한 파일명 초안 fallback
 features/budget
 components/{ui,common,layout}
 lib/storage
@@ -74,3 +86,6 @@ docs/plan
 화이트 배경 + 토스형 액션 블루 `#3182F6`. 회색 설명 카드 `GrayCard` 추가.  
 상세 규정: [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md)
 
+이미지 분석·쿠팡 비교 환경 설정은
+[`docs/plan/IMAGE_ANALYSIS_SETUP.md`](./docs/plan/IMAGE_ANALYSIS_SETUP.md)를
+참고하세요.

@@ -1,4 +1,5 @@
 import { isKoreaEximSupported } from "@/features/fx/lib/koreaexim";
+import { isFrankfurterSupported } from "@/features/fx/lib/frankfurter";
 
 /** 통화 → 국기 에셋 (public/flags) */
 const FLAG_BY_CURRENCY: Record<string, string> = {
@@ -15,5 +16,7 @@ export function getCurrencyFlagSrc(currency: string): string | null {
 }
 
 export function isFxSupported(currency: string): boolean {
-  return isKoreaEximSupported(currency);
+  return (
+    isKoreaEximSupported(currency) || isFrankfurterSupported(currency)
+  );
 }

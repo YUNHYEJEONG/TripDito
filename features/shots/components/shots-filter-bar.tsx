@@ -23,6 +23,7 @@ export function ShotsFilterBar({
   onSortChange,
   destinationOpen,
   onDestinationOpenChange,
+  destinations,
 }: {
   shots: Shot[];
   /** 여행지 Sheet로 선택한 값 — 인기 칩과 분리 */
@@ -35,6 +36,7 @@ export function ShotsFilterBar({
   onSortChange: (value: ShotSort) => void;
   destinationOpen?: boolean;
   onDestinationOpenChange?: (open: boolean) => void;
+  destinations?: ReadonlyArray<{ city: string; country: string }>;
 }) {
   const [internalDestOpen, setInternalDestOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -48,17 +50,19 @@ export function ShotsFilterBar({
   useMouseDragScroll(scrollerRef, true, { snap: false, wheel: true });
 
   return (
-    <div className="sticky top-12 z-10 -mx-4 bg-canvas/95 px-4 pt-0.5 pb-1.5 backdrop-blur-md sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
+    <div className="sticky top-[calc(env(safe-area-inset-top)+3rem)] z-20 -mx-4 bg-paper px-4 py-2">
       <div
         ref={scrollerRef}
         className={cn(
-          "flex min-w-0 touch-pan-x items-center gap-1 overflow-x-auto overscroll-x-contain pb-0.5",
+          "flex min-w-0 touch-auto items-center gap-2 overflow-x-auto overscroll-x-contain py-1",
           "cursor-grab [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         )}
       >
         <FilterChip
           scrollerRef={scrollerRef}
           active={Boolean(sheetDestination)}
+          popup="dialog"
+          expanded={destOpen}
           onClick={() => setDestOpen(true)}
         >
           {sheetDestination ? sheetDestination.city : "여행지"}
@@ -68,6 +72,8 @@ export function ShotsFilterBar({
         <FilterChip
           scrollerRef={scrollerRef}
           active={sort !== "newest"}
+          popup="dialog"
+          expanded={sortOpen}
           onClick={() => setSortOpen(true)}
         >
           {SHOT_SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "정렬"}
@@ -83,6 +89,7 @@ export function ShotsFilterBar({
               key={`${dest.country}-${dest.city}`}
               scrollerRef={scrollerRef}
               active={active}
+              pressed={active}
               onClick={() =>
                 onHotDestinationChange(
                   active
@@ -102,6 +109,7 @@ export function ShotsFilterBar({
         onOpenChange={setDestOpen}
         value={sheetDestination}
         onSelect={onSheetDestinationChange}
+        destinations={destinations}
       />
       <SortFilterSheet
         open={sortOpen}
@@ -116,26 +124,35 @@ export function ShotsFilterBar({
 function FilterChip({
   children,
   active,
+  pressed,
+  popup,
+  expanded,
   onClick,
   scrollerRef,
 }: {
   children: React.ReactNode;
   active?: boolean;
+  pressed?: boolean;
+  popup?: "dialog";
+  expanded?: boolean;
   onClick: () => void;
   scrollerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
     <button
       type="button"
+      aria-pressed={pressed}
+      aria-haspopup={popup}
+      aria-expanded={popup ? expanded : undefined}
       onClick={() => {
         if (scrollerRef.current?.dataset.dragMoved) return;
         onClick();
       }}
       className={cn(
-        "inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-[13px] font-medium leading-none whitespace-nowrap transition-colors",
+        "inline-flex h-11 shrink-0 items-center gap-1 rounded-full border px-3 text-[13px] font-semibold leading-none whitespace-nowrap outline-none transition-colors duration-120 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
         active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-[#E5E8EB] bg-background text-foreground",
+          ? "border-ink bg-ink text-paper hover:bg-ink-2 active:bg-ink-2"
+          : "border-rule bg-paper text-ink hover:bg-paper-2 active:bg-paper-2",
       )}
     >
       {children}

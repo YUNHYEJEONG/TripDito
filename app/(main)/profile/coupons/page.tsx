@@ -11,25 +11,37 @@ export default function ProfileCouponsPage() {
 
   return (
     <AppShell withBottomNav>
-      <PageHeader title="내가 받은 쿠폰" backHref="/profile" />
+      <PageHeader title="쿠폰" backHref="/profile" />
 
-      {isLoading ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
-      ) : coupons.length === 0 ? (
-        <EmptyState
-          title="받은 쿠폰이 없어요"
-          description="쇼핑 탭에서 쿠폰을 받으면 여기에 모여요."
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-[13px] text-muted-foreground">
-            총 {coupons.length}장
+      <main className="mx-auto w-full max-w-[480px]">
+        {isLoading ? (
+          <p
+            className="py-10 text-center text-[13px] text-ink-2"
+            role="status"
+          >
+            쿠폰을 불러오는 중…
           </p>
-          <CouponCardList coupons={coupons} />
-        </div>
-      )}
+        ) : coupons.length === 0 ? (
+          <EmptyState
+            title="받은 쿠폰이 없어요"
+            description="쇼핑거리에서 필요한 쿠폰을 받아두면 이곳에 모여요."
+          />
+        ) : (
+          <section aria-labelledby="coupon-count">
+            <p
+              id="coupon-count"
+              className="mb-3 text-[13px] font-medium text-ink-2 tabular-nums"
+            >
+              보관한 쿠폰 {coupons.length}장
+            </p>
+            <p className="mb-4 rounded-lg bg-paper-2 px-3 py-3 text-[12px] leading-5 text-ink-2">
+              받은 당시 정보예요. 사용 전에 제공처에서 혜택과 조건을 다시
+              확인해 주세요.
+            </p>
+            <CouponCardList coupons={coupons} action="remove" />
+          </section>
+        )}
+      </main>
     </AppShell>
   );
 }

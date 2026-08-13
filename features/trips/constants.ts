@@ -9,4 +9,6 @@ export const defaultTripFormValues: TripFormValues = {
   endDate: "",
   currency: appConfig.defaultCurrency,
   budget: 0,
+  budgetMode: "unknown",
+  tripTags: [],
 };

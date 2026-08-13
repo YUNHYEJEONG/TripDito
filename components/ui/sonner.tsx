@@ -54,7 +54,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         classNames: {
           toast: "cn-toast",
           actionButton:
-            "!bg-primary !text-primary-foreground hover:!bg-[#1b64da]",
+            "!bg-primary !text-primary-foreground hover:!bg-accent-text",
         },
       }}
       {...props}

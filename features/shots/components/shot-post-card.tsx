@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Bookmark,
   Heart,
   MessageCircle,
   MoreVertical,
-  Plus,
   Send,
   ShoppingBag,
 } from "lucide-react";
@@ -43,21 +43,33 @@ function formatFeedDate(iso: string) {
   return `${yyyy}.${mm}.${dd}`;
 }
 
-function formatCount(n: number) {
-  return new Intl.NumberFormat("ko-KR").format(n);
+const COUNT_FORMATTER = new Intl.NumberFormat("ko-KR");
+
+function formatCount(count: number) {
+  return COUNT_FORMATTER.format(count);
 }
 
-export function ShotPostCard({ shot }: { shot: Shot }) {
+const actionButtonClassName =
+  "inline-flex size-11 items-center justify-center rounded-full text-ink outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-50 aria-expanded:bg-paper-2";
+
+export function ShotPostCard({
+  shot,
+  preloadImage = false,
+  resumeComments = false,
+}: {
+  shot: Shot;
+  preloadImage?: boolean;
+  resumeComments?: boolean;
+}) {
   const router = useRouter();
   const { data: profile } = useLocalProfile();
+  const { isLoggedIn } = useIsLoggedIn();
   const [expanded, setExpanded] = useState(false);
-  const [needsClamp, setNeedsClamp] = useState(false);
   const [shoppingOpen, setShoppingOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(resumeComments);
   const [shareOpen, setShareOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [highlight, setHighlight] = useState(false);
-  const bodyRef = useRef<HTMLParagraphElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
 
   const toggleLike = useToggleShotLike();
   const incrementShare = useIncrementShotShare();
@@ -65,49 +77,36 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
   const deleteShot = useDeleteShot();
   const scrapped = useIsScrapped(shot.id);
 
-  const { isLoggedIn } = useIsLoggedIn();
   const isMine =
     isLoggedIn && Boolean(profile?.id && profile.id === shot.authorId);
   const body = shot.body.trim();
+  const canExpandBody = body.length > 72 || body.includes("\n");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (window.location.hash !== `#${shot.id}`) return;
-    setHighlight(true);
-    const el = document.getElementById(shot.id);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const timer = window.setTimeout(() => setHighlight(false), 1800);
+    const article = articleRef.current;
+    if (!article) return;
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    article.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    article.focus({ preventScroll: true });
+    article.dataset.highlighted = "true";
+    const timer = window.setTimeout(() => {
+      delete article.dataset.highlighted;
+    }, 1800);
     return () => window.clearTimeout(timer);
   }, [shot.id]);
-
-  useEffect(() => {
-    setExpanded(false);
-  }, [shot.id, body]);
-
-  useEffect(() => {
-    const el = bodyRef.current;
-    if (!el || !body) {
-      setNeedsClamp(false);
-      return;
-    }
-
-    function measure() {
-      if (!bodyRef.current || expanded) return;
-      const { scrollHeight, clientHeight } = bodyRef.current;
-      setNeedsClamp(scrollHeight > clientHeight + 1);
-    }
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [body, expanded]);
 
   async function handleLike() {
     try {
       await toggleLike.mutateAsync(shot.id);
     } catch {
-      toast.error("좋아요 처리에 실패했습니다");
+      toast.error("좋아요를 반영하지 못했어요. 다시 시도해 주세요.");
     }
   }
 
@@ -115,13 +114,13 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
     try {
       await toggleScrap.mutateAsync(shot.id);
     } catch {
-      toast.error("스크랩 처리에 실패했습니다");
+      toast.error("스크랩을 반영하지 못했어요. 다시 시도해 주세요.");
     }
   }
 
   function handleShared() {
     void incrementShare.mutateAsync(shot.id).catch(() => {
-      /* count is best-effort */
+      /* 공유 자체는 끝났으므로 카운트 갱신 실패만 무시한다. */
     });
   }
 
@@ -129,11 +128,12 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
     deleteShot.mutate(shot.id, {
       onSuccess: () => {
         setDeleteOpen(false);
-        toast.success("피드를 삭제했습니다");
       },
       onError: (error) => {
         toast.error(
-          error instanceof Error ? error.message : "삭제에 실패했습니다",
+          error instanceof Error
+            ? error.message
+            : "피드를 삭제하지 못했어요. 다시 시도해 주세요.",
         );
       },
     });
@@ -141,40 +141,47 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
 
   return (
     <article
+      ref={articleRef}
       id={shot.id}
-      className={cn(
-        "-mx-4 border-b border-[#EAEDED] pb-4 sm:-mx-5 md:-mx-6 lg:-mx-8",
-        highlight && "bg-primary/5",
-      )}
+      tabIndex={-1}
+      className="scroll-mt-24 border-b border-rule pb-5 outline-none transition-colors duration-200 data-[highlighted=true]:bg-accent/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
     >
-      <header className="flex items-center gap-2.5 px-4 py-3 sm:px-5 md:px-6 lg:px-8">
-        <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E8ECF0] text-[13px] font-semibold text-[#4E5968]">
+      <header className="flex min-h-14 items-center gap-3 px-4 py-3">
+        <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-paper-3 text-[13px] font-semibold text-ink-2">
           {shot.authorAvatarDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={shot.authorAvatarDataUrl}
-              alt=""
-              className="size-full object-cover"
+              alt={`${shot.authorNickname} 프로필`}
+              fill
+              unoptimized
+              sizes="36px"
+              className="object-cover"
             />
           ) : (
-            shot.authorNickname.slice(0, 1)
+            <span aria-hidden>{shot.authorNickname.slice(0, 1)}</span>
           )}
         </div>
+
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold leading-tight">
+          <p className="truncate text-[15px] font-semibold leading-tight text-ink">
             {shot.authorNickname}
           </p>
-          <p className="truncate text-[11px] text-muted-foreground">
+          <p className="mt-1 truncate text-[12px] text-ink-2">
             {shot.destinationCity} · {shot.destinationCountry}
           </p>
         </div>
+
         {isMine ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label="더보기"
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[#4E5968] transition-colors hover:bg-[#F2F4F6]"
+              aria-label="피드 메뉴"
+              className={actionButtonClassName}
             >
-              <MoreVertical className="size-5" strokeWidth={1.75} />
+              <MoreVertical
+                className="size-5"
+                strokeWidth={1.8}
+                aria-hidden
+              />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-36">
               <DropdownMenuItem
@@ -182,9 +189,7 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
               >
                 수정
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setDeleteOpen(true)}
-              >
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
                 삭제
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -192,165 +197,187 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
         ) : null}
       </header>
 
-      <ShotImageCarousel images={shot.images} pins={shot.pins} />
+      <ShotImageCarousel
+        images={shot.images}
+        pins={shot.pins}
+        alt={
+          shot.channel === "community"
+            ? `${shot.authorNickname}님의 ${shot.destinationCity} 여행 이야기 사진`
+            : `${shot.authorNickname}님의 ${shot.destinationCity} 때샷`
+        }
+        preloadFirstImage={preloadImage}
+      />
 
-      {shot.shoppingItemIds.length > 0 ? (
-        <button
-          type="button"
-          onClick={() => setShoppingOpen(true)}
-          className="mx-4 mt-3 mb-2 flex w-[calc(100%-2rem)] items-center gap-2 rounded-xl bg-[#F2F4F6] px-3 py-2.5 text-left transition-colors hover:bg-[#E8ECF0] sm:mx-5 sm:w-[calc(100%-2.5rem)] md:mx-6 md:w-[calc(100%-3rem)] lg:mx-8 lg:w-[calc(100%-4rem)]"
-        >
-          <ShoppingBag className="size-4 shrink-0 text-primary" />
-          <span className="min-w-0 flex-1 truncate text-[13px] font-normal text-foreground">
-            <span className="font-bold">{shot.authorNickname}</span>
-            {" 님의 쇼핑리스트 목록"}
-          </span>
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-[#CFD4DA] bg-background text-primary">
-            <Plus className="size-3.5" strokeWidth={2.5} />
-          </span>
-        </button>
-      ) : null}
-
-      <div className="flex items-center px-4 py-1.5 sm:px-5 md:px-6 lg:px-8">
-        <div className="flex flex-1 items-center gap-4">
-          <ActionButton
-            label="좋아요"
-            onClick={handleLike}
-            count={shot.likeCount}
+      <div className="flex items-center px-2 pt-2">
+        <div className="flex min-w-0 flex-1 items-center">
+          <button
+            type="button"
+            aria-label={
+              toggleLike.isPending
+                ? "좋아요 반영 중"
+                : shot.likedByMe
+                  ? "좋아요 취소"
+                  : "좋아요"
+            }
+            aria-pressed={shot.likedByMe}
+            aria-busy={toggleLike.isPending}
+            disabled={toggleLike.isPending}
+            onClick={() => void handleLike()}
+            className={actionButtonClassName}
           >
             <Heart
               className={cn(
                 "size-6",
-                shot.likedByMe && "fill-[#F04452] text-[#F04452]",
+                shot.likedByMe && "fill-affect text-affect",
               )}
-              strokeWidth={1.75}
+              strokeWidth={1.8}
+              aria-hidden
             />
-          </ActionButton>
+          </button>
 
-          <ActionButton
-            label="댓글"
+          <button
+            type="button"
+            aria-label={`댓글 ${formatCount(shot.comments.length)}개 보기`}
             onClick={() => setCommentsOpen(true)}
-            count={shot.comments.length}
+            className={actionButtonClassName}
           >
-            <MessageCircle className="size-6" strokeWidth={1.75} />
-          </ActionButton>
+            <MessageCircle
+              className="size-6"
+              strokeWidth={1.8}
+              aria-hidden
+            />
+          </button>
 
-          <ActionButton
-            label="공유"
+          <button
+            type="button"
+            aria-label="공유"
             onClick={() => setShareOpen(true)}
-            count={shot.shareCount}
+            className={actionButtonClassName}
           >
-            <Send className="size-6" strokeWidth={1.75} />
-          </ActionButton>
+            <Send className="size-6" strokeWidth={1.8} aria-hidden />
+          </button>
+
+          {shot.shoppingItemIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setShoppingOpen(true)}
+              aria-haspopup="dialog"
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-2 text-[12px] font-semibold text-ink outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+            >
+              <ShoppingBag className="size-5" strokeWidth={1.8} aria-hidden />
+              {isMine ? "내 목록" : "담기"}
+            </button>
+          ) : null}
         </div>
 
-        <ActionButton
-          label={scrapped ? "스크랩 해제" : "스크랩"}
-          onClick={handleScrap}
+        <button
+          type="button"
+          aria-label={
+            toggleScrap.isPending
+              ? "스크랩 반영 중"
+              : scrapped
+                ? "스크랩 해제"
+                : "스크랩"
+          }
+          aria-pressed={scrapped}
+          aria-busy={toggleScrap.isPending}
+          disabled={toggleScrap.isPending}
+          onClick={() => void handleScrap()}
+          className={actionButtonClassName}
         >
           <Bookmark
-            className={cn(
-              "size-6 transition-colors",
-              scrapped && "fill-primary text-primary",
-            )}
-            strokeWidth={1.75}
+            className={cn("size-6", scrapped && "fill-ink text-ink")}
+            strokeWidth={1.8}
+            aria-hidden
           />
-        </ActionButton>
+        </button>
       </div>
 
-      <div className="px-4 pt-1 sm:px-5 md:px-6 lg:px-8">
+      <div className="px-4">
+        <p className="text-[14px] font-semibold text-ink tabular-nums">
+          좋아요 {formatCount(shot.likeCount)}개
+        </p>
+
         {body ? (
-          <div>
+          <div className="mt-1">
             <p
-              ref={bodyRef}
               className={cn(
-                "text-[14px] leading-relaxed whitespace-pre-wrap text-foreground",
-                !expanded && "line-clamp-2",
+                "min-w-0 max-w-full break-words text-[15px] leading-[1.5] whitespace-pre-wrap text-ink [overflow-wrap:anywhere]",
+                canExpandBody && !expanded && "line-clamp-2",
               )}
             >
+              <span className="font-semibold">{shot.authorNickname}</span>{" "}
               {body}
             </p>
-            {needsClamp || expanded ? (
+            {canExpandBody ? (
               <button
                 type="button"
-                className="mt-0.5 text-[14px] text-muted-foreground"
+                aria-expanded={expanded}
+                className="mt-1 min-h-11 text-[13px] text-ink-2 outline-none hover:text-ink active:text-ink focus-visible:underline"
                 onClick={() => setExpanded((value) => !value)}
               >
-                {expanded ? "간단 보기" : "더보기"}
+                {expanded ? "접기" : "더보기"}
               </button>
             ) : null}
           </div>
         ) : null}
-        <p
-          className={cn(
-            "text-[12px] text-muted-foreground",
-            body ? "mt-1.5" : undefined,
-          )}
-        >
+
+        {shot.comments.length > 0 ? (
+          <button
+            type="button"
+            className="mt-1 block min-h-11 text-[13px] text-ink-2 outline-none hover:text-ink active:text-ink focus-visible:underline"
+            onClick={() => setCommentsOpen(true)}
+          >
+            댓글 {formatCount(shot.comments.length)}개 모두 보기
+          </button>
+        ) : null}
+
+        <p className="mt-1 text-[12px] font-medium text-ink-2 tabular-nums">
           {formatFeedDate(shot.createdAt)}
         </p>
       </div>
 
-      <ShoppingListSheet
-        open={shoppingOpen}
-        onOpenChange={setShoppingOpen}
-        nickname={shot.authorNickname}
-        shotAuthorId={shot.authorId}
-        tripId={shot.tripId}
-        destinationCity={shot.destinationCity}
-        itemIds={shot.shoppingItemIds}
-      />
-      <CommentsSheet
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        shotId={shot.id}
-        shotAuthorId={shot.authorId}
-        comments={shot.comments}
-      />
-      <ShareSheet
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        shotId={shot.id}
-        nickname={shot.authorNickname}
-        onShared={handleShared}
-      />
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="피드를 삭제할까요?"
-        description="삭제한 피드는 되돌릴 수 없습니다."
-        confirmLabel="삭제"
-        loading={deleteShot.isPending}
-        onConfirm={handleDelete}
-      />
-    </article>
-  );
-}
-
-function ActionButton({
-  children,
-  label,
-  count,
-  onClick,
-}: {
-  children: React.ReactNode;
-  label: string;
-  count?: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 text-foreground"
-    >
-      {children}
-      {typeof count === "number" && count > 0 ? (
-        <span className="text-[13px] font-semibold tabular-nums">
-          {formatCount(count)}
-        </span>
+      {shoppingOpen ? (
+        <ShoppingListSheet
+          open
+          onOpenChange={setShoppingOpen}
+          nickname={shot.authorNickname}
+          shotAuthorId={shot.authorId}
+          tripId={shot.tripId}
+          destinationCity={shot.destinationCity}
+          itemIds={shot.shoppingItemIds}
+          shotId={shot.id}
+        />
       ) : null}
-    </button>
+      {commentsOpen ? (
+        <CommentsSheet
+          open
+          onOpenChange={setCommentsOpen}
+          shotId={shot.id}
+          shotAuthorId={shot.authorId}
+          comments={shot.comments}
+        />
+      ) : null}
+      {shareOpen ? (
+        <ShareSheet
+          open
+          onOpenChange={setShareOpen}
+          shotId={shot.id}
+          nickname={shot.authorNickname}
+          onShared={handleShared}
+        />
+      ) : null}
+      {deleteOpen ? (
+        <ConfirmDialog
+          open
+          onOpenChange={setDeleteOpen}
+          title="피드를 삭제할까요?"
+          description="삭제한 피드는 되돌릴 수 없어요."
+          confirmLabel="삭제"
+          loading={deleteShot.isPending}
+          onConfirm={handleDelete}
+        />
+      ) : null}
+    </article>
   );
 }

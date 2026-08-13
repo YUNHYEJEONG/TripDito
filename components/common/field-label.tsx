@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -11,18 +12,20 @@ export function FieldLabel({
   children,
   required,
   className,
-}: {
-  children: React.ReactNode;
+  ...props
+}: ComponentProps<typeof Label> & {
   required?: boolean;
-  className?: string;
 }) {
   return (
-    <Label className={cn("gap-0.5", className)}>
+    <Label className={cn("gap-1", className)} {...props}>
       <span>{children}</span>
       {required ? (
-        <span className="text-destructive" aria-hidden>
-          *
-        </span>
+        <>
+          <span className="text-ink" aria-hidden>
+            *
+          </span>
+          <span className="sr-only"> (필수)</span>
+        </>
       ) : null}
     </Label>
   );

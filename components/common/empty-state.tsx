@@ -31,16 +31,16 @@ export function EmptyState({
           <GrayCardDescription>{description}</GrayCardDescription>
         ) : null}
         {(actionLabel && onAction) || (secondaryLabel && onSecondary) ? (
-          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-1 flex flex-col gap-2">
             {actionLabel && onAction ? (
-              <Button className="w-full sm:w-auto" onClick={onAction}>
+              <Button className="w-full" onClick={onAction}>
                 {actionLabel}
               </Button>
             ) : null}
             {secondaryLabel && onSecondary ? (
               <Button
                 variant="surfaceOutline"
-                className="w-full sm:w-auto"
+                className="w-full"
                 onClick={onSecondary}
               >
                 {secondaryLabel}

@@ -1,4 +1,5 @@
 import type { TaxFreeCoupon } from "../types";
+import { getCouponCanonicalId } from "./coupon-identity";
 
 const REGION_KEYWORDS = [
   "도쿄",
@@ -77,11 +78,6 @@ function extractRegions(title: string): string[] {
   return [...regions];
 }
 
-function slugId(title: string, href: string, index: number) {
-  const fromHref = href.replace(/^https?:\/\//, "").replace(/[^\w]+/g, "-");
-  return `tf-${index}-${fromHref.slice(0, 40)}-${title.slice(0, 8)}`;
-}
-
 /**
  * taxfreecoupon.com/70 HTML에서 쿠폰 리스트 링크를 추출합니다.
  * "현재 제공되지 않는" 안내 이전의 활성 목록만 사용합니다.
@@ -124,8 +120,7 @@ export function parseTaxFreeCouponHtml(html: string): {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    coupons.push({
-      id: slugId(title, href, coupons.length),
+    const coupon = {
       title,
       href,
       benefit: extractBenefit(title),
@@ -133,7 +128,8 @@ export function parseTaxFreeCouponHtml(html: string): {
       regions: extractRegions(title),
       active: true,
       merchant: extractMerchant(title),
-    });
+    };
+    coupons.push({ ...coupon, id: getCouponCanonicalId(coupon) });
   }
 
   return { coupons, updatedAt };

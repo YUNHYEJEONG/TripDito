@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useRef, useState } from "react";
+import NextImage from "next/image";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import {
   type ImagePin,
   type ShotFormValues,
 } from "../schema";
+import { useUnsavedChanges } from "@/lib/navigation/unsaved-changes";
 
 const EMPTY_FORM_VALUES: ShotFormValues = {
   channel: "shots",
@@ -44,6 +46,18 @@ function formatTripOptionLabel(startDate: string, city: string) {
   const [y, m, d] = startDate.split("-");
   if (!y || !m || !d) return `${startDate} ${city}`;
   return `${y}.${m}.${d} ${city}`;
+}
+
+function firstErrorMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  for (const value of Object.values(error)) {
+    const message = firstErrorMessage(value);
+    if (message) return message;
+  }
+  return undefined;
 }
 
 export function ShotUploadForm({
@@ -72,25 +86,37 @@ export function ShotUploadForm({
     defaultValues: { ...EMPTY_FORM_VALUES, ...initialValues },
   });
 
-  const channel = form.watch("channel");
-  const tripId = form.watch("tripId");
-  const images = form.watch("images");
-  const pins = form.watch("pins") ?? [];
-  const shoppingItemIds = form.watch("shoppingItemIds") ?? [];
+  const [
+    channel,
+    tripId,
+    images,
+    pins = [],
+    shoppingItemIds = [],
+    body = "",
+  ] = useWatch({
+    control: form.control,
+    name: [
+      "channel",
+      "tripId",
+      "images",
+      "pins",
+      "shoppingItemIds",
+      "body",
+    ],
+  });
 
   const { data: items = [] } = useItems(tripId);
+  const hasUnsavedChanges =
+    form.formState.isDirty || compressing || Boolean(pinText.trim());
+  useUnsavedChanges(hasUnsavedChanges);
 
   useMouseDragScroll(pinScrollerRef, images.length > 1);
-
-  useEffect(() => {
-    setPinDraft(null);
-  }, [pinImageIndex]);
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
     const remaining = MAX_SHOT_IMAGES - images.length;
     if (remaining <= 0) {
-      toast.error(`이미지는 최대 ${MAX_SHOT_IMAGES}장까지 가능합니다`);
+      toast.error(`사진은 최대 ${MAX_SHOT_IMAGES}장까지 올릴 수 있어요.`);
       return;
     }
     setCompressing(true);
@@ -98,14 +124,17 @@ export function ShotUploadForm({
       const compressed = await compressImageFiles(
         [...files].slice(0, remaining),
       );
-      form.setValue("images", [...images, ...compressed.map((c) => c.dataUrl)], {
-        shouldValidate: true,
-      });
+      const currentImages = form.getValues("images");
+      form.setValue(
+        "images",
+        [...currentImages, ...compressed.map((c) => c.dataUrl)],
+        { shouldDirty: true, shouldValidate: true },
+      );
       if (images.length === 0 && compressed.length > 0) {
         setPinImageIndex(0);
       }
     } catch {
-      toast.error("이미지 처리에 실패했습니다");
+      toast.error("사진을 처리하지 못했어요. 다시 선택해 주세요.");
     } finally {
       setCompressing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -114,7 +143,10 @@ export function ShotUploadForm({
 
   function removeImage(index: number) {
     const next = images.filter((_, i) => i !== index);
-    form.setValue("images", next, { shouldValidate: true });
+    form.setValue("images", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     form.setValue(
       "pins",
       pins
@@ -124,7 +156,7 @@ export function ShotUploadForm({
             ? { ...pin, imageIndex: pin.imageIndex - 1 }
             : pin,
         ),
-      { shouldValidate: true },
+      { shouldDirty: true, shouldValidate: true },
     );
     setPinImageIndex((prev) => Math.min(prev, Math.max(0, next.length - 1)));
     setPinDraft(null);
@@ -137,7 +169,13 @@ export function ShotUploadForm({
     const slide = el?.firstElementChild as HTMLElement | null;
     const slideWidth = slide?.getBoundingClientRect().width ?? el?.clientWidth;
     if (el && slideWidth) {
-      el.scrollTo({ left: index * slideWidth, behavior: "smooth" });
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      el.scrollTo({
+        left: index * slideWidth,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
     }
   }
 
@@ -149,21 +187,25 @@ export function ShotUploadForm({
     if (!slideWidth) return;
     const next = Math.round(el.scrollLeft / slideWidth);
     const clamped = Math.min(Math.max(next, 0), images.length - 1);
-    setPinImageIndex((prev) => {
-      if (prev === clamped) return prev;
-      return clamped;
-    });
+    if (pinImageIndex === clamped) return;
+    setPinImageIndex(clamped);
+    setPinDraft(null);
   }
 
-  function handleImageTap(e: React.MouseEvent<HTMLDivElement>) {
+  function handleImageTap(e: React.MouseEvent<HTMLButtonElement>) {
     if (pinScrollerRef.current?.dataset.dragMoved) return;
     if (!images[pinImageIndex]) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+    const keyboardActivation = e.detail === 0;
+    const xPct = keyboardActivation
+      ? 50
+      : ((e.clientX - rect.left) / rect.width) * 100;
+    const yPct = keyboardActivation
+      ? 50
+      : ((e.clientY - rect.top) / rect.height) * 100;
     setPinDraft({
-      xPct: Math.min(95, Math.max(5, xPct)),
-      yPct: Math.min(95, Math.max(5, yPct)),
+      xPct: Math.min(92, Math.max(8, xPct)),
+      yPct: Math.min(92, Math.max(8, yPct)),
     });
     setPinText("");
   }
@@ -177,7 +219,10 @@ export function ShotUploadForm({
       yPct: pinDraft.yPct,
       text: pinText.trim(),
     };
-    form.setValue("pins", [...pins, pin], { shouldValidate: true });
+    form.setValue("pins", [...pins, pin], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     setPinDraft(null);
     setPinText("");
   }
@@ -186,7 +231,31 @@ export function ShotUploadForm({
     const set = new Set(shoppingItemIds);
     if (set.has(itemId)) set.delete(itemId);
     else set.add(itemId);
-    form.setValue("shoppingItemIds", [...set], { shouldValidate: true });
+    form.setValue("shoppingItemIds", [...set], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
+
+  function selectChannel(nextChannel: "shots" | "community") {
+    if (channel === nextChannel) return;
+    form.setValue("channel", nextChannel, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    if (nextChannel === "community") {
+      form.setValue("shoppingItemIds", [], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      form.setValue("pins", [], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setShoppingOpen(false);
+      setPinDraft(null);
+      setPinText("");
+    }
   }
 
   const currentPins = pins.filter((pin) => pin.imageIndex === pinImageIndex);
@@ -195,6 +264,8 @@ export function ShotUploadForm({
     <form
       id={formId}
       className="flex flex-col gap-5"
+      data-unsaved={hasUnsavedChanges ? "true" : undefined}
+      noValidate
       onSubmit={form.handleSubmit(async (values) => {
         await onSubmit({
           ...values,
@@ -205,51 +276,62 @@ export function ShotUploadForm({
         });
       })}
     >
-      <Field label="업로드 위치" required>
-        <div className="grid grid-cols-2 gap-2">
+      <Field label="게시 위치" required>
+        <div role="group" aria-label="게시 위치" className="grid grid-cols-2 gap-2">
           {(
             [
-              { value: "shots", label: "때샷구경" },
-              { value: "community", label: "커뮤니티" },
+              {
+                value: "shots",
+                label: "때샷",
+                description: "상품 핀·리스트 연결",
+              },
+              {
+                value: "community",
+                label: "커뮤니티",
+                description: "여행 이야기·팁",
+              },
             ] as const
-          ).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={cn(
-                "rounded-xl border px-3 py-2.5 text-[14px] font-semibold transition-colors",
-                channel === option.value
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-[#E5E8EB] bg-background text-foreground",
-              )}
-              onClick={() => {
-                form.setValue("channel", option.value, {
-                  shouldValidate: true,
-                });
-                if (option.value === "community") {
-                  form.setValue("shoppingItemIds", [], {
-                    shouldValidate: true,
-                  });
-                  form.setValue("pins", [], { shouldValidate: true });
-                  setPinDraft(null);
-                  setPinText("");
-                }
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
+          ).map((option) => {
+            const selected = channel === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => selectChannel(option.value)}
+                className={cn(
+                  "flex min-h-14 flex-col items-start justify-center rounded-xl border px-3 py-2 text-left outline-none transition-colors duration-120 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+                  selected
+                    ? "border-ink bg-ink text-paper hover:bg-ink-2 active:bg-ink-2"
+                    : "border-rule bg-paper text-ink hover:bg-paper-2 active:bg-paper-3",
+                )}
+              >
+                <span className="text-[14px] font-semibold">
+                  {option.label}
+                </span>
+                <span
+                  className={cn(
+                    "mt-0.5 text-[11px]",
+                    selected ? "text-paper/75" : "text-ink-2",
+                  )}
+                >
+                  {option.description}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </Field>
 
       <Field
-        label="내 여행지"
+        label="여행 선택"
         required
+        errorId="shot-trip-error"
         error={form.formState.errors.tripId?.message}
       >
         {trips.length === 0 ? (
-          <p className="rounded-xl bg-[#F2F4F6] px-3 py-3 text-[13px] text-muted-foreground">
-            등록된 여행이 없습니다. 홈에서 여행을 먼저 만들어 주세요.
+          <p className="rounded-xl bg-paper-2 px-3 py-3 text-[13px] text-ink-2">
+            등록된 여행이 없어요. 여행을 만든 뒤 다시 시도해 주세요.
           </p>
         ) : (
           <Controller
@@ -264,9 +346,25 @@ export function ShotUploadForm({
                 <Select
                   items={tripItems}
                   value={field.value || null}
-                  onValueChange={(value) => field.onChange(value ?? "")}
+                  onValueChange={(value) => {
+                    const nextTripId = value ?? "";
+                    if (nextTripId !== field.value) {
+                      form.setValue("shoppingItemIds", [], {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      setShoppingOpen(false);
+                    }
+                    field.onChange(nextTripId);
+                  }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger
+                    aria-label="여행 선택"
+                    aria-required="true"
+                    aria-invalid={Boolean(form.formState.errors.tripId)}
+                    aria-describedby="shot-trip-error"
+                    className="w-full"
+                  >
                     <SelectValue placeholder="여행지 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -284,10 +382,11 @@ export function ShotUploadForm({
       </Field>
 
       <Field
-        label={channel === "shots" ? "때샷 이미지" : "이미지"}
+        label={channel === "shots" ? "사진" : "이미지"}
         required
+        errorId="shot-images-error"
         trailing={
-          <span className="text-[12px] text-muted-foreground tabular-nums">
+          <span className="text-[12px] text-ink-2 tabular-nums">
             최대 {MAX_SHOT_IMAGES}장 · {images.length}/{MAX_SHOT_IMAGES}
           </span>
         }
@@ -296,6 +395,12 @@ export function ShotUploadForm({
         <input
           ref={fileInputRef}
           type="file"
+          aria-label={
+            channel === "community" ? "커뮤니티 사진 선택" : "때샷 사진 선택"
+          }
+          aria-required="true"
+          aria-invalid={Boolean(form.formState.errors.images)}
+          aria-describedby="shot-images-error"
           accept="image/*"
           multiple
           className="hidden"
@@ -306,24 +411,32 @@ export function ShotUploadForm({
             <div
               key={`${index}-${src.slice(0, 20)}`}
               className={cn(
-                "relative size-20 overflow-hidden rounded-xl border-2",
+                "relative size-20 overflow-hidden rounded-xl border",
                 pinImageIndex === index
-                  ? "border-primary"
+                  ? "border-accent"
                   : "border-transparent",
               )}
             >
               <button
                 type="button"
-                className="size-full"
+                aria-label={`${index + 1}번째 사진 선택`}
+                aria-pressed={pinImageIndex === index}
+                className="size-full outline-none hover:brightness-95 active:brightness-90 focus-visible:[box-shadow:inset_0_0_0_2px_var(--color-paper),inset_0_0_0_4px_var(--color-focus)]"
                 onClick={() => selectPinImage(index)}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="size-full object-cover" />
+                <NextImage
+                  src={src}
+                  alt={`업로드한 사진 ${index + 1}`}
+                  fill
+                  unoptimized={src.startsWith("data:")}
+                  sizes="80px"
+                  className="object-cover"
+                />
               </button>
               <button
                 type="button"
                 aria-label="이미지 삭제"
-                className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/55 text-white"
+                className="absolute top-0 right-0 flex size-11 items-center justify-center rounded-full bg-ink/65 text-paper outline-none hover:bg-ink/80 active:bg-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
                 onClick={() => removeImage(index)}
               >
                 <X className="size-3.5" />
@@ -335,10 +448,11 @@ export function ShotUploadForm({
               type="button"
               disabled={compressing}
               onClick={() => fileInputRef.current?.click()}
-              className="flex size-20 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#CFD4DA] bg-[#F2F4F6] text-[#848C94]"
+              aria-label={compressing ? "필수 사진 처리 중" : "필수 사진 추가"}
+              className="flex size-20 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-paper-3 bg-paper-2 text-ink-2 outline-none transition-colors duration-120 hover:border-control hover:bg-paper-3 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:border-paper-3 disabled:bg-paper-2 disabled:text-ink-3"
             >
               <ImagePlus className="size-5" />
-              <span className="text-[10px] font-medium">
+              <span className="text-[12px] font-medium">
                 {compressing ? "처리 중" : "추가"}
               </span>
             </button>
@@ -347,11 +461,16 @@ export function ShotUploadForm({
       </Field>
 
       {images.length > 0 && channel === "shots" ? (
-        <Field label="이미지 코멘트">
-          <p className="mb-2 text-[12px] text-muted-foreground">
-            이미지를 탭하고 코멘트를 달아보세요.
+        <Field
+          label="사진에 핀 달기"
+          errorId="shot-pins-error"
+          error={firstErrorMessage(form.formState.errors.pins)}
+        >
+          <p className="mb-2 text-[12px] text-ink-2">
+            사진을 탭한 위치에 상품 메모를 남길 수 있어요. 키보드는 Enter로
+            핀을 만든 뒤 방향키로 옮겨요.
           </p>
-          <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F2F4F6]">
+          <div className="relative aspect-square overflow-hidden rounded-2xl bg-paper-2">
             <div
               ref={pinScrollerRef}
               className={cn(
@@ -364,45 +483,87 @@ export function ShotUploadForm({
                 <div
                   key={`${index}-${src.slice(0, 16)}`}
                   className="relative aspect-square min-w-full shrink-0 basis-full snap-start"
-                  onClick={index === pinImageIndex ? handleImageTap : undefined}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <NextImage
                     src={src}
-                    alt=""
-                    className="pointer-events-none size-full object-cover"
+                    alt={`핀을 추가할 사진 ${index + 1}`}
+                    fill
+                    unoptimized={src.startsWith("data:")}
+                    sizes="(max-width: 480px) 100dvw, 480px"
+                    className="pointer-events-none object-cover"
                     draggable={false}
                   />
+                  {index === pinImageIndex ? (
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-[1] outline-none transition-colors duration-120 hover:bg-paper/10 active:bg-ink/10 focus-visible:[box-shadow:inset_0_0_0_2px_var(--color-paper),inset_0_0_0_4px_var(--color-focus)]"
+                      onClick={handleImageTap}
+                      onKeyDown={(event) => {
+                        if (!pinDraft) return;
+                        const step = event.shiftKey ? 10 : 3;
+                        const delta = {
+                          ArrowLeft: [-step, 0],
+                          ArrowRight: [step, 0],
+                          ArrowUp: [0, -step],
+                          ArrowDown: [0, step],
+                        }[event.key];
+                        if (!delta) return;
+                        event.preventDefault();
+                        setPinDraft((current) =>
+                          current
+                            ? {
+                                xPct: Math.min(
+                                  92,
+                                  Math.max(8, current.xPct + delta[0]),
+                                ),
+                                yPct: Math.min(
+                                  92,
+                                  Math.max(8, current.yPct + delta[1]),
+                                ),
+                              }
+                            : current,
+                        );
+                      }}
+                      aria-label={
+                        pinDraft
+                          ? `${index + 1}번째 사진 핀 위치 가로 ${Math.round(pinDraft.xPct)}%, 세로 ${Math.round(pinDraft.yPct)}%. 방향키로 이동`
+                          : `${index + 1}번째 사진에 핀 추가`
+                      }
+                    />
+                  ) : null}
                   {index === pinImageIndex
                     ? currentPins.map((pin) => (
                         <button
                           key={pin.id}
                           type="button"
-                          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md"
-                          style={{ left: `${pin.xPct}%`, top: `${pin.yPct}%` }}
+                          className="press-overlay absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent-text text-paper shadow-float outline-none hover:bg-ink focus-visible:ring-2 focus-visible:ring-paper focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+                          style={{
+                            left: `clamp(26px, ${pin.xPct}%, calc(100% - 26px))`,
+                            top: `clamp(26px, ${pin.yPct}%, calc(100% - 26px))`,
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             form.setValue(
                               "pins",
                               pins.filter((p) => p.id !== pin.id),
-                              { shouldValidate: true },
+                              { shouldDirty: true, shouldValidate: true },
                             );
                           }}
                           aria-label="핀 삭제"
                         >
-                          <Plus className="size-4" strokeWidth={2.5} />
+                          <X className="size-4" strokeWidth={1.9} />
                         </button>
                       ))
                     : null}
                   {index === pinImageIndex && pinDraft ? (
                     <span
-                      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary/80 text-white"
+                      className="pointer-events-none absolute z-10 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent/80 text-paper"
                       style={{
                         left: `${pinDraft.xPct}%`,
                         top: `${pinDraft.yPct}%`,
                       }}
                     >
-                      <Plus className="size-4" strokeWidth={2.5} />
+                      <Plus className="size-4" strokeWidth={1.9} />
                     </span>
                   ) : null}
                 </div>
@@ -411,18 +572,18 @@ export function ShotUploadForm({
 
             {images.length > 1 ? (
               <>
-                <span className="absolute top-3 right-3 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white tabular-nums">
+                <span className="absolute top-3 right-3 z-10 rounded-full bg-ink/65 px-2 py-1 text-[11px] font-semibold text-paper tabular-nums">
                   {pinImageIndex + 1}/{images.length}
                 </span>
-                <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-1.5">
+                <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-ink/45 px-2 py-1">
                   {images.map((_, i) => (
                     <span
                       key={i}
                       className={cn(
-                        "h-1.5 rounded-full shadow-sm transition-all",
+                        "h-1.5 rounded-full transition-opacity duration-[var(--dur-fast)]",
                         i === pinImageIndex
-                          ? "w-4 bg-white"
-                          : "w-1.5 bg-white/50",
+                          ? "w-4 bg-paper"
+                          : "w-1.5 bg-paper/50",
                       )}
                     />
                   ))}
@@ -433,13 +594,20 @@ export function ShotUploadForm({
           {pinDraft ? (
             <div className="mt-2 flex flex-col gap-2">
               <Textarea
+                aria-label="핀 메모"
+                aria-describedby="shot-pins-error"
                 value={pinText}
                 onChange={(e) => setPinText(e.target.value)}
-                placeholder="생생한 코멘트를 남겨보세요!"
+                placeholder="상품이나 가격 메모"
+                maxLength={200}
                 rows={2}
                 className="min-h-16"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[12px] text-ink-2 tabular-nums">
+                  {pinText.length}/200
+                </span>
+                <div className="flex gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -451,33 +619,34 @@ export function ShotUploadForm({
                 <Button type="button" size="sm" onClick={confirmPin}>
                   추가
                 </Button>
+                </div>
               </div>
             </div>
           ) : null}
           {pins.length > 0 ? (
-            <ul className="mt-2 space-y-1.5">
+            <ul className="mt-2 space-y-2">
               {pins.map((pin) => (
                 <li
                   key={pin.id}
-                  className="flex items-center gap-2 rounded-lg bg-[#F2F4F6] px-2.5 py-2 text-[12px]"
+                  className="flex items-center gap-2 rounded-lg bg-paper-2 px-2 py-2 text-[12px]"
                 >
-                  <div className="flex min-w-0 flex-1 items-start gap-1.5">
-                    <span className="shrink-0 font-semibold text-primary">
+                  <div className="flex min-w-0 flex-1 items-start gap-2">
+                    <span className="shrink-0 font-semibold text-accent-text">
                       사진 {pin.imageIndex + 1}
                     </span>
-                    <span className="min-w-0 flex-1 break-words whitespace-pre-wrap text-foreground">
+                    <span className="min-w-0 flex-1 break-words whitespace-pre-wrap text-ink">
                       {pin.text}
                     </span>
                   </div>
                   <button
                     type="button"
                     aria-label="핀 삭제"
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-md text-ink-2 outline-none transition-colors duration-120 hover:bg-paper active:bg-paper focus-visible:ring-2 focus-visible:ring-focus"
                     onClick={() =>
                       form.setValue(
                         "pins",
                         pins.filter((p) => p.id !== pin.id),
-                        { shouldValidate: true },
+                        { shouldDirty: true, shouldValidate: true },
                       )
                     }
                   >
@@ -490,28 +659,10 @@ export function ShotUploadForm({
         </Field>
       ) : null}
 
-      <Field label="피드">
-        <Controller
-          control={form.control}
-          name="body"
-          render={({ field }) => (
-            <Textarea
-              {...field}
-              value={field.value ?? ""}
-              placeholder="내용을 입력해주세요."
-              rows={4}
-              className="min-h-20"
-            />
-          )}
-        />
-      </Field>
-
       {channel === "shots" ? (
         <Field
-          label="쇼핑리스트"
-          description={
-            !tripId ? "내 여행지를 우선 선택해주세요." : undefined
-          }
+          label="리스트 연결"
+          description={!tripId ? "여행을 먼저 선택해 주세요." : undefined}
         >
           <Button
             type="button"
@@ -521,7 +672,7 @@ export function ShotUploadForm({
             onClick={() => setShoppingOpen(true)}
           >
             <Plus className="size-4" />
-            쇼핑리스트 선택
+            연결할 상품 선택
             {shoppingItemIds.length > 0
               ? ` · ${shoppingItemIds.length}개 선택`
               : ""}
@@ -529,21 +680,52 @@ export function ShotUploadForm({
         </Field>
       ) : null}
 
+      <Field
+        label="본문"
+        trailing={
+          <span className="text-[12px] text-ink-2 tabular-nums">
+            {body.length}/2,000
+          </span>
+        }
+        errorId="shot-body-error"
+        error={form.formState.errors.body?.message}
+      >
+        <Controller
+          control={form.control}
+          name="body"
+          render={({ field }) => (
+            <Textarea
+              {...field}
+              aria-label="본문"
+              aria-describedby="shot-body-error"
+              value={field.value ?? ""}
+              placeholder={
+                channel === "community"
+                  ? "여행 팁이나 쇼핑 동선을 나눠보세요"
+                  : "사진과 함께 남길 내용"
+              }
+              maxLength={2000}
+              rows={4}
+              className="min-h-20"
+            />
+          )}
+        />
+      </Field>
+
       <Sheet open={shoppingOpen} onOpenChange={setShoppingOpen}>
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="mx-auto max-h-[75vh] max-w-[480px] rounded-t-2xl md:max-w-[720px] lg:max-w-[960px]"
+          className="mx-auto max-h-[75dvh] max-w-[480px] rounded-t-2xl"
         >
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#D1D5DB]" />
           <SheetCloseHeader
             title="쇼핑리스트 선택"
             onClose={() => setShoppingOpen(false)}
           />
-          <ul className="mt-3 flex max-h-[55vh] flex-col gap-2 overflow-y-auto px-4 pb-6">
+          <ul className="mt-3 flex max-h-[55dvh] flex-col gap-2 overflow-y-auto px-4 pb-6">
             {items.length === 0 ? (
-              <li className="py-8 text-center text-[13px] text-muted-foreground">
-                이 여행에 등록된 상품이 없습니다
+              <li className="py-8 text-center text-[13px] text-ink-2">
+                이 여행에 등록된 상품이 없어요
               </li>
             ) : (
               items.map((item) => {
@@ -552,20 +734,22 @@ export function ShotUploadForm({
                   <li key={item.id}>
                     <button
                       type="button"
+                      aria-pressed={checked}
                       onClick={() => toggleShoppingItem(item.id)}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                        "flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left outline-none transition-colors duration-120 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                         checked
-                          ? "border-primary bg-primary/10"
-                          : "border-transparent bg-[#F2F4F6]",
+                          ? "border-accent bg-accent/10 hover:bg-accent/15 active:bg-accent/20"
+                          : "border-transparent bg-paper-2 hover:bg-paper-3 active:bg-paper-3",
                       )}
                     >
                       <span
+                        aria-hidden
                         className={cn(
                           "flex size-5 shrink-0 items-center justify-center rounded border text-[11px]",
                           checked
-                            ? "border-primary bg-primary text-white"
-                            : "border-[#CFD4DA] bg-white",
+                            ? "border-accent-text bg-accent-text text-paper"
+                            : "border-paper-3 bg-paper",
                         )}
                       >
                         {checked ? "✓" : ""}
@@ -579,13 +763,13 @@ export function ShotUploadForm({
               })
             )}
           </ul>
-          <div className="border-t border-[#EAEDED] px-4 py-3">
+          <div className="border-t border-rule px-4 py-3">
             <Button
               type="button"
               className="w-full"
               onClick={() => setShoppingOpen(false)}
             >
-              완료 ({shoppingItemIds.length})
+              선택 완료 · {shoppingItemIds.length}개
             </Button>
           </div>
         </SheetContent>
@@ -598,6 +782,7 @@ function Field({
   label,
   required,
   error,
+  errorId,
   trailing,
   description,
   children,
@@ -605,23 +790,28 @@ function Field({
   label: string;
   required?: boolean;
   error?: string;
+  errorId?: string;
   trailing?: React.ReactNode;
   description?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <FieldLabel required={required}>{label}</FieldLabel>
         {trailing}
       </div>
       {description ? (
-        <p className="text-[12px] text-muted-foreground">{description}</p>
+        <p className="text-[12px] text-ink-2">{description}</p>
       ) : null}
       {children}
-      {error ? (
-        <p className="text-[12px] text-destructive">{error}</p>
-      ) : null}
+      <p
+        id={errorId}
+        className="min-h-5 text-[12px] leading-5 text-ink"
+        aria-live="polite"
+      >
+        {error ?? <span aria-hidden>&nbsp;</span>}
+      </p>
     </div>
   );
 }

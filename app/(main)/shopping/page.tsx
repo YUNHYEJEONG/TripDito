@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Search, X } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { CouponSection } from "@/features/shopping/components/coupon-section";
@@ -11,6 +12,7 @@ import { RecommendRail } from "@/features/shopping/components/recommend-rail";
 import { ShoppingAdDialog } from "@/features/shopping/components/shopping-ad-dialog";
 import { ShoppingDestinationFilter } from "@/features/shopping/components/shopping-destination-filter";
 import { ShoppingSection } from "@/features/shopping/components/shopping-section";
+import { ShotsChannelTabs } from "@/features/shots/components/shots-channel-tabs";
 import {
   DEMO_MAGAZINES,
   DEMO_MALLS,
@@ -19,6 +21,8 @@ import {
   DEMO_TOURS,
   SHOPPING_DESTINATION_OPTIONS,
   type ShoppingDestination,
+  type ShoppingMagazineItem,
+  type ShoppingRecommendItem,
 } from "@/features/shopping/data/demo-shopping-content";
 import {
   filterMagazineItems,
@@ -26,133 +30,282 @@ import {
 } from "@/features/shopping/lib/filter-shopping-content";
 import { listCouponDestinations } from "@/features/coupons/lib/filter-coupons";
 import { useTaxFreeCoupons } from "@/features/coupons/hooks/use-taxfree-coupons";
-import { cn } from "@/lib/utils";
 
-function SectionDivider({ className }: { className?: string }) {
+function normalizeSearch(value: string) {
+  return value.trim().toLocaleLowerCase("ko-KR");
+}
+
+function searchRecommendItems(
+  items: ShoppingRecommendItem[],
+  query: string,
+) {
+  const normalized = normalizeSearch(query);
+  if (!normalized) return items;
+  return items.filter((item) =>
+    [item.title, item.subtitle, item.spot, item.country, ...item.regions]
+      .join(" ")
+      .toLocaleLowerCase("ko-KR")
+      .includes(normalized),
+  );
+}
+
+function searchMagazineItems(items: ShoppingMagazineItem[], query: string) {
+  const normalized = normalizeSearch(query);
+  if (!normalized) return items;
+  return items.filter((item) =>
+    [item.title, item.summary, item.tag, item.country, ...item.regions]
+      .join(" ")
+      .toLocaleLowerCase("ko-KR")
+      .includes(normalized),
+  );
+}
+
+function SectionDivider() {
+  return <div className="h-px w-full bg-rule" aria-hidden />;
+}
+
+function ShoppingSearch({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [{ draft, sourceValue }, setSearchState] = useState(() => ({
+    draft: value,
+    sourceValue: value,
+  }));
+  const [isComposing, setIsComposing] = useState(false);
+
+  // URL 뒤로가기처럼 외부에서 검색어가 바뀐 경우에만 로컬 입력을 맞춘다.
+  // 렌더 중 이전 prop을 비교하는 React의 허용된 state 조정 패턴으로,
+  // 입력 요소를 재마운트하지 않아 포커스와 커서 위치가 유지된다.
+  if (value !== sourceValue) {
+    setSearchState({ draft: value, sourceValue: value });
+  }
+
+  useEffect(() => {
+    if (isComposing || draft === value) return;
+    const timer = window.setTimeout(() => onChange(draft), 250);
+    return () => window.clearTimeout(timer);
+  }, [draft, isComposing, onChange, value]);
+
   return (
-    <div
-      className={cn("h-px w-full bg-border/80", className)}
-      role="separator"
-      aria-hidden
-    />
+    <div role="search" className="relative">
+      <label htmlFor="shopping-search" className="sr-only">
+        쇼핑몰과 매거진 검색
+      </label>
+      <Search
+        className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-2"
+        strokeWidth={1.8}
+        aria-hidden
+      />
+      <input
+        id="shopping-search"
+        type="search"
+        value={draft}
+        onChange={(event) =>
+          setSearchState((current) => ({
+            ...current,
+            draft: event.target.value,
+          }))
+        }
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={(event) => {
+          setSearchState((current) => ({
+            ...current,
+            draft: event.currentTarget.value,
+          }));
+          setIsComposing(false);
+        }}
+        placeholder="쇼핑·투어·맛집 검색"
+        autoComplete="off"
+        className="h-12 w-full rounded-xl border border-ink-2 bg-paper-2 pr-12 pl-12 text-[15px] text-ink outline-2 outline-transparent outline-offset-1 placeholder:text-ink-3 hover:bg-paper-3 focus:bg-paper focus:outline-focus"
+      />
+      {draft ? (
+        <button
+          type="button"
+          aria-label="검색어 지우기"
+          onClick={() =>
+            setSearchState((current) => ({ ...current, draft: "" }))
+          }
+          className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-2 outline-none hover:bg-paper-3 hover:text-ink active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <X className="size-4" strokeWidth={1.9} />
+        </button>
+      ) : null}
+    </div>
   );
 }
 
 export default function ShoppingPage() {
-  const [destination, setDestination] = useState<ShoppingDestination>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const city = searchParams.get("city");
+  const country = searchParams.get("country");
+  const destination = useMemo<ShoppingDestination>(
+    () => (city && country ? { city, country } : null),
+    [city, country],
+  );
+  const query = searchParams.get("q") ?? "";
   const { data: couponData } = useTaxFreeCoupons();
+
+  const replaceFilterUrl = useCallback(
+    (nextDestination: ShoppingDestination, nextQuery: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextDestination) {
+        params.set("city", nextDestination.city);
+        params.set("country", nextDestination.country);
+      } else {
+        params.delete("city");
+        params.delete("country");
+      }
+      if (nextQuery.trim()) params.set("q", nextQuery.trim());
+      else params.delete("q");
+      const search = params.toString();
+      router.replace(
+        `${pathname}${search ? `?${search}` : ""}${window.location.hash}`,
+        { scroll: false },
+      );
+    },
+    [pathname, router, searchParams],
+  );
+
+  function handleDestinationChange(next: ShoppingDestination) {
+    replaceFilterUrl(next, query);
+  }
+
+  const handleQueryChange = useCallback(
+    (next: string) => replaceFilterUrl(destination, next),
+    [destination, replaceFilterUrl],
+  );
 
   const destinationOptions = useMemo(() => {
     const map = new Map<string, { city: string; country: string }>();
-    for (const opt of SHOPPING_DESTINATION_OPTIONS) {
-      map.set(`${opt.country}::${opt.city}`, opt);
+    for (const option of SHOPPING_DESTINATION_OPTIONS) {
+      map.set(`${option.country}::${option.city}`, option);
     }
-    for (const opt of listCouponDestinations(couponData?.coupons ?? [])) {
-      map.set(`${opt.country}::${opt.city}`, opt);
+    for (const option of listCouponDestinations(couponData?.coupons ?? [])) {
+      map.set(`${option.country}::${option.city}`, option);
     }
     return [...map.values()].sort((a, b) => a.city.localeCompare(b.city, "ko"));
   }, [couponData?.coupons]);
 
   const magazines = useMemo(
-    () => filterMagazineItems(DEMO_MAGAZINES, destination),
-    [destination],
+    () =>
+      searchMagazineItems(
+        filterMagazineItems(DEMO_MAGAZINES, destination),
+        query,
+      ),
+    [destination, query],
   );
   const malls = useMemo(
-    () => filterRecommendItems(DEMO_MALLS, destination),
-    [destination],
+    () =>
+      searchRecommendItems(filterRecommendItems(DEMO_MALLS, destination), query),
+    [destination, query],
   );
   const tours = useMemo(
-    () => filterRecommendItems(DEMO_TOURS, destination),
-    [destination],
+    () =>
+      searchRecommendItems(filterRecommendItems(DEMO_TOURS, destination), query),
+    [destination, query],
   );
   const restaurants = useMemo(
-    () => filterRecommendItems(DEMO_RESTAURANTS, destination),
-    [destination],
+    () =>
+      searchRecommendItems(
+        filterRecommendItems(DEMO_RESTAURANTS, destination),
+        query,
+      ),
+    [destination, query],
   );
 
+  const hasSearchResults =
+    malls.length + magazines.length + tours.length + restaurants.length > 0;
+  const searchResultCount =
+    malls.length + magazines.length + tours.length + restaurants.length;
+  const hasQuery = normalizeSearch(query).length > 0;
+
   return (
-    <AppShell withBottomNav>
-      <PageHeader title="쇼핑" actions={<HeaderNavActions />} />
+    <AppShell withBottomNav className="px-0">
+      <ShotsChannelTabs active="shopping" actions={<HeaderNavActions />} />
       <ShoppingAdDialog ad={DEMO_SHOPPING_AD} />
+      <main className="mx-auto flex w-full max-w-[var(--app-rail-max)] flex-col gap-5 px-4 pt-4 pb-6">
+        <section aria-label="쇼핑거리 검색" className="flex flex-col gap-3">
+          <ShoppingSearch
+            value={query}
+            onChange={handleQueryChange}
+          />
+          <ShoppingDestinationFilter
+            value={destination}
+            options={destinationOptions}
+            onChange={handleDestinationChange}
+          />
+        </section>
 
-      <div className="flex flex-col gap-4">
-        <ShoppingDestinationFilter
-          value={destination}
-          options={destinationOptions}
-          onChange={setDestination}
-        />
-
-        <div className="flex flex-col gap-4">
-          <ShoppingSection
-            title="매거진"
-            description="여행 쇼핑에 도움 되는 짧은 가이드"
+        {hasQuery ? (
+          <p
+            className="text-[13px] font-medium text-ink-2"
+            role="status"
+            aria-live="polite"
+            aria-atomic
           >
-            {magazines.length ? (
-              <MagazineList items={magazines} />
-            ) : (
-              <EmptyState
-                title="매거진이 없어요"
-                description="선택한 여행지에 맞는 매거진이 아직 없습니다."
-              />
-            )}
-          </ShoppingSection>
+            &apos;{query.trim()}&apos; 검색 결과 {searchResultCount}개
+          </p>
+        ) : null}
 
-          <SectionDivider />
+        {hasQuery && !hasSearchResults ? (
+          <EmptyState
+            title="일치하는 쇼핑 정보가 없어요"
+            description="검색어를 줄이거나 다른 여행지를 선택해 보세요."
+            actionLabel="검색어 지우기"
+            onAction={() => handleQueryChange("")}
+          />
+        ) : (
+          <div className="flex flex-col gap-8">
+            {malls.length > 0 ? (
+              <ShoppingSection
+                title="쇼핑할 곳"
+                description="매장 위치와 지도 리뷰를 확인할 수 있어요."
+              >
+                <RecommendRail
+                  items={malls}
+                  ariaLabel="쇼핑할 곳 목록"
+                  showFavorite
+                  preloadFirstImage
+                />
+              </ShoppingSection>
+            ) : null}
 
-          <ShoppingSection
-            title="요즘 뜨는 쇼핑몰"
-            description="현지에서 자주 찾는 쇼핑 스팟"
-          >
-            {malls.length ? (
-              <RecommendRail items={malls} ariaLabel="요즘 뜨는 쇼핑몰 목록" />
-            ) : (
-              <EmptyState
-                title="쇼핑몰 추천이 없어요"
-                description="선택한 여행지에 맞는 쇼핑몰이 아직 없습니다."
-              />
-            )}
-          </ShoppingSection>
+            {magazines.length > 0 ? (
+              <ShoppingSection title="쇼핑 가이드">
+                <MagazineList items={magazines} />
+              </ShoppingSection>
+            ) : null}
 
-          <SectionDivider />
+            {tours.length > 0 ? (
+              <ShoppingSection title="현지 투어">
+                <RecommendRail items={tours} ariaLabel="현지 투어 목록" />
+              </ShoppingSection>
+            ) : null}
 
-          <ShoppingSection
-            title="투어 추천"
-            description="쇼핑과 함께 즐기기 좋은 투어"
-          >
-            {tours.length ? (
-              <RecommendRail items={tours} ariaLabel="투어 추천 목록" />
-            ) : (
-              <EmptyState
-                title="투어 추천이 없어요"
-                description="선택한 여행지에 맞는 투어가 아직 없습니다."
-              />
-            )}
-          </ShoppingSection>
+            {restaurants.length > 0 ? (
+              <ShoppingSection title="근처 맛집">
+                <RecommendRail items={restaurants} ariaLabel="근처 맛집 목록" />
+              </ShoppingSection>
+            ) : null}
 
-          <SectionDivider />
-
-          <ShoppingSection
-            title="고독한 미식가에 나온 맛집"
-            description="장보고 들르기 좋은 근처 맛집"
-          >
-            {restaurants.length ? (
-              <RecommendRail
-                items={restaurants}
-                ariaLabel="고독한 미식가에 나온 맛집 목록"
-              />
-            ) : (
-              <EmptyState
-                title="맛집 추천이 없어요"
-                description="선택한 여행지에 맞는 맛집이 아직 없습니다."
-              />
-            )}
-          </ShoppingSection>
-
-          <SectionDivider />
-
-          <CouponSection destination={destination} />
-        </div>
-      </div>
+            {!hasQuery ? (
+              <>
+                {hasSearchResults ? <SectionDivider /> : null}
+                <CouponSection
+                  key={destination ? `${destination.country}-${destination.city}` : "all"}
+                  destination={destination}
+                />
+              </>
+            ) : null}
+          </div>
+        )}
+      </main>
     </AppShell>
   );
 }

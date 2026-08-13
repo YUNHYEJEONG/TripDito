@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight, MapPin } from "lucide-react";
+import { ArrowUpRight, MapPin, Search } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { SearchInput } from "@/components/common/search-input";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { POPULAR_DESTINATIONS } from "../constants";
 import { searchDestinations } from "../utils/shot-query";
 import { cn } from "@/lib/utils";
@@ -20,59 +20,70 @@ export function DestinationFilterSheet({
   onOpenChange,
   value,
   onSelect,
+  destinations = POPULAR_DESTINATIONS,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: DestinationValue;
   onSelect: (destination: DestinationValue) => void;
+  destinations?: ReadonlyArray<{ city: string; country: string }>;
 }) {
   const [query, setQuery] = useState("");
 
   const results = useMemo(
-    () => searchDestinations(POPULAR_DESTINATIONS, query),
-    [query],
+    () => searchDestinations(destinations, query),
+    [destinations, query],
   );
+
+  function handleSheetOpenChange(nextOpen: boolean) {
+    if (!nextOpen) setQuery("");
+    onOpenChange(nextOpen);
+  }
 
   function handleSelect(city: string, country: string) {
     onSelect({ city, country });
-    onOpenChange(false);
-    setQuery("");
+    handleSheetOpenChange(false);
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        onOpenChange(next);
-        if (!next) setQuery("");
-      }}
-    >
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="mx-auto max-h-[85vh] max-w-[480px] rounded-t-2xl md:max-w-[720px] lg:max-w-[960px]"
+        className="mx-auto max-h-[85dvh] max-w-[480px] rounded-t-2xl"
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#D1D5DB]" />
         <SheetCloseHeader
           title="여행지 선택"
-          onClose={() => onOpenChange(false)}
+          onClose={() => handleSheetOpenChange(false)}
         />
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6">
-          <SearchInput
-            value={query}
-            onChange={setQuery}
-            placeholder="여행지를 검색해보세요"
-            className="[&_input]:rounded-full [&_input]:bg-[#F2F4F6]"
-          />
+          <div role="search" className="relative">
+            <label htmlFor="shot-destination-search" className="sr-only">
+              도시나 국가 검색
+            </label>
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-2"
+              strokeWidth={1.8}
+              aria-hidden
+            />
+            <Input
+              id="shot-destination-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="도시나 국가 검색"
+              className="rounded-full bg-paper-2 pl-9 shadow-none"
+            />
+          </div>
 
           {!query.trim() ? (
             <div>
-              <h3 className="mb-3 text-[14px] font-bold text-foreground">
-                인기 지역
+              <h3 className="mb-3 text-[14px] font-bold text-ink">
+                전체 여행지
               </h3>
               <div className="flex flex-wrap gap-2">
-                {POPULAR_DESTINATIONS.map((dest) => {
+                {destinations.map((dest) => {
                   const selected =
                     value?.city === dest.city &&
                     value?.country === dest.country;
@@ -80,12 +91,13 @@ export function DestinationFilterSheet({
                     <button
                       key={`${dest.country}-${dest.city}`}
                       type="button"
+                      aria-pressed={selected}
                       onClick={() => handleSelect(dest.city, dest.country)}
                       className={cn(
-                        "rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors",
+                        "min-h-11 rounded-full border px-3 py-2 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                         selected
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-[#E5E8EB] bg-background text-foreground hover:bg-[#F2F4F6]",
+                          ? "border-ink bg-ink text-paper hover:bg-ink-2 active:bg-ink-2"
+                          : "border-rule bg-paper text-ink hover:bg-paper-2 active:bg-paper-3",
                       )}
                     >
                       {dest.city}
@@ -100,7 +112,7 @@ export function DestinationFilterSheet({
                   className="mt-4 w-full"
                   onClick={() => {
                     onSelect(null);
-                    onOpenChange(false);
+                    handleSheetOpenChange(false);
                   }}
                 >
                   필터 초기화
@@ -110,27 +122,27 @@ export function DestinationFilterSheet({
           ) : (
             <ul className="flex flex-col">
               {results.length === 0 ? (
-                <li className="py-8 text-center text-[13px] text-muted-foreground">
-                  검색 결과가 없습니다
+                <li className="py-8 text-center text-[13px] text-ink-2">
+                  일치하는 여행지가 없어요
                 </li>
               ) : (
                 results.map((dest) => (
                   <li key={`${dest.country}-${dest.city}`}>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-3 py-3 text-left"
+                      className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
                       onClick={() => handleSelect(dest.city, dest.country)}
                     >
-                      <MapPin className="size-5 shrink-0 text-[#848C94]" />
+                      <MapPin className="size-5 shrink-0 text-ink-2" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[15px] font-semibold text-primary">
+                        <span className="block text-[15px] font-semibold text-ink">
                           {dest.city}
                         </span>
-                        <span className="block text-[12px] text-[#848C94]">
+                        <span className="block text-[12px] text-ink-2">
                           {dest.country}
                         </span>
                       </span>
-                      <ArrowUpRight className="size-4 shrink-0 text-[#848C94]" />
+                      <ArrowUpRight className="size-4 shrink-0 text-ink-2" />
                     </button>
                   </li>
                 ))

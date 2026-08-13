@@ -1,32 +1,41 @@
+import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import type { ShoppingMagazineItem } from "../data/demo-shopping-content";
 import { cn } from "@/lib/utils";
 
 function MagazineRow({ item }: { item: ShoppingMagazineItem }) {
-  const body = (
+  const content = (
     <>
       <div
         className={cn(
-          "relative size-[72px] shrink-0 overflow-hidden rounded-xl",
+          "relative size-24 shrink-0 overflow-hidden rounded-xl bg-paper-2",
           item.tone,
         )}
       >
         {item.imageSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={item.imageSrc}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
+            alt={`${item.title} 표지`}
+            fill
+            sizes="96px"
+            className="object-cover"
           />
         ) : null}
-        <span className="absolute bottom-1 left-1 rounded bg-black/45 px-1.5 py-0.5 text-[9px] font-semibold text-white">
-          {item.tag}
-        </span>
       </div>
-      <div className="min-w-0 flex-1 py-0.5">
-        <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-foreground">
+      <div className="min-w-0 flex-1 py-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[12px] font-semibold text-accent-text">{item.tag}</p>
+          {item.href ? (
+            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-ink-2">
+              외부 글
+              <ArrowUpRight className="size-3.5" aria-hidden />
+            </span>
+          ) : null}
+        </div>
+        <h3 className="mt-1 line-clamp-2 text-[18px] font-semibold leading-[1.45] text-ink">
           {item.title}
-        </p>
-        <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+        </h3>
+        <p className="mt-1 line-clamp-2 text-[12px] leading-[1.45] text-ink-2">
           {item.summary}
         </p>
       </div>
@@ -39,21 +48,19 @@ function MagazineRow({ item }: { item: ShoppingMagazineItem }) {
         href={item.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex gap-3 rounded-xl py-1 outline-none active:bg-muted/40"
+        className="-mx-2 flex gap-3 rounded-xl px-2 py-3 outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
-        {body}
+        {content}
       </a>
     );
   }
 
-  return (
-    <div className="flex gap-3 rounded-xl py-1 active:bg-muted/40">{body}</div>
-  );
+  return <article className="flex gap-3 py-3">{content}</article>;
 }
 
 export function MagazineList({ items }: { items: ShoppingMagazineItem[] }) {
   return (
-    <ul className="flex flex-col gap-2">
+    <ul aria-label="쇼핑 매거진" className="divide-y divide-rule">
       {items.map((item) => (
         <li key={item.id}>
           <MagazineRow item={item} />

@@ -24,6 +24,12 @@
 .DS_Store
 *.pem
 
+# editor (개인 설정)
+.vscode/
+
+# hallmark 디자인 툴 세션 로그 (시스템 문서는 DESIGN.md가 원본)
+.hallmark/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

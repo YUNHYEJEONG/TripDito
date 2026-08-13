@@ -7,7 +7,7 @@ let loadPromise: Promise<void> | null = null;
 /** Places UI Kit 포함 Maps JS API 로드 (한 번만) */
 export function loadGoogleMaps(apiKey: string): Promise<void> {
   if (!apiKey) {
-    return Promise.reject(new Error("Google Maps API 키가 없습니다."));
+    return Promise.reject(new Error("Google Maps API 키가 없어요."));
   }
 
   if (loadPromise) return loadPromise;
