@@ -112,7 +112,12 @@ function isDateInsideTrip(date: string, trip: Trip) {
 function buildItem(
   tripId: string,
   input: ShoppingItemFormValues,
-  options: { purchased?: boolean; sortOrder?: number; now?: string } = {},
+  options: {
+    purchased?: boolean;
+    purchasedAt?: string;
+    sortOrder?: number;
+    now?: string;
+  } = {},
 ): ShoppingItem {
   const now = options.now ?? new Date().toISOString();
   const purchased = options.purchased ?? false;
@@ -135,7 +140,7 @@ function buildItem(
     id: createId(),
     tripId,
     purchased,
-    purchasedAt: purchased ? now : null,
+    purchasedAt: purchased ? (options.purchasedAt ?? now) : null,
     sortOrder: options.sortOrder ?? Date.now(),
     createdAt: now,
     updatedAt: now,
@@ -163,8 +168,12 @@ export const itemRepository = {
     return readItems().find((item) => item.id === id);
   },
 
-  create(tripId: string, input: ShoppingItemFormValues): ShoppingItem {
-    const item = buildItem(tripId, input);
+  create(
+    tripId: string,
+    input: ShoppingItemFormValues,
+    options: { purchased?: boolean; purchasedAt?: string } = {},
+  ): ShoppingItem {
+    const item = buildItem(tripId, input, options);
     writeItems([item, ...readItems()]);
     return item;
   },
@@ -217,12 +226,13 @@ export const itemRepository = {
   createMany(
     tripId: string,
     inputs: ShoppingItemFormValues[],
-    options: { purchased?: boolean } = {},
+    options: { purchased?: boolean; purchasedAt?: string } = {},
   ): ShoppingItem[] {
     const now = new Date().toISOString();
     const created = inputs.map((input, index) =>
       buildItem(tripId, input, {
         purchased: options.purchased,
+        purchasedAt: options.purchasedAt,
         sortOrder: Date.now() + index,
         now,
       }),

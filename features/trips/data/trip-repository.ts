@@ -74,6 +74,30 @@ export const tripRepository = {
     return updated;
   },
 
+  /** Updates only budget fields and never rebases dates or touches shopping items. */
+  updateBudget(
+    id: string,
+    input: { budget: number; budgetMode: "unknown" | "input" },
+  ): Trip {
+    if (!Number.isFinite(input.budget) || input.budget < 0) {
+      throw new Error("예산은 0 이상이어야 해요");
+    }
+
+    const trips = readTrips();
+    const index = trips.findIndex((trip) => trip.id === id);
+    if (index < 0) throw new Error("여행을 찾을 수 없어요");
+
+    const updated: Trip = {
+      ...trips[index],
+      budget: input.budgetMode === "unknown" ? 0 : input.budget,
+      budgetMode: input.budgetMode,
+      updatedAt: new Date().toISOString(),
+    };
+    trips[index] = updated;
+    writeTrips(trips);
+    return updated;
+  },
+
   remove(id: string) {
     writeTrips(readTrips().filter((trip) => trip.id !== id));
     itemRepository.removeByTripId(id);

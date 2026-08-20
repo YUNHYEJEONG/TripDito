@@ -4,6 +4,7 @@ import {
   DEMO_HOME_PREVIEW_STORAGE_KEY,
   DEMO_STORAGE_MARKER_KEY,
   USER_DATA_STORAGE_KEYS,
+  demoIds,
 } from "./constants";
 import { buildDemoDataFixture, type DemoDataFixture } from "./fixtures";
 import { assertValidDemoDataFixture } from "./validate";
@@ -22,6 +23,7 @@ export type DemoBootstrapMarker = {
 
 export type DemoBootstrapResult =
   | { status: "seeded"; fixture: DemoDataFixture }
+  | { status: "upgraded" }
   | { status: "already-seeded" }
   | { status: "existing-data" }
   | { status: "suppressed" }
@@ -101,6 +103,151 @@ function hasExistingUserData(storage: DemoStorage) {
   return USER_DATA_STORAGE_KEYS.some((key) =>
     hasMeaningfulValue(key, storage.getItem(key)),
   );
+}
+
+type StoredEntity = Record<string, unknown> & { id: string };
+
+const V2_DEMO_TRIP_ANCHOR_IDS = [
+  demoIds.trips.tokyo,
+  demoIds.trips.osaka,
+  demoIds.trips.taipei,
+  demoIds.trips.paris,
+  demoIds.trips.fukuoka,
+] as const;
+
+const V2_DEMO_ITEM_ANCHOR_IDS = [
+  demoIds.items.tokyoSunscreen,
+  demoIds.items.osakaKitkat,
+  demoIds.items.taipeiPineappleCake,
+  demoIds.items.parisSoap,
+  demoIds.items.fukuokaMentaiko,
+] as const;
+
+const V3_DEMO_TRIP_IDS = new Set<string>([
+  demoIds.trips.kyoto,
+  demoIds.trips.seoul,
+  demoIds.trips.bangkok,
+  demoIds.trips.rome,
+]);
+
+const V3_DEMO_ITEM_IDS = new Set<string>([
+  demoIds.items.kyotoIncense,
+  demoIds.items.kyotoFuroshiki,
+  demoIds.items.kyotoMatcha,
+  demoIds.items.kyotoTenugui,
+  demoIds.items.kyotoCeramics,
+  demoIds.items.seoulCandle,
+  demoIds.items.seoulTray,
+  demoIds.items.seoulYakgwa,
+  demoIds.items.seoulBeans,
+  demoIds.items.seoulTeacup,
+  demoIds.items.bangkokCoconutOil,
+  demoIds.items.bangkokRattanBag,
+  demoIds.items.bangkokSilkScarf,
+  demoIds.items.bangkokHerbBalm,
+  demoIds.items.bangkokMangoJelly,
+  demoIds.items.romeTruffleOil,
+  demoIds.items.romeParmigiano,
+  demoIds.items.romeSoap,
+  demoIds.items.romeCardWallet,
+  demoIds.items.romeMokaPot,
+]);
+
+function readStoredEntities(storage: DemoStorage, key: string) {
+  const parsed = parseStoredValue(storage.getItem(key));
+  if (!parsed.valid || !Array.isArray(parsed.value)) return null;
+  if (
+    !parsed.value.every(
+      (entity): entity is StoredEntity =>
+        typeof entity === "object" &&
+        entity !== null &&
+        !Array.isArray(entity) &&
+        typeof (entity as Record<string, unknown>).id === "string",
+    )
+  ) {
+    return null;
+  }
+  return parsed.value;
+}
+
+function containsEveryId(
+  entities: StoredEntity[],
+  expectedIds: readonly string[],
+) {
+  const ids = new Set(entities.map((entity) => entity.id));
+  return expectedIds.every((id) => ids.has(id));
+}
+
+function appendMissingEntities<T extends { id: string }>(
+  current: StoredEntity[],
+  additions: T[],
+) {
+  const existingIds = new Set(current.map((entity) => entity.id));
+  return [
+    ...current,
+    ...additions.filter((entity) => !existingIds.has(entity.id)),
+  ];
+}
+
+/**
+ * Upgrades only a recognizable v2 demo snapshot. Existing records always win,
+ * so user edits, user-created entities, and even user-created v3 ID collisions
+ * are preserved. Only the new passport records absent from storage are added.
+ */
+function upgradeSeededV2DemoData(
+  storage: DemoStorage,
+  marker: DemoBootstrapMarker,
+  reference: Date,
+) {
+  if (marker.state !== "seeded" || marker.version !== 2) return false;
+
+  const storedTrips = readStoredEntities(storage, storageKeys.trips);
+  const storedItems = readStoredEntities(storage, storageKeys.items);
+  if (
+    !storedTrips ||
+    !storedItems ||
+    !containsEveryId(storedTrips, V2_DEMO_TRIP_ANCHOR_IDS) ||
+    !containsEveryId(storedItems, V2_DEMO_ITEM_ANCHOR_IDS)
+  ) {
+    return false;
+  }
+
+  const fixture = buildDemoDataFixture(reference);
+  assertValidDemoDataFixture(fixture, reference);
+  const mergedTrips = appendMissingEntities(
+    storedTrips,
+    fixture.trips.filter((trip) => V3_DEMO_TRIP_IDS.has(trip.id)),
+  );
+  const mergedItems = appendMissingEntities(
+    storedItems,
+    fixture.items.filter((item) => V3_DEMO_ITEM_IDS.has(item.id)),
+  );
+  const writes: Array<[string, unknown]> = [
+    [storageKeys.trips, mergedTrips],
+    [storageKeys.items, mergedItems],
+    [DEMO_STORAGE_MARKER_KEY, seededMarker(reference)],
+  ];
+  const previous = new Map(
+    writes.map(([key]) => [key, storage.getItem(key)]),
+  );
+
+  try {
+    for (const [key, value] of writes) {
+      storage.setItem(key, JSON.stringify(value));
+    }
+  } catch (error) {
+    for (const [key, value] of previous) {
+      try {
+        if (value === null) storage.removeItem(key);
+        else storage.setItem(key, value);
+      } catch {
+        // Best-effort rollback for browsers that revoke storage mid-write.
+      }
+    }
+    throw error;
+  }
+
+  return true;
 }
 
 function fixtureWrites(
@@ -188,6 +335,9 @@ export function bootstrapDemoData(
       marker.version === DEMO_DATA_VERSION
     ) {
       return { status: "already-seeded" };
+    }
+    if (marker && upgradeSeededV2DemoData(storage, marker, reference)) {
+      return { status: "upgraded" };
     }
     if (hasExistingUserData(storage)) return { status: "existing-data" };
 

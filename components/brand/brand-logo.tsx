@@ -1,28 +1,32 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { appConfig } from "@/config/app";
 import { cn } from "@/lib/utils";
 
 type BrandLogoProps = {
-  /** symbol: 캐리어만 / wordmark: 로고만 / full: 심볼+로고 */
+  /** symbol: D 리본 하트 / wordmark: TripDito / full: 승인된 D 락업 */
   variant?: "symbol" | "wordmark" | "full";
   size?: "sm" | "md" | "lg" | "xl";
   href?: string | null;
   className?: string;
 };
 
-const SYMBOL_SIZE = {
-  sm: 22,
-  md: 28,
-  lg: 40,
-  xl: 72,
+const RENDER_HEIGHT = {
+  symbol: { sm: 20, md: 26, lg: 38, xl: 60 },
+  wordmark: { sm: 16, md: 22, lg: 30, xl: 44 },
+  full: { sm: 20, md: 26, lg: 34, xl: 52 },
 } as const;
 
-const LOGO_HEIGHT = {
-  sm: 22,
-  md: 30,
-  lg: 38,
-  xl: 56,
+const SOURCE = {
+  symbol: appConfig.brand.symbolSrc,
+  wordmark: appConfig.brand.logoSrc,
+  full: appConfig.brand.lockupSrc,
+} as const;
+
+const INTRINSIC_SIZE = {
+  symbol: { width: 70, height: 60 },
+  wordmark: { width: 166, height: 42 },
+  full: { width: 244, height: 60 },
 } as const;
 
 export function BrandLogo({
@@ -31,30 +35,22 @@ export function BrandLogo({
   href = "/home",
   className,
 }: BrandLogoProps) {
-  const showSymbol = variant === "symbol" || variant === "full";
-  const showLogo = variant === "wordmark" || variant === "full";
+  const intrinsic = INTRINSIC_SIZE[variant];
+  const height = RENDER_HEIGHT[variant][size];
+  const width = Math.round((height * intrinsic.width) / intrinsic.height);
 
   const content = (
-    <span className={cn("inline-flex items-center gap-1", className)}>
-      {showSymbol ? (
-        <Image
-          src="/brand/symbol.png"
-          alt=""
-          width={SYMBOL_SIZE[size]}
-          height={SYMBOL_SIZE[size]}
-          className="shrink-0 object-contain"
-        />
-      ) : null}
-      {showLogo ? (
-        <Image
-          src="/brand/logo.png"
-          alt=""
-          width={Math.round((LOGO_HEIGHT[size] * 821) / 324)}
-          height={LOGO_HEIGHT[size]}
-          loading="eager"
-          className="w-auto object-contain object-left"
-        />
-      ) : null}
+    <span className={cn("inline-flex items-center", className)}>
+      <Image
+        src={SOURCE[variant]}
+        alt=""
+        width={intrinsic.width}
+        height={intrinsic.height}
+        loading="eager"
+        unoptimized
+        style={{ width, height }}
+        className="shrink-0 object-contain"
+      />
       <span className="sr-only">{appConfig.name}</span>
     </span>
   );

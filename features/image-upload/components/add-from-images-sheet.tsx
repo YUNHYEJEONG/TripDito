@@ -46,7 +46,7 @@ import { analysisJobRepository } from "@/features/image-analysis/data/analysis-j
 import { cn } from "@/lib/utils";
 
 type Step = "pick" | "review";
-type ImageImportFlow = "generic" | "prep" | "live";
+type ImageImportFlow = "generic" | "prep" | "live" | "settlement";
 
 export type ImageImportIntent = AnalysisJobIntent;
 
@@ -60,6 +60,21 @@ function parseStores(value: string): string[] {
     .map((part) => part.trim())
     .filter(Boolean);
 }
+
+/**
+ * 사진을 고르는 단계의 문구는 **네 흐름이 모두 같다.** 하는 일이 "사진 고르기"로 똑같은데
+ * `살 것 후보 담기 / 오늘 산 것 기록 / 지난 여행 구매 기록`처럼 흐름마다 다른 이름을 붙이면
+ * 같은 화면을 매번 다시 읽어야 하고, `후보`처럼 제품에서 쓰지 않는 말이 새어 나온다.
+ * 흐름별로 진짜 달라지는 건 **가격의 의미와 저장 결과**뿐이라 그쪽만 나눈다.
+ */
+const PICK_COPY = {
+  title: "사진으로 추가",
+  description: "디토 AI는 여러 장의 사진도 예측 가능해요!",
+  galleryLabel: "앨범",
+  cameraLabel: "카메라",
+  emptyLabel: "이미지를 선택하세요",
+  draftLabel: "디토 AI 분석 시작",
+} as const;
 
 const FLOW_COPY: Record<
   ImageImportFlow,
@@ -79,52 +94,64 @@ const FLOW_COPY: Record<
   }
 > = {
   generic: {
-    pickTitle: "사진으로 상품 추가",
-    reviewTitle: "상품 초안 확인",
-    pickDescription:
-      "사진 속 상품을 분석해 초안을 만들어요. 분석 연결이 없으면 파일명 초안으로 전환해요.",
+    pickTitle: PICK_COPY.title,
+    reviewTitle: "상품 확인",
+    pickDescription: PICK_COPY.description,
     reviewDescription:
-      "분석 결과의 이름과 가격을 확인한 뒤 쇼핑 리스트에 추가해 주세요.",
-    galleryLabel: "앨범",
-    cameraLabel: "카메라",
-    emptyLabel: "상품 사진을 선택해 주세요",
-    draftLabel: "상품 분석 시작",
+      "이름과 가격을 확인한 뒤 쇼핑리스트에 추가해 주세요.",
+    galleryLabel: PICK_COPY.galleryLabel,
+    cameraLabel: PICK_COPY.cameraLabel,
+    emptyLabel: PICK_COPY.emptyLabel,
+    draftLabel: PICK_COPY.draftLabel,
     priceLabel: "예상 가격",
     countLabel: "상품",
     totalLabel: "합계",
     saveLabel: (count) => `${count}개 추가`,
   },
   prep: {
-    pickTitle: "살 것 후보 담기",
-    reviewTitle: "살 것 후보 확인",
-    pickDescription:
-      "저장해 둔 상품 캡처를 분석해 여행 전 쇼핑 리스트 초안을 만들어요.",
+    pickTitle: PICK_COPY.title,
+    reviewTitle: "상품 확인",
+    pickDescription: PICK_COPY.description,
     reviewDescription:
-      "이름과 예상 가격을 확인하면 아직 사지 않은 쇼핑 후보로 저장해요.",
-    galleryLabel: "캡처 고르기",
-    cameraLabel: "직접 찍기",
-    emptyLabel: "저장해 둔 상품 캡처를 골라 주세요",
-    draftLabel: "살 것 후보 분석",
+      "이름과 예상 가격을 확인하면 쇼핑리스트에 담아 둬요.",
+    galleryLabel: PICK_COPY.galleryLabel,
+    cameraLabel: PICK_COPY.cameraLabel,
+    emptyLabel: PICK_COPY.emptyLabel,
+    draftLabel: PICK_COPY.draftLabel,
     priceLabel: "예상 가격",
-    countLabel: "후보",
+    countLabel: "상품",
     totalLabel: "예상 합계",
-    saveLabel: (count) => `후보 ${count}개 저장`,
+    saveLabel: (count) => `${count}개 추가`,
   },
   live: {
-    pickTitle: "오늘 산 것 기록",
+    pickTitle: PICK_COPY.title,
     reviewTitle: "구매 내역 확인",
-    pickDescription:
-      "방금 산 상품을 찍거나 앨범에서 골라 상품명과 가격을 분석해요.",
+    pickDescription: PICK_COPY.description,
     reviewDescription:
       "이름과 실제 결제 금액을 확인하면 오늘 구매 완료로 기록해요.",
-    galleryLabel: "앨범에서 찾기",
-    cameraLabel: "상품 찍기",
-    emptyLabel: "방금 산 상품 사진을 찍어 주세요",
-    draftLabel: "구매 내역 분석",
+    galleryLabel: PICK_COPY.galleryLabel,
+    cameraLabel: PICK_COPY.cameraLabel,
+    emptyLabel: PICK_COPY.emptyLabel,
+    draftLabel: PICK_COPY.draftLabel,
     priceLabel: "결제 금액",
     countLabel: "구매",
     totalLabel: "결제 합계",
     saveLabel: (count) => `${count}개 구매 기록`,
+  },
+  settlement: {
+    pickTitle: PICK_COPY.title,
+    reviewTitle: "구매 내역 확인",
+    pickDescription: PICK_COPY.description,
+    reviewDescription:
+      "이름과 가격을 확인하면 지난 여행의 구매 완료 기록으로 저장해요.",
+    galleryLabel: PICK_COPY.galleryLabel,
+    cameraLabel: PICK_COPY.cameraLabel,
+    emptyLabel: PICK_COPY.emptyLabel,
+    draftLabel: PICK_COPY.draftLabel,
+    priceLabel: "기록 가격",
+    countLabel: "구매 기록",
+    totalLabel: "기록 합계",
+    saveLabel: (count) => `${count}개 기록 저장`,
   },
 };
 
@@ -173,7 +200,9 @@ export function AddFromImagesSheet({
     intent.kind === "pretrip-candidates"
       ? "prep"
       : intent.kind === "trip-purchases"
-        ? "live"
+        ? intent.context === "settlement"
+          ? "settlement"
+          : "live"
         : "generic";
   const plannedPurchaseDate =
     intent.kind === "trip-purchases"
@@ -183,7 +212,13 @@ export function AddFromImagesSheet({
         : null;
   const markPurchased = intent.kind === "trip-purchases";
   const copy = FLOW_COPY[flow];
-  const createMany = useCreateManyItems(tripId, { markPurchased });
+  const createMany = useCreateManyItems(tripId, {
+    markPurchased,
+    purchasedAt:
+      intent.kind === "trip-purchases"
+        ? `${intent.purchasedOn}T12:00:00.000Z`
+        : undefined,
+  });
   const { data: analysisJob } = useAnalysisJob();
   const startAnalysisJob = useStartAnalysisJob();
   const clearAnalysisJob = useClearAnalysisJob();

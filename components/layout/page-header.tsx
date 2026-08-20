@@ -33,6 +33,7 @@ export function HeaderCancelButton({
 
 export function PageHeader({
   title,
+  titleAccessory,
   description,
   backHref,
   actions,
@@ -43,6 +44,7 @@ export function PageHeader({
   sticky = true,
 }: {
   title: string;
+  titleAccessory?: React.ReactNode;
   description?: string;
   backHref?: string;
   actions?: React.ReactNode;
@@ -86,9 +88,14 @@ export function PageHeader({
               description ? "gap-1" : "h-9",
             )}
           >
-            <h1 className="truncate text-left text-[18px] font-semibold leading-none tracking-[-0.02em] text-foreground">
-              {title}
-            </h1>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <h1 className="min-w-0 flex-1 truncate text-left text-[18px] font-semibold leading-none tracking-[-0.02em] text-foreground">
+                {title}
+              </h1>
+              {titleAccessory ? (
+                <div className="shrink-0">{titleAccessory}</div>
+              ) : null}
+            </div>
             {description ? (
               <p className="truncate text-left text-xs leading-none text-muted-foreground">
                 {description}

@@ -33,8 +33,9 @@ export function getTripHomeMode(
  * Picks a contextual trip. Far-future trips stay in the ordinary (`idle`)
  * home, while completed trips remain available as settlement history.
  *
- * Automatic priority is live → nearest prep → most recent after. Sorting is
- * deterministic so repository ordering cannot unexpectedly change the home.
+ * Automatic priority is live → nearest prep → nearest future → most recent
+ * after. Home is a shopping-list workspace, so an upcoming list is more useful
+ * than reopening a settlement unless the user explicitly selected it.
  */
 export function selectHomeTrip(
   trips: Trip[],
@@ -59,6 +60,16 @@ export function selectHomeTrip(
         a.id.localeCompare(b.id),
     );
   if (prep[0]) return prep[0];
+
+  const future = trips
+    .filter((trip) => getTripHomeMode(trip, today) === "idle")
+    .sort(
+      (a, b) =>
+        a.startDate.localeCompare(b.startDate) ||
+        a.endDate.localeCompare(b.endDate) ||
+        a.id.localeCompare(b.id),
+    );
+  if (future[0]) return future[0];
 
   const after = trips
     .filter((trip) => getTripHomeMode(trip, today) === "after")

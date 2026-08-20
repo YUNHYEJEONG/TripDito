@@ -136,7 +136,7 @@ export function HomeFxCard({ currency }: { currency: string }) {
                       </span>
                     ) : (
                       <span className="text-[12px] leading-[1.4] font-medium text-muted-foreground">
-                        전일 대비 —
+                        전일 대비 정보 없음
                       </span>
                     )}
                   </div>

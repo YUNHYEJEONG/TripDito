@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { getLivePurchaseProgressHref } from "../features/home/components/home-status-hero";
 import { getHomeTripCardAction } from "../features/home/components/home-upcoming-trip-card";
-import { getTripStatusLabel } from "../features/home/components/trip-switch-sheet";
+import { tripCardStatusFromHomeMode } from "../features/trips/components/trip-card";
 import type { Trip } from "../features/trips/types";
 
 function trip(overrides: Partial<Trip> = {}): Trip {
@@ -22,15 +22,13 @@ function trip(overrides: Partial<Trip> = {}): Trip {
 }
 
 describe("home action semantics", () => {
-  it("uses the live destination image card for nearby map discovery", () => {
-    const action = getHomeTripCardAction(trip(), "2026-08-13");
-    const href = new URL(action.href, "https://tripdito.local");
+  it("opens the trip detail from the hero card in every state", () => {
+    // 여행 중에만 지도로 새면 같은 자리를 눌렀는데 다른 곳이 열린다.
+    const live = getHomeTripCardAction(trip(), "2026-08-13");
 
-    assert.equal(href.pathname, "/map");
-    assert.equal(href.searchParams.get("q"), "타이베이");
-    assert.equal(href.searchParams.get("returnTo"), "/home");
-    assert.equal(action.label, "현지 지도와 쇼핑 장소 보기");
-    assert.equal(action.ariaLabel, "타이베이 현지 지도와 쇼핑 장소 보기");
+    assert.equal(live.href, "/trips/taipei-trip?returnTo=%2Fhome");
+    assert.equal(live.label, "여행 중인 쇼핑 계획 보기");
+    assert.equal(live.ariaLabel, "타이베이 여행 쇼핑 계획 보기");
   });
 
   it("keeps upcoming and completed cards focused on plans and records", () => {
@@ -55,10 +53,12 @@ describe("home action semantics", () => {
     );
   });
 
-  it("uses natural, consistent labels for every trip status badge", () => {
-    assert.equal(getTripStatusLabel("idle"), "준비 전");
-    assert.equal(getTripStatusLabel("prep"), "예정");
-    assert.equal(getTripStatusLabel("live"), "여행 중");
-    assert.equal(getTripStatusLabel("after"), "결산");
+  it("shows one trip status badge everywhere, not a per-screen label set", () => {
+    // 여행 탭 카드와 홈의 여행 전환 시트가 같은 배지를 쓴다.
+    assert.equal(tripCardStatusFromHomeMode("live"), "live");
+    assert.equal(tripCardStatusFromHomeMode("after"), "complete");
+    // 먼 미래(idle)도 사용자에게는 그냥 출발 예정이다.
+    assert.equal(tripCardStatusFromHomeMode("prep"), "prep");
+    assert.equal(tripCardStatusFromHomeMode("idle"), "prep");
   });
 });

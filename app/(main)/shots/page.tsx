@@ -5,7 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { migrateDemoShotImages } from "@/features/demo";
@@ -198,11 +197,7 @@ export default function ShotsPage() {
           "pb-[calc(var(--tab-bar-height)+6rem+env(safe-area-inset-bottom))]",
       )}
     >
-      <ShotsChannelTabs
-        active="shots"
-        shotView={view}
-        actions={<HeaderNavActions />}
-      />
+      <ShotsChannelTabs active="shots" shotView={view} />
 
       <main className="flex flex-col">
         {view === "ranking" ? (

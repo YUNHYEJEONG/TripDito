@@ -1,0 +1,23 @@
+.previewGlass {
+  color: var(--color-paper);
+  background: var(--color-ink);
+}
+
+@supports (
+  (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))
+) {
+  .previewGlass {
+    background: var(--color-ink);
+    background: color-mix(in srgb, var(--color-ink) 68%, transparent);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    backdrop-filter: blur(10px) saturate(115%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .previewGlass {
+    background: var(--color-ink);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

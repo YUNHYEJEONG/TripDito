@@ -20,7 +20,7 @@ export function DemoDataBootstrap() {
     const result = bootstrapDemoData(
       createAccountScopedStorage(window.localStorage),
     );
-    if (result.status === "seeded") {
+    if (result.status === "seeded" || result.status === "upgraded") {
       void queryClient.invalidateQueries();
     }
   }, [queryClient]);

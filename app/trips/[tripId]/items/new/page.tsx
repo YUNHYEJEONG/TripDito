@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { ItemForm } from "@/features/shopping-items/components/item-form";
 import { useCreateItem } from "@/features/shopping-items/hooks/use-items";
+import { getTripHomeMode } from "@/features/home/utils/get-home-mode";
 import { FormPageStatus } from "@/features/trips/components/form-page-status";
 import { useTrip } from "@/features/trips/hooks/use-trips";
 import { getSafeReturnTo, withReturnTo } from "@/lib/navigation/return-to";
@@ -20,7 +21,17 @@ export default function NewItemPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: trip, isLoading, isError, refetch } = useTrip(tripId);
-  const createItem = useCreateItem(tripId);
+  const settlementRequested = searchParams.get("intent") === "settlement";
+  const isSettlement = Boolean(
+    settlementRequested && trip && getTripHomeMode(trip) === "after",
+  );
+  const createItem = useCreateItem(tripId, {
+    markPurchased: isSettlement,
+    purchasedAt:
+      isSettlement && trip
+        ? `${trip.endDate}T12:00:00.000Z`
+        : undefined,
+  });
   const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
   const tripHref = withReturnTo(`/trips/${tripId}`, returnTo);
 
@@ -68,12 +79,17 @@ export default function NewItemPage({
 
   return (
     <AppShell surface="planning">
-      <PageHeader title="상품 추가" backHref={tripHref} />
+      <PageHeader
+        title={isSettlement ? "구매 기록 추가" : "상품 추가"}
+        backHref={tripHref}
+      />
       <ItemForm
         currency={trip.currency}
         tripStartDate={trip.startDate}
         tripEndDate={trip.endDate}
-        submitLabel="리스트에 상품 추가"
+        submitLabel={
+          isSettlement ? "구매 기록 저장" : "리스트에 상품 추가"
+        }
         onCancel={() => router.push(tripHref)}
         onSubmit={async (values) => {
           try {

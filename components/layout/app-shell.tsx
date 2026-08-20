@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 
-export type AppShellSurface = "compact" | "feed" | "planning";
+export type AppShellSurface = "compact" | "feed" | "planning" | "passport";
 
 /**
  * 모든 viewport에서 480px 모바일 앱 레일을 유지하는 공통 화면 셸.
- * `surface`는 기존 호출부의 의미 표시에만 남기고 너비에는 영향을 주지 않는다.
+ * `passport`만 700px 이상 900px 미만 폴더블 구간에서 두 물리 페이지를 위해 확장한다.
+ * 그 외 화면과 900px 이상 데스크톱에서는 480px 모바일 앱 레일을 유지한다.
  */
 export function AppShell({
   children,
@@ -29,8 +30,9 @@ export function AppShell({
       data-mode={contextualMode ? mode : undefined}
       data-surface={surface}
       className={cn(
-        "app-rail mx-auto flex min-h-dvh w-full max-w-[var(--app-rail-max)] flex-1 flex-col bg-canvas px-[var(--app-gutter)] pt-[calc(env(safe-area-inset-top)+0.75rem)]",
-        contextualMode && "bg-mode-canvas transition-colors duration-200",
+        "app-rail mx-auto flex min-h-dvh w-full max-w-[var(--app-rail-max)] flex-1 flex-col bg-paper px-[var(--app-gutter)] pt-[calc(env(safe-area-inset-top)+0.75rem)]",
+        surface === "passport" &&
+          "min-[700px]:max-[900px]:max-w-[calc(100vw-2rem)]",
         withBottomNav
           ? "pb-[calc(var(--tab-bar-height)+var(--app-bottom-gap)+env(safe-area-inset-bottom))]"
           : "pb-[calc(1.5rem+env(safe-area-inset-bottom))]",

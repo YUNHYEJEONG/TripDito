@@ -62,7 +62,7 @@ function DestinationChip({
       className={cn(
         "inline-flex h-11 shrink-0 items-center rounded-full border px-3 text-[13px] font-semibold outline-none transition-colors duration-120 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
         selected
-          ? "border-ink bg-ink text-paper hover:bg-ink-2 active:bg-ink-2"
+          ? "border-accent-text bg-accent-text text-paper hover:bg-accent active:bg-accent-text"
           : "border-rule bg-paper text-ink hover:bg-paper-2 active:bg-paper-2",
       )}
     >

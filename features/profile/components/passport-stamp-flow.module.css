@@ -1,0 +1,33 @@
+.impression {
+  transform-origin: center;
+  animation: passport-stamp-impression 440ms
+    cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes passport-stamp-impression {
+  0% {
+    opacity: 0;
+    transform: scale(1.34) rotate(-5deg);
+  }
+
+  56% {
+    opacity: 0.72;
+    transform: scale(0.94) rotate(1.5deg);
+  }
+
+  78% {
+    opacity: 0.9;
+    transform: scale(1.025) rotate(-0.5deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impression {
+    animation: none;
+  }
+}

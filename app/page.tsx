@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { appConfig } from "@/config/app";
 import { cn } from "@/lib/utils";
 
@@ -49,25 +49,12 @@ export default function LandingPage() {
           phase === "exit" && "-translate-y-2 scale-105 opacity-0",
         )}
       >
-        <Image
-          src="/brand/symbol.png"
-          alt=""
-          width={1_075}
-          height={1_075}
-          priority
+        <BrandLogo
+          variant="full"
+          size="xl"
+          href={null}
           className={cn(
-            "size-[4.5rem] object-contain transition-transform duration-700 ease-[var(--ease-out)] motion-reduce:transition-none",
-            phase === "hold" ? "scale-100" : "scale-95",
-          )}
-        />
-        <Image
-          src="/brand/logo.png"
-          alt={appConfig.name}
-          width={821}
-          height={324}
-          priority
-          className={cn(
-            "h-12 w-auto max-w-[min(240px,70vw)] object-contain transition-transform duration-700 ease-[var(--ease-out)] motion-reduce:transition-none",
+            "transition-transform duration-700 ease-[var(--ease-out)] motion-reduce:transition-none",
             phase === "hold" ? "scale-100" : "scale-95",
           )}
         />

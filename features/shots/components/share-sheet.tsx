@@ -4,6 +4,7 @@ import { Link2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
+import { appConfig } from "@/config/app";
 
 export function ShareSheet({
   open,
@@ -39,7 +40,7 @@ export function ShareSheet({
   }
 
   async function shareFromDevice() {
-    const text = `${nickname}님의 때샷 — 트립디토`;
+    const text = `${nickname}님의 때샷 - ${appConfig.name}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: text, text, url: shareUrl });

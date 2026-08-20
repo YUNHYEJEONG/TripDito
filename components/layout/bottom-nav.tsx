@@ -2,46 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Images, ShoppingBag, UserRound } from "lucide-react";
+import { BookOpen, Home, Images, ShoppingBag, UserRound } from "lucide-react";
+import {
+  BOTTOM_NAV_ITEMS,
+  getActiveBottomNavItem,
+  type BottomNavItemId,
+} from "@/components/layout/bottom-nav-items";
 import { cn } from "@/lib/utils";
 
-const tabs = [
-  {
-    href: "/home",
-    label: "홈",
-    icon: Home,
-    active: (pathname: string) =>
-      pathname === "/home" ||
-      pathname === "/" ||
-      pathname.startsWith("/my-trips") ||
-      pathname.startsWith("/trips"),
-  },
-  {
-    href: "/shopping",
-    label: "쇼핑",
-    icon: ShoppingBag,
-    active: (pathname: string) => pathname.startsWith("/shopping"),
-  },
-  {
-    href: "/shots",
-    label: "때샷",
-    icon: Images,
-    active: (pathname: string) => pathname.startsWith("/shots"),
-  },
-  {
-    href: "/profile",
-    label: "프로필",
-    icon: UserRound,
-    active: (pathname: string) => pathname.startsWith("/profile"),
-  },
-] as const;
+const tabIcons = {
+  shopping: ShoppingBag,
+  shots: Images,
+  home: Home,
+  passport: BookOpen,
+  profile: UserRound,
+} satisfies Record<BottomNavItemId, typeof Home>;
 
 /**
  * 앱이 모바일 전용이므로 넓은 화면에서도 중앙 앱 레일의 하단 탭을 유지한다.
- * 여행 관리는 홈의 현재 여행 영역에 포함하고, 전역 목적지만 4개로 유지한다.
+ * 홈을 엄지 도달이 쉬운 중앙에 두고, 완료 여행은 독립된 여권 탭에서 본다.
  */
 export function BottomNav() {
   const pathname = usePathname();
+  const activeItem = getActiveBottomNavItem(pathname);
 
   if (pathname === "/map" || pathname.startsWith("/map/")) return null;
 
@@ -50,37 +33,36 @@ export function BottomNav() {
       aria-label="주요 메뉴"
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40"
     >
-      <div className="pointer-events-auto mx-auto max-w-[var(--app-rail-max)] border-t border-rule bg-paper min-[481px]:border-x">
-        <div className="grid h-[var(--tab-bar-height)] grid-cols-4 items-stretch px-2">
-          {tabs.map(({ href, label, icon: Icon, active: isActive }) => {
-            const active = isActive(pathname);
+      <div
+        data-bottom-nav-rail=""
+        className="pointer-events-auto mx-auto w-full max-w-[var(--app-rail-max)] border-t border-rule bg-paper min-[481px]:border-x"
+      >
+        <div className="grid h-[var(--tab-bar-height)] grid-cols-5 items-stretch px-2">
+          {BOTTOM_NAV_ITEMS.map(({ id, href, ariaLabel }) => {
+            const Icon = tabIcons[id];
+            const active = activeItem === id;
 
             return (
               <Link
-                key={href}
+                key={id}
                 href={href}
-                aria-label={label}
+                aria-label={ariaLabel}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl px-0.5 whitespace-nowrap outline-none transition-[color,background-color,transform] duration-120 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus active:scale-[0.98]",
+                  "flex min-h-11 min-w-11 items-center justify-center rounded-2xl outline-none transition-[color,background-color,transform] duration-120 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus active:scale-[0.96]",
                   active
-                    ? "text-accent-text active:bg-paper-2"
+                    ? "bg-accent/10 text-accent-text active:bg-accent/15"
                     : "text-ink-2 hover:bg-paper-2 hover:text-ink active:bg-paper-2 active:text-ink",
                 )}
               >
                 <Icon
-                  className="size-[22px] shrink-0"
-                  strokeWidth={active ? 2.35 : 1.85}
+                  className={cn(
+                    "shrink-0 transition-[transform,stroke-width] duration-120",
+                    active ? "size-7 scale-105" : "size-6",
+                  )}
+                  strokeWidth={active ? 2.4 : 1.8}
                   aria-hidden
                 />
-                <span
-                  className={cn(
-                    "text-[10px] leading-none tracking-[-0.01em] min-[360px]:text-[11px]",
-                    active ? "font-bold" : "font-medium",
-                  )}
-                >
-                  {label}
-                </span>
               </Link>
             );
           })}

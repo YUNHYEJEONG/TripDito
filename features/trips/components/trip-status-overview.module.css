@@ -1,0 +1,1350 @@
+/* Hallmark · component: trip status overview · macrostructure: edge HP + central line-volume device + summary rail
+ * Design read: Toss-inspired information hierarchy with TripDito's flat-color line language.
+ * Dials: variance 5 · motion 5 · density 5.
+ * Motion communicates liquid level, packing change, purchase fill, and earned completion.
+ */
+
+.shortViewportCard {
+  --status-deep: var(--prep-deep);
+  --status-rule: var(--prep-tint);
+  --status-surface: var(--prep);
+  --device-stroke: 2px;
+}
+
+.shortViewportCard[data-trip-status-overview="live"],
+.shortViewportCard[data-trip-status-loading="live"] {
+  --status-deep: var(--live-deep);
+  --status-rule: var(--live-tint);
+  --status-surface: var(--live);
+}
+
+.shortViewportCard[data-trip-status-overview="after"],
+.shortViewportCard[data-trip-status-loading="after"] {
+  --status-deep: var(--after-deep);
+  --status-rule: var(--after-tint);
+  --status-surface: var(--after);
+}
+
+.overviewBody {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: 152px auto;
+  min-width: 0;
+  min-height: 204px;
+}
+
+.overviewBody[data-has-budget-reservoir="false"] {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 196px;
+}
+
+.reservoirRail {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  min-width: 0;
+  min-height: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--status-deep) 7%, var(--status-surface)),
+    transparent
+  );
+}
+
+.instrumentStage {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / 3;
+  grid-row: 1;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: 2px var(--space-2) 0;
+}
+
+.informationRail {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  padding: 0 10px 7px var(--space-2);
+}
+
+.overviewBody[data-has-budget-reservoir="false"] .instrumentStage,
+.overviewBody[data-has-budget-reservoir="false"] .informationRail {
+  grid-column: 1;
+}
+
+.summaryRail,
+.planningRail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: baseline;
+  min-width: 0;
+  column-gap: var(--space-3);
+  border-block-start: 1px solid var(--status-rule);
+  padding-block-start: var(--space-1);
+}
+
+.summaryRail {
+  min-height: 44px;
+}
+
+.completedRail {
+  min-height: 44px;
+}
+
+.planningRail {
+  position: relative;
+  grid-template-columns: minmax(92px, 1fr) minmax(70px, max-content) max-content;
+  align-items: end;
+  column-gap: 10px;
+  min-height: 48px;
+}
+
+.reservoirColumn {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  place-items: stretch center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 6px 3px;
+}
+
+.budgetReservoir {
+  position: relative;
+  width: min(58px, 100%);
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+  color: var(--status-deep);
+  isolation: isolate;
+}
+
+.prepReservoir {
+  color: var(--prep-deep);
+}
+
+.liveReservoir {
+  color: var(--live-deep);
+}
+
+.reservoirTankFace {
+  position: absolute;
+  z-index: 2;
+  inset: 7px 7px 3px 0;
+  overflow: hidden;
+  border: var(--device-stroke) solid currentColor;
+  border-radius: 6px 4px 7px 8px;
+  background: color-mix(in srgb, var(--color-paper) 94%, var(--status-surface));
+  box-shadow:
+    inset 3px 0 0 color-mix(in srgb, var(--color-paper) 70%, transparent),
+    inset -3px -3px 0 color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.reservoirSideFace {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 1px;
+  bottom: 8px;
+  width: 8px;
+  border: var(--device-stroke) solid currentColor;
+  border-inline-start: 0;
+  border-radius: 0 4px 5px 0;
+  background: color-mix(in srgb, currentColor 8%, var(--status-surface));
+  transform: skewY(-24deg);
+  transform-origin: 0 0;
+}
+
+.reservoirCap {
+  position: absolute;
+  z-index: 4;
+  top: 2px;
+  left: 2px;
+  width: 23px;
+  height: 8px;
+  border: var(--device-stroke) solid currentColor;
+  border-radius: 4px 2px 2px 3px;
+  background: color-mix(in srgb, var(--color-paper) 92%, var(--status-surface));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 9%, transparent);
+  transform: skewX(-18deg);
+  transform-origin: 0 100%;
+}
+
+.reservoirFill {
+  position: absolute;
+  z-index: 1;
+  inset: 2px;
+  overflow: visible;
+  border-radius: 4px 3px 5px 6px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, currentColor 43%, var(--color-paper)),
+    color-mix(in srgb, currentColor 56%, var(--color-paper))
+  );
+  box-shadow:
+    inset 5px 0 8px color-mix(in srgb, var(--color-paper) 30%, transparent),
+    inset -4px 0 8px color-mix(in srgb, var(--color-ink) 5%, transparent);
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.reservoirFill::before {
+  position: absolute;
+  top: -2px;
+  right: -12%;
+  left: -12%;
+  height: 3px;
+  border-radius: 55% 45% 35% 65%;
+  background: color-mix(in srgb, currentColor 45%, var(--color-paper));
+  content: "";
+  opacity: 0.68;
+  transform: translateX(-4%);
+}
+
+.reservoirTicks {
+  position: absolute;
+  z-index: 3;
+  inset: 7px 4px;
+  border-block-start: 1px dashed color-mix(in srgb, currentColor 16%, transparent);
+  border-inline-end: 1px dashed color-mix(in srgb, currentColor 14%, transparent);
+  pointer-events: none;
+}
+
+.planningBudgetDetails {
+  display: grid;
+  grid-template-rows: 12px 31px;
+  min-width: 0;
+}
+
+.budgetInputLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  color: var(--color-ink-2);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 700;
+}
+
+.saveStateIcon {
+  display: inline-grid;
+  width: 18px;
+  height: 12px;
+  place-items: center;
+  color: var(--prep-deep);
+}
+
+.budgetInputWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.budgetInput {
+  height: 31px;
+  min-height: 31px;
+  padding: 0 40px 0 0;
+  border: 0;
+  border-block-end: 1px solid var(--prep-tint);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: clamp(20px, 5.8vw, 23px);
+  line-height: 31px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  box-shadow: none;
+}
+
+.budgetInput:hover {
+  border-block-end-color: var(--prep-deep);
+}
+
+.budgetInput:focus-visible {
+  border-block-end-color: var(--color-focus);
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--color-paper) 56%, transparent);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.currencySuffix {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-ink-2);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.budgetError {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--color-danger-text);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budgetError[data-budget-error-visible="false"] {
+  display: none;
+}
+
+.metric {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+}
+
+.summaryRail .secondaryMetric,
+.completedRail .secondaryMetric,
+.planningRail .secondaryMetric {
+  justify-self: end;
+}
+
+.planningRail .metric {
+  display: grid;
+  align-content: end;
+  gap: 0;
+}
+
+.planningRail .metricLabel {
+  line-height: 12px;
+}
+
+.planningRail .metricValue {
+  line-height: 25px;
+}
+
+.metricLabel {
+  overflow: hidden;
+  color: var(--color-ink-2);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metricValue {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.primaryMetric .metricValue {
+  font-size: clamp(20px, 5.6vw, 24px);
+  line-height: 27px;
+}
+
+.secondaryMetric .metricValue {
+  font-size: clamp(15px, 4.4vw, 18px);
+  line-height: 21px;
+}
+
+.loadingReservoir {
+  align-self: stretch;
+  justify-self: center;
+  width: 38px;
+  margin: var(--space-2) 0 var(--space-6);
+  border-radius: var(--r-m);
+  background: var(--status-rule);
+  opacity: 0.76;
+}
+
+.loadingInstrument {
+  opacity: 0.3;
+}
+
+.loadingRailPrimary,
+.loadingRailSecondary {
+  display: block;
+  height: 40px;
+  border-radius: var(--r-m);
+  background: var(--status-rule);
+  opacity: 0.72;
+}
+
+.loadingRailSecondary {
+  width: 64px;
+  height: 28px;
+}
+
+.suitcaseGauge {
+  --suitcase-line: var(--prep-deep);
+  --suitcase-tint: var(--prep-tint);
+
+  width: 228px;
+  height: 150px;
+  overflow: visible;
+  color: var(--suitcase-line);
+}
+
+.suitcaseGauge[data-suitcase-scene="transit"] {
+  --suitcase-line: var(--live-deep);
+  --suitcase-tint: var(--live-tint);
+}
+
+.suitcaseGauge[data-suitcase-scene="unpacking"] {
+  --suitcase-line: var(--after-deep);
+  --suitcase-tint: var(--after-tint);
+}
+
+.suitcaseCanvas {
+  position: absolute;
+  inset: 0;
+}
+
+.suitcaseArtwork {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: 50% 82%;
+  perspective: 360px;
+}
+
+.suitcaseGround {
+  position: absolute;
+  z-index: 0;
+  right: 14px;
+  bottom: 0;
+  left: 17px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--suitcase-line) 9%, transparent);
+  filter: blur(2px);
+}
+
+.suitcaseHandle {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  left: 50%;
+  width: 46px;
+  height: 24px;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-block-end: 0;
+  border-radius: 11px 11px 0 0;
+  background: color-mix(in srgb, var(--color-paper) 82%, transparent);
+  transform: translateX(-50%) rotateZ(-1deg);
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.suitcaseHandleGrip {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  left: 8px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--suitcase-line) 16%, transparent);
+}
+
+.suitcaseLid {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 18px;
+  width: 128px;
+  height: 31px;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-radius: 15px 13px 10px 11px;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-paper) 94%, var(--suitcase-tint)),
+      color-mix(in srgb, var(--suitcase-tint) 37%, var(--color-paper))
+    );
+  box-shadow: inset -6px -5px 0 color-mix(in srgb, var(--suitcase-line) 6%, transparent);
+  transform: rotateZ(-1deg);
+  transform-origin: 18% 100%;
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
+}
+
+.suitcaseLidInset {
+  position: absolute;
+  inset: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--suitcase-line) 38%, transparent);
+  border-radius: 9px 8px 6px;
+}
+
+.suitcaseTopFace {
+  position: absolute;
+  z-index: 3;
+  top: 28px;
+  left: 20px;
+  width: 129px;
+  height: 15px;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-radius: 6px 8px 4px 5px;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--color-paper) 82%, var(--suitcase-tint)),
+      color-mix(in srgb, var(--suitcase-line) 13%, var(--suitcase-tint))
+    );
+  box-shadow: inset 0 3px 0 color-mix(in srgb, var(--color-paper) 40%, transparent);
+  transform: skewX(-19deg);
+  transform-origin: 0 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.suitcaseBody {
+  position: absolute;
+  z-index: 4;
+  top: 35px;
+  left: 14px;
+  width: 135px;
+  height: 57px;
+  overflow: visible;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-radius: 15px 13px 15px 17px;
+  background:
+    linear-gradient(
+      137deg,
+      color-mix(in srgb, var(--color-paper) 95%, var(--suitcase-tint)),
+      color-mix(in srgb, var(--suitcase-tint) 28%, var(--color-paper))
+    );
+  box-shadow:
+    inset 5px 0 0 color-mix(in srgb, var(--color-paper) 48%, transparent),
+    inset -8px -6px 0 color-mix(in srgb, var(--suitcase-line) 5%, transparent),
+    0 3px 0 color-mix(in srgb, var(--suitcase-line) 11%, transparent);
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+  isolation: isolate;
+}
+
+.suitcaseBody::before {
+  position: absolute;
+  z-index: 0;
+  inset: 5px 6px 6px;
+  border: 1px solid color-mix(in srgb, var(--suitcase-line) 21%, transparent);
+  border-radius: 10px 8px 10px 12px;
+  content: "";
+  pointer-events: none;
+}
+
+.suitcaseSideFace {
+  position: absolute;
+  z-index: 5;
+  top: 37px;
+  left: 148px;
+  width: 13px;
+  height: 52px;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-inline-start: 0;
+  border-radius: 0 8px 9px 0;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--suitcase-line) 15%, var(--suitcase-tint)),
+      color-mix(in srgb, var(--suitcase-line) 23%, var(--suitcase-tint))
+    );
+  transform: skewY(-22deg);
+  transform-origin: 0 0;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.suitcaseSideBand {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 4px;
+  width: 1px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--suitcase-line) 38%, transparent);
+}
+
+.suitcaseGauge[data-suitcase-scene="packing"] .suitcaseHandle {
+  transform: translateX(-50%) translateY(-1px) rotateZ(-4deg);
+}
+
+.suitcaseGauge[data-suitcase-scene="packing"] .suitcaseLid {
+  transform: perspective(150px) translateY(-7px) rotateX(-42deg) rotateZ(-3deg);
+}
+
+.suitcaseGauge[data-suitcase-scene="packing"] .suitcaseTopFace {
+  transform: translateY(-1px) skewX(-23deg);
+}
+
+.suitcaseGauge[data-suitcase-scene="transit"] .suitcaseLid {
+  transform: translateY(11px) rotateZ(-1deg) scaleY(0.48);
+  transform-origin: 50% 100%;
+}
+
+.suitcaseGauge[data-suitcase-scene="transit"] .suitcaseTopFace {
+  transform: translateY(2px) skewX(-18deg);
+}
+
+.suitcaseGauge[data-suitcase-scene="unpacking"] .suitcaseHandle {
+  transform: translateX(-50%) translateY(-1px) rotateZ(4deg);
+}
+
+.suitcaseGauge[data-suitcase-scene="unpacking"] .suitcaseLid {
+  transform: perspective(150px) translateY(-7px) rotateX(-40deg) rotateZ(3deg);
+  transform-origin: 82% 100%;
+}
+
+.suitcaseGauge[data-suitcase-scene="unpacking"] .suitcaseTopFace {
+  transform: translateY(-1px) skewX(-16deg);
+}
+
+.suitcaseFill {
+  position: absolute;
+  z-index: 1;
+  inset: 4px 5px 5px;
+  overflow: hidden;
+  border-radius: 10px 8px 10px 12px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--suitcase-line) 24%, var(--color-paper)) 0%,
+    color-mix(in srgb, var(--suitcase-line) 17%, var(--color-paper)) 68%,
+    color-mix(in srgb, var(--suitcase-line) 5%, transparent) 90%,
+    transparent 100%
+  );
+  box-shadow: inset 0 -5px 8px color-mix(in srgb, var(--suitcase-line) 7%, transparent);
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.suitcaseFrontBandStart,
+.suitcaseFrontBandEnd {
+  position: absolute;
+  z-index: 4;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--suitcase-line) 24%, transparent);
+  pointer-events: none;
+}
+
+.suitcaseFrontBandStart {
+  left: 18%;
+}
+
+.suitcaseFrontBandEnd {
+  right: 17%;
+}
+
+.suitcasePropSlot {
+  position: absolute;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  color: var(--suitcase-line);
+}
+
+.suitcasePropGlyph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--color-paper) 68%, transparent));
+  transform: translateY(0) scale(1);
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
+}
+
+.suitcaseItemShirt {
+  top: -7px;
+  left: 11%;
+  transform: rotate(-7deg);
+}
+
+.suitcaseItemCamera {
+  top: 9px;
+  left: 40%;
+  transform: rotate(3deg);
+}
+
+.suitcaseItemGlasses {
+  top: -4px;
+  right: 8%;
+  transform: rotate(-3deg);
+}
+
+.suitcaseItemMap {
+  bottom: 4px;
+  left: 24%;
+  transform: rotate(4deg);
+}
+
+.suitcaseItemHeadphones {
+  right: 23%;
+  bottom: 3px;
+  transform: rotate(-5deg);
+}
+
+.suitcasePropSlot[data-suitcase-item-mode="collection"][data-suitcase-item-active="false"]
+  .suitcasePropGlyph {
+  opacity: 0;
+  transform: translateY(-14px) scale(0.72);
+}
+
+.suitcasePropSlot[data-suitcase-item-mode="progress"] .suitcasePropGlyph {
+  opacity: 0.94;
+}
+
+.suitcaseOverflow {
+  position: absolute;
+  z-index: 9;
+  right: 5px;
+  bottom: 4px;
+  display: inline-grid;
+  min-width: 22px;
+  min-height: 22px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-paper) 72%, transparent);
+  border-radius: var(--r-full);
+  background: var(--suitcase-line);
+  color: var(--color-paper);
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.unpackedItems {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  color: var(--suitcase-line);
+  pointer-events: none;
+}
+
+.unpackedShirt,
+.unpackedHeadphones {
+  position: absolute;
+  width: 23px;
+  height: 23px;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--color-paper) 68%, transparent));
+}
+
+.unpackedShirt {
+  bottom: 1px;
+  left: 0;
+  transform: rotate(-15deg);
+}
+
+.unpackedHeadphones {
+  right: 0;
+  bottom: 2px;
+  transform: rotate(14deg);
+}
+
+.suitcaseWheel {
+  position: absolute;
+  z-index: 6;
+  bottom: 0;
+  width: 9px;
+  height: 9px;
+  border: var(--device-stroke) solid var(--suitcase-line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--suitcase-line) 24%, var(--color-paper));
+}
+
+.suitcaseWheelStart {
+  left: 27px;
+}
+
+.suitcaseWheelEnd {
+  right: 23px;
+}
+.reservoirSvg,
+.suitcaseSvg {
+  display: block;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+}
+
+.reservoirSvg {
+  color: currentColor;
+}
+
+.reservoirShadow {
+  fill: color-mix(in srgb, currentColor 12%, transparent);
+  stroke: none;
+}
+
+.reservoirGlassBody {
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.reservoirLiquid {
+  transform: scaleY(var(--reservoir-fill-scale, 0));
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.reservoirMeniscus {
+  fill: color-mix(in srgb, currentColor 80%, var(--color-paper));
+  stroke: color-mix(in srgb, currentColor 88%, var(--color-paper));
+  stroke-width: 1.2;
+  transform: translateY(calc(-1 * var(--reservoir-liquid-travel, 0px)));
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
+}
+
+.reservoirSideShade {
+  fill: currentColor;
+  opacity: 0.08;
+  stroke: none;
+}
+
+.reservoirRimOuter {
+  fill: color-mix(in srgb, var(--color-paper) 88%, var(--status-surface));
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.reservoirRimInner {
+  fill: color-mix(in srgb, var(--status-surface) 34%, var(--color-paper));
+  stroke: color-mix(in srgb, currentColor 58%, transparent);
+  stroke-width: 1.1;
+}
+
+.reservoirBaseLine {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.reservoirReflectionDot {
+  fill: color-mix(in srgb, var(--color-paper) 92%, transparent);
+  stroke: color-mix(in srgb, currentColor 24%, transparent);
+  stroke-width: 0.9;
+}
+
+.reservoirReflectionGlint {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-paper) 88%, transparent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.suitcaseSvg {
+  --artwork-paper: color-mix(in srgb, var(--color-paper) 96%, var(--suitcase-tint));
+  --artwork-body: color-mix(in srgb, var(--color-paper) 68%, var(--suitcase-tint));
+  --artwork-body-shadow: color-mix(
+    in srgb,
+    var(--color-paper) 46%,
+    var(--suitcase-tint)
+  );
+  --artwork-side-light: color-mix(
+    in srgb,
+    var(--color-paper) 35%,
+    var(--suitcase-tint)
+  );
+  --artwork-side-dark: color-mix(
+    in srgb,
+    var(--suitcase-line) 24%,
+    var(--suitcase-tint)
+  );
+  --artwork-cream-light: #fffdf7;
+  --artwork-cream: #f8ebcf;
+
+  position: absolute;
+  inset: 0;
+}
+
+.artworkStroke {
+  stroke: var(--suitcase-line);
+  stroke-width: 2.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.artworkGround {
+  fill: color-mix(in srgb, var(--suitcase-line) 11%, transparent);
+  stroke: none;
+}
+
+.artworkInsetLine,
+.artworkSoftLine,
+.artworkHandle,
+.artworkHandleGrip,
+.artworkTagCord,
+.artworkMotionLine {
+  fill: none;
+}
+
+.artworkInsetLine {
+  stroke: color-mix(in srgb, var(--suitcase-line) 34%, transparent);
+  stroke-width: 1.2;
+}
+
+.artworkHighlightLine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-paper) 82%, transparent);
+  stroke-width: 3.4;
+}
+
+.artworkWell {
+  fill: color-mix(in srgb, var(--suitcase-line) 11%, var(--suitcase-tint));
+}
+
+.artworkTintFill,
+.artworkFoldedItem {
+  fill: color-mix(in srgb, var(--color-paper) 44%, var(--suitcase-tint));
+}
+
+.artworkCreamFill {
+  fill: var(--artwork-cream);
+}
+
+.artworkSoftLine {
+  stroke: color-mix(in srgb, var(--suitcase-line) 62%, transparent);
+  stroke-width: 1.35;
+}
+
+.artworkPassport {
+  fill: color-mix(in srgb, var(--suitcase-line) 68%, var(--artwork-body));
+}
+
+.artworkHandle {
+  stroke-width: 2.8;
+}
+
+.artworkHandleGrip {
+  stroke: color-mix(in srgb, var(--suitcase-line) 44%, transparent);
+  stroke-width: 3.4;
+}
+
+.artworkWheel {
+  fill: color-mix(in srgb, var(--suitcase-line) 27%, var(--color-paper));
+}
+
+.packedItem,
+.purchaseStack {
+  opacity: 1;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.packedItem[data-active="false"] {
+  opacity: 0.12;
+  transform: translateY(4px) scale(0.96);
+}
+
+.purchaseStack[data-visible="false"] {
+  opacity: 0;
+  transform: translateY(5px) scale(0.96);
+}
+
+.artworkOverflow circle {
+  fill: var(--suitcase-line);
+  stroke: var(--color-paper);
+  stroke-width: 1.2;
+}
+
+.artworkOverflow text {
+  fill: var(--color-paper);
+  stroke: none;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.artworkRoute {
+  fill: none;
+  stroke: color-mix(in srgb, var(--suitcase-line) 52%, var(--color-paper));
+  stroke-width: 2.8;
+  stroke-dasharray: 5 7;
+}
+
+.artworkCloud {
+  fill: color-mix(in srgb, var(--artwork-cream) 76%, var(--color-paper));
+  stroke: color-mix(in srgb, var(--suitcase-line) 24%, var(--artwork-cream));
+}
+
+.artworkPlane {
+  fill: color-mix(in srgb, var(--color-paper) 24%, var(--suitcase-tint));
+}
+
+.suitcaseLiquid {
+  stroke: none;
+  transform: scaleY(var(--suitcase-fill-scale, 0));
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.artworkTagCord {
+  stroke-width: 2.2;
+}
+
+.artworkTagHole {
+  fill: var(--color-paper);
+  stroke-width: 1.3;
+}
+
+.artworkMotionLine {
+  stroke: color-mix(in srgb, var(--suitcase-line) 68%, transparent);
+  stroke-width: 2.3;
+}
+
+.artworkSouvenirMark {
+  fill: var(--suitcase-line);
+  stroke: none;
+}
+
+.artworkSparkle {
+  fill: color-mix(in srgb, var(--color-paper) 56%, var(--artwork-cream));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reservoirLiquid,
+  .reservoirMeniscus,
+  .suitcaseLiquid,
+  .packedItem,
+  .purchaseStack {
+    transition: none;
+  }
+}
+
+.suitcaseJump {
+  animation: suitcase-completion-jump 520ms var(--ease-out) both;
+}
+
+.confettiBurst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.confettiPiece {
+  --confetti-x: 0px;
+  --confetti-y: -48px;
+  --confetti-rotate: 90deg;
+  --confetti-delay: 0ms;
+
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 4px;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  opacity: 0;
+  animation: suitcase-confetti-burst 720ms var(--ease-out)
+    var(--confetti-delay) both;
+}
+
+.confettiPiece:nth-child(1) {
+  --confetti-x: -64px;
+  --confetti-y: -30px;
+  --confetti-rotate: -115deg;
+}
+
+.confettiPiece:nth-child(2) {
+  --confetti-x: -48px;
+  --confetti-y: -56px;
+  --confetti-rotate: -70deg;
+  --confetti-delay: 25ms;
+}
+
+.confettiPiece:nth-child(3) {
+  --confetti-x: -24px;
+  --confetti-y: -66px;
+  --confetti-rotate: -35deg;
+  --confetti-delay: 45ms;
+}
+
+.confettiPiece:nth-child(4) {
+  --confetti-y: -70px;
+  --confetti-rotate: 28deg;
+  --confetti-delay: 15ms;
+}
+
+.confettiPiece:nth-child(5) {
+  --confetti-x: 24px;
+  --confetti-y: -64px;
+  --confetti-rotate: 65deg;
+  --confetti-delay: 55ms;
+}
+
+.confettiPiece:nth-child(6) {
+  --confetti-x: 48px;
+  --confetti-y: -52px;
+  --confetti-rotate: 105deg;
+  --confetti-delay: 30ms;
+}
+
+.confettiPiece:nth-child(7) {
+  --confetti-x: 64px;
+  --confetti-y: -26px;
+  --confetti-rotate: 145deg;
+  --confetti-delay: 65ms;
+}
+
+.confettiPiece:nth-child(8) {
+  --confetti-x: -40px;
+  --confetti-y: 20px;
+  --confetti-rotate: -155deg;
+  --confetti-delay: 70ms;
+}
+
+.confettiPiece:nth-child(9) {
+  --confetti-x: 40px;
+  --confetti-y: 22px;
+  --confetti-rotate: 165deg;
+  --confetti-delay: 75ms;
+}
+
+@keyframes reservoir-water-surface {
+  from {
+    opacity: 0.78;
+    transform: translateX(-5%) scaleX(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(5%) scaleX(1.04);
+  }
+}
+
+@keyframes suitcase-packing-settle {
+  0% {
+    opacity: 0.82;
+    transform: translate3d(0, -4px, 0) scale(0.97);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate3d(0, 1px, 0) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes suitcase-completion-jump {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  42% {
+    transform: translate3d(0, -9px, 0) rotate(-1.5deg);
+  }
+
+  72% {
+    transform: translate3d(0, 2px, 0) rotate(0.75deg);
+  }
+}
+
+@keyframes suitcase-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55) rotate(0deg);
+  }
+
+  16% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(-50% + var(--confetti-x)),
+        calc(-50% + var(--confetti-y))
+      )
+      scale(1) rotate(var(--confetti-rotate));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reservoirFill::before {
+    animation: reservoir-water-surface 2.2s ease-in-out infinite alternate;
+  }
+
+  .packingRefresh {
+    animation: suitcase-packing-settle var(--dur-slow) var(--ease-out) both;
+  }
+}
+
+@media (max-width: 340px) {
+  .overviewBody {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .informationRail {
+    padding-inline: var(--space-2);
+  }
+
+  .summaryRail {
+    column-gap: var(--space-2);
+  }
+
+  .planningRail {
+    grid-template-columns: minmax(88px, 1fr) minmax(66px, max-content) max-content;
+    column-gap: 6px;
+  }
+
+  .reservoirColumn {
+    padding-inline: 3px;
+  }
+
+  .suitcaseGauge {
+    width: 204px;
+    height: 140px;
+  }
+
+  .suitcaseArtwork {
+    scale: 1;
+  }
+
+  .budgetInput {
+    font-size: 20px;
+  }
+}
+
+@media (max-height: 640px) {
+  .overviewBody {
+    grid-template-rows: 128px auto;
+    min-height: 190px;
+  }
+
+  .overviewBody[data-has-budget-reservoir="false"] {
+    min-height: 176px;
+  }
+
+  .reservoirColumn {
+    padding-block: 3px;
+  }
+
+  .suitcaseGauge {
+    width: 204px;
+    height: 128px;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .overviewBody {
+    grid-template-rows: 124px 42px;
+    min-height: 166px;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .instrumentStage {
+    padding-block-start: 0;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .informationRail {
+    padding-block-end: 0;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .summaryRail {
+    min-height: 42px;
+    padding-block-start: 2px;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .suitcaseGauge {
+    width: 198px;
+    height: 124px;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .suitcaseArtwork {
+    scale: 1;
+  }
+
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"]
+    )
+    .reservoirColumn {
+    padding-block: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reservoirFill,
+  .suitcaseHandle,
+  .suitcaseLid,
+  .suitcaseTopFace,
+  .suitcaseBody,
+  .suitcaseSideFace,
+  .suitcaseFill,
+  .suitcasePropGlyph {
+    transition: none;
+  }
+
+  .packingRefresh,
+  .suitcaseJump,
+  .confettiPiece,
+  .reservoirFill::before {
+    animation: none;
+  }
+
+  .confettiBurst {
+    display: none;
+  }
+}

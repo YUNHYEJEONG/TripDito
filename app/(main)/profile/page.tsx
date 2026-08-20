@@ -8,7 +8,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProfileCollectionBoard } from "@/features/profile/components/profile-collection-board";
 import { ProfileIdentityCard } from "@/features/profile/components/profile-identity-card";
 import { ProfileMenuLink } from "@/features/profile/components/profile-menu-link";
-import { PassportHistory } from "@/features/profile/components/passport-history";
 import { hasNickname } from "@/features/profile/constants";
 import {
   useLocalProfile,
@@ -28,8 +27,10 @@ import {
 import { getLoginMethodLabel } from "@/features/auth/lib/login-method-label";
 import { getSafeReturnTo } from "@/lib/navigation/return-to";
 import { useUnsavedChanges } from "@/lib/navigation/unsaved-changes";
+import { useHydrated } from "@/lib/react/use-hydrated";
 
 export default function ProfilePage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedReturnTo = searchParams.get("returnTo");
@@ -55,7 +56,7 @@ export default function ProfilePage() {
   const nicknameDirty = editing && nickname.trim() !== storedNickname;
   const requestNicknameDiscard = useUnsavedChanges(nicknameDirty);
 
-  if (profileLoading || authLoading || !profile) {
+  if (!hydrated || profileLoading || authLoading || !profile) {
     return (
       <AppShell withBottomNav>
         <main>
@@ -149,13 +150,13 @@ export default function ProfilePage() {
           displayName={displayName}
           summary={
             tripsLoading || shotsLoading
-              ? "여행 기록을 불러오는 중"
+              ? "프로필 정보를 불러오는 중"
               : `여행 ${trips.length}번 · 내 때샷 ${ownShots.length}개`
           }
           detail={
             isLoggedIn
               ? loginMethodLabel
-              : "로그인하면 프로필과 여행 기록을 이어서 관리할 수 있어요"
+              : "로그인하면 내 정보와 여행을 이어서 관리할 수 있어요"
           }
           avatarSrc={isLoggedIn ? profile.avatarDataUrl : null}
           avatarInitial={GUEST_AVATAR_INITIAL}
@@ -170,21 +171,6 @@ export default function ProfilePage() {
           onSaveNickname={() => void handleSaveNickname()}
           onAvatarSelect={(files) => void handleAvatarChange(files)}
         />
-
-        {tripsLoading ? (
-          <section aria-label="여행 기록 불러오는 중" aria-busy="true">
-            <h2 className="mb-3 text-[18px] font-bold tracking-[-0.02em] text-foreground">
-              여행 기록
-            </h2>
-            <div className="flex min-h-28 items-center justify-center rounded-2xl border border-rule bg-secondary px-4 text-center">
-              <p className="text-[13px] text-ink-2" role="status">
-                여행 기록을 불러오는 중…
-              </p>
-            </div>
-          </section>
-        ) : (
-          <PassportHistory trips={trips} />
-        )}
 
         <section aria-labelledby="profile-collections-title">
           <h2

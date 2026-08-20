@@ -95,10 +95,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/brand/favicon.ico?v=3" },
-      { url: "/brand/favicon.png?v=3", type: "image/png", sizes: "32x32" },
+      { url: "/brand/d/favicon.ico?v=2" },
+      { url: appConfig.brand.faviconSrc, type: "image/png", sizes: "32x32" },
     ],
-    apple: [{ url: "/brand/app-icon.png?v=3" }],
+    apple: [{ url: appConfig.brand.appIconSrc }],
   },
 };
 
@@ -106,7 +106,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "white",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -120,7 +120,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className="h-full font-sans"
     >
-      <body className="flex min-h-full flex-col bg-canvas text-foreground">
+      <body className="flex min-h-full flex-col bg-paper text-foreground">
         <AppProviders>{children}</AppProviders>
         <Script
           id="tripdito-unsaved-navigation-guard"

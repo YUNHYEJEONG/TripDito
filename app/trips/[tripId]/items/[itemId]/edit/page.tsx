@@ -78,7 +78,7 @@ export default function EditItemPage({
     const recoveryHref =
       item && item.tripId !== tripId
         ? withReturnTo(`/trips/${item.tripId}`, returnTo)
-        : "/my-trips";
+        : "/passport";
     const recoveryLabel =
       item && item.tripId !== tripId
         ? "상품이 담긴 쇼핑리스트로"

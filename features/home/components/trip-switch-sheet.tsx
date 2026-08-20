@@ -13,19 +13,16 @@ import {
 } from "@/components/ui/sheet";
 import type { Trip } from "@/features/trips/types";
 import {
+  TripStatusBadge,
+  tripCardStatusFromHomeMode,
+} from "@/features/trips/components/trip-card";
+import {
   getTripHomeMode,
   type HomeMode,
 } from "@/features/home/utils/get-home-mode";
 import { todayIsoDate } from "@/features/home/utils/get-upcoming-trip";
 import { formatDateRange } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
-
-export function getTripStatusLabel(mode: HomeMode) {
-  if (mode === "prep") return "예정";
-  if (mode === "live") return "여행 중";
-  if (mode === "after") return "결산";
-  return "준비 전";
-}
 
 export function TripSwitchSheet({
   trips,
@@ -83,7 +80,7 @@ export function TripSwitchSheet({
         <SheetHeader className="shrink-0 border-b border-rule px-5 py-4 pr-16">
           <SheetTitle className="text-[18px] font-semibold">내 여행</SheetTitle>
           <SheetDescription className="text-[13px] text-ink-2">
-            진행 중·예정·완료 여행을 확인하고 홈에 표시할 여행을 선택하세요.
+            홈의 쇼핑리스트에 표시할 여행을 선택하세요.
           </SheetDescription>
           {selectError ? (
             <p className="text-[13px] text-danger" role="alert">
@@ -169,7 +166,7 @@ export function TripSwitchSheet({
         </div>
         <SheetFooter className="grid shrink-0 grid-cols-2 gap-2 border-t border-rule p-4">
           <Link
-            href="/my-trips"
+            href="/passport"
             className="flex min-h-12 items-center justify-center rounded-lg border border-ink px-3 text-center text-[14px] font-semibold text-ink outline-none transition-colors duration-120 hover:bg-paper-2 active:bg-paper-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             전체 여행 관리
@@ -210,18 +207,8 @@ function TripRow({
     <div className="min-w-0 flex-1">
       <div className="flex items-center gap-2">
         <p className="truncate text-[15px] font-semibold text-ink">{trip.name}</p>
-        <span
-          className={cn(
-            "inline-flex min-h-6 shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-            mode === "idle" && "border-rule bg-paper-2 text-ink-2",
-            mode === "prep" && "border-prep-tint bg-prep text-prep-deep",
-            mode === "live" && "border-live-tint bg-live text-live-deep",
-            mode === "after" &&
-              "border-after-tint bg-after text-after-deep",
-          )}
-        >
-          {getTripStatusLabel(mode)}
-        </span>
+        {/* 배지는 여행 탭 카드와 **같은 컴포넌트**를 쓴다. 정의가 한 곳뿐이라 갈라질 수 없다. */}
+        <TripStatusBadge status={tripCardStatusFromHomeMode(mode)} />
       </div>
       <p className="mt-1 truncate text-[13px] text-ink-2">
         {trip.city} · {formatDateRange(trip.startDate, trip.endDate)}

@@ -18,7 +18,9 @@ import {
   getNextHomeAdIndex,
 } from "../features/home/data/home-ad-carousel";
 import {
-  filterHomePurchaseItems,
+  filterHomeShoppingItems,
+  getHomeChecklistMode,
+  getHomeShoppingFilterOptions,
   getHomeShoppingPreview,
 } from "../features/home/utils/home-shopping-list";
 
@@ -141,7 +143,7 @@ describe("home trip modes", () => {
     assert.equal(getTripHomeMode(target, "2027-08-23"), "after");
   });
 
-  it("selects live, then only near prep, then most recently ended trip", () => {
+  it("selects live, then near prep, then the nearest future trip", () => {
     const trips = [
       trip("older-after", "2026-08-01", "2026-08-06"),
       trip("far-future-idle", "2026-08-25", "2026-08-27"),
@@ -161,6 +163,17 @@ describe("home trip modes", () => {
     );
     assert.equal(
       selectHomeTrip(
+        trips.filter(
+          (candidate) =>
+            candidate.id === "far-future-idle" ||
+            candidate.id.includes("after"),
+        ),
+        "2026-08-12",
+      )?.id,
+      "far-future-idle",
+    );
+    assert.equal(
+      selectHomeTrip(
         trips.filter((candidate) => candidate.id.includes("after")),
         "2026-08-12",
       )?.id,
@@ -168,10 +181,10 @@ describe("home trip modes", () => {
     );
   });
 
-  it("returns no contextual trip when only far-future trips exist", () => {
+  it("keeps a far-future shopping list available when it is the only trip", () => {
     const trips = [trip("far-future", "2026-08-20", "2026-08-23")];
 
-    assert.equal(selectHomeTrip(trips, "2026-08-12"), null);
+    assert.equal(selectHomeTrip(trips, "2026-08-12")?.id, "far-future");
   });
 
   it("uses the most recently completed trip for settlement history", () => {
@@ -290,6 +303,21 @@ describe("context action persistence", () => {
       assert.notEqual(prepItem.id, liveItem.id);
     });
   });
+
+  it("keeps a completed-trip purchase on its recorded travel date", () => {
+    withMemoryStorage(() => {
+      const purchasedAt = "2026-08-10T12:00:00.000Z";
+      const item = itemRepository.create(
+        "completed-trip",
+        capturedItem(null),
+        { purchased: true, purchasedAt },
+      );
+
+      assert.equal(item.purchased, true);
+      assert.equal(item.purchasedAt, purchasedAt);
+      assert.notEqual(item.createdAt, item.purchasedAt);
+    });
+  });
 });
 
 describe("live home purchase checklist", () => {
@@ -303,10 +331,30 @@ describe("live home purchase checklist", () => {
     assert.equal(getHomeShoppingPreview(items, 0).length, 0);
   });
 
-  it("separates planned items and completed purchase history", () => {
-    assert.equal(filterHomePurchaseItems(items, "all").length, 7);
-    assert.equal(filterHomePurchaseItems(items, "pending").length, 5);
-    assert.equal(filterHomePurchaseItems(items, "purchased").length, 2);
+  it("filters the home list by trip day only, in every mode", () => {
+    const trip = { startDate: "2026-08-26", endDate: "2026-08-29" };
+
+    // 구매 상태는 필터 축이 아니다 — 각 행의 체크박스가 이미 말한다.
+    assert.deepEqual(
+      getHomeShoppingFilterOptions([1, 2, 3, 4]).map((option) => option.key),
+      ["all", "day-1", "day-2", "day-3", "day-4"],
+    );
+    assert.equal(filterHomeShoppingItems(items, "all", trip).length, 7);
+    assert.ok(
+      filterHomeShoppingItems(items, "day-1", trip).length <= items.length,
+    );
+    // 알 수 없는 일차는 거르지 않고 전체를 돌려준다.
+    assert.equal(
+      filterHomeShoppingItems(items, "day-x" as never, trip).length,
+      7,
+    );
+  });
+
+  it("keeps far-future trips unlocked for shopping preparation", () => {
+    assert.equal(getHomeChecklistMode("idle"), "prep");
+    assert.equal(getHomeChecklistMode("prep"), "prep");
+    assert.equal(getHomeChecklistMode("live"), "live");
+    assert.equal(getHomeChecklistMode("after"), "after");
   });
 });
 

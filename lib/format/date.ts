@@ -10,5 +10,5 @@ export function formatDate(isoDate: string) {
 }
 
 export function formatDateRange(startDate: string, endDate: string) {
-  return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
 }

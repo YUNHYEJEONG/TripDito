@@ -23,6 +23,7 @@
   --color-affect: var(--color-affect);
   --color-success-text: var(--color-success-text);
   --color-danger: var(--color-danger);
+  --color-danger-text: var(--color-danger-text);
   --color-star: var(--color-star);
   --color-mode: var(--mode-accent);
   --color-mode-canvas: var(--mode-canvas);
@@ -104,47 +105,48 @@
 }
 
 :root {
-  /* Mobile app core paper & ink palette. */
+  /* Brand D: pure white canvas, violet-tinted component surfaces. */
   --color-paper: #ffffff;
-  --color-paper-2: #f2f4f6;
-  --color-paper-3: #e9edf2;
-  --color-ink: #191f28;
-  --color-ink-2: #4e5968;
-  --color-ink-3: #8b95a1;
-  --color-rule: #e5e8eb;
+  --color-paper-2: #f7f6fc;
+  --color-paper-3: #ececf6;
+  --color-ink: #1d1a2b;
+  --color-ink-2: #555166;
+  --color-ink-3: #6f6a80;
+  --color-rule: #dedbe8;
 
-  /* Semantic colors stay constant across travel modes. */
-  --color-accent: #3182f6;
-  --color-accent-text: #1b64da;
-  --color-affect: #ff385c;
-  --color-success: #03b26c;
-  --color-success-text: #037a4b;
-  --color-danger: #f04452;
-  --color-star: #ffb703;
-  --color-focus: #3182f6;
-  --color-control: #8b95a1;
+  /* Indigo is the single interactive accent; semantic colors keep their jobs. */
+  --color-accent: #4949d7;
+  --color-accent-text: #4338ca;
+  --color-affect: #b91c7c;
+  --color-success: #067647;
+  --color-success-text: #067647;
+  --color-danger: #d23f55;
+  --color-danger-text: #a11d35;
+  --color-star: #b77900;
+  --color-focus: #4949d7;
+  --color-control: #777187;
 
   /* Home-only travel mode layer. */
   --mode-canvas: var(--color-paper);
   --mode-accent: var(--color-accent);
-  --prep: #eef5ff;
-  --prep-deep: #1b64da;
-  --prep-tint: #dbeafe;
-  --live: #e0f5f1;
-  --live-accent: #0d9488;
-  --live-deep: #0f766e;
-  --live-sub: #446e63;
-  --live-tint: #c2e9e1;
-  --live-ink: #12312b;
-  --after: #fff6e8;
-  --after-deep: #a55200;
-  --after-ink-2: #8a6a3a;
-  --after-tint: #ffe9c7;
+  --prep: #eff0ff;
+  --prep-deep: #4338ca;
+  --prep-tint: #d8dbff;
+  --live: #fff1ee;
+  --live-accent: #e45266;
+  --live-deep: #ad2944;
+  --live-sub: #765057;
+  --live-tint: #ffd5ce;
+  --live-ink: #351923;
+  --after: #fff0fb;
+  --after-deep: #9d1b78;
+  --after-ink-2: #754461;
+  --after-tint: #f4c9ea;
 
   /* Gift tags. */
-  --gift-acq: #8ecae6;
-  --gift-col: #ffb703;
-  --gift-fri: #fb8500;
+  --gift-acq: #aeb5ff;
+  --gift-col: #ff9a9d;
+  --gift-fri: #e995d4;
 
   /* Brand-provider colors live here instead of component-level hex values. */
   --brand-kakao: #fee500;
@@ -189,15 +191,38 @@
   --app-bottom-gap: 1rem;
 
   --lift-flat: none;
-  --lift-card: 0 0 0 1px rgb(25 31 40 / 0.02),
-    0 2px 6px rgb(25 31 40 / 0.04),
-    0 4px 8px rgb(25 31 40 / 0.08);
-  --lift-float: 0 2px 8px rgb(25 31 40 / 0.16);
-  --lift-inset: inset 0 0 0 1px rgb(25 31 40 / 0.04);
+  --lift-card: 0 0 0 1px rgb(73 73 215 / 0.035),
+    0 3px 10px rgb(73 73 215 / 0.07);
+  --lift-float: 0 4px 14px rgb(67 56 202 / 0.18);
+  --lift-inset: inset 0 0 0 1px rgb(73 73 215 / 0.07);
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --dur-fast: 120ms;
   --dur-base: 200ms;
   --dur-slow: 320ms;
+  /**
+   * 여권 넘김 전용. 실제 시간은 JS가 남은 각도에 비례해 계산하므로
+   * (use-passport-page-turn.ts FULL_TURN_MS) 여기 값은 문서용 기준치다.
+   */
+  --dur-page-turn: 560ms;
+
+  /**
+   * 여권 내지 한 장의 높이. 여권 화면은 **절대 스크롤되지 않아야** 한다.
+   * 최소 높이를 두면 작은 화면에서 넘치므로, 화면에서 크롬을 뺀 값을 그대로 쓴다.
+   * 매직 넘버 대신 실제 구성 요소를 그대로 더한다 — 값 하나만 빠져도 스크롤이 생긴다
+   * (보더 4겹 4px을 빠뜨려 미세 스크롤이 났던 적이 있다).
+   */
+  --passport-chrome: calc(
+    0.75rem /* 앱셸 위 여백 pt-3 */ + 3rem
+      /* 허브 헤더 h-12 — 화면 제목 대신 탭이 이 자리를 쓴다(별도 탭 줄 없음) */ -
+      0.75rem /* 허브 -mt-3 */ + 0.75rem /* 섹션 pt-3 */ + 52px
+      /* 표지 위 여백 */ + 7px /* 표지 아래 여백 */ + 4px
+      /* 표지·책 보더 각 상하 */ + var(--tab-bar-height) +
+      var(--app-bottom-gap) + 2px /* 반올림 여유 */
+  );
+  --passport-page-height: calc(
+    100dvh - var(--passport-chrome) - env(safe-area-inset-top) -
+      env(safe-area-inset-bottom)
+  );
 
   /* shadcn semantic aliases */
   --background: var(--color-paper);
@@ -248,23 +273,58 @@
   --sidebar-accent-foreground: var(--color-ink);
   --sidebar-border: var(--color-rule);
   --sidebar-ring: var(--color-focus);
+
+  /**
+   * 여권 — 종이·잉크·포일이라는 물성을 표현하는 전용 팔레트.
+   * 앱 시맨틱 토큰(accent/affect/success)과 의도적으로 분리하며,
+   * 여권 화면 밖에서는 사용하지 않는다. 명암비는 종이(#F7F8EF) 기준 실측.
+   */
+  --passport-cover: #102e4e;
+  --passport-cover-hi: #173e63;
+  --passport-cover-mid: #0d2948;
+  --passport-cover-lo: #0a213b;
+  --passport-cover-edge: #061b31;
+
+  --passport-foil: #d8bd76;
+  --passport-foil-ring: #b69a55;
+  --passport-foil-page: #ccb36f;
+  --passport-foil-focus: #d1b365;
+  /** 종이 위 금색 텍스트 — 4.99:1 (장식용 --passport-foil은 텍스트 금지) */
+  --passport-foil-ink: #836726;
+
+  --passport-paper: #f7f8ef;
+  --passport-paper-hi: #faf8ed;
+  --passport-paper-mint: #f0f7f0;
+  --passport-paper-warm: #f9f1e7;
+  --passport-paper-nav: #f3f5e9;
+  --passport-paper-load: #eef4ed;
+  --passport-paper-press: #dbe8e5;
+
+  --passport-ink: #183b58;      /* 본문 10.87:1 */
+  --passport-ink-2: #315f77;    /* 머리글 6.47:1 */
+  --passport-ink-3: #54717c;    /* 보조 4.87:1 */
+  --passport-ink-nav: #214c68;
+  --passport-ink-brand: #2d688b;
+  --passport-ink-deep: #245579;
+  --passport-ink-soft: #527583;
+  --passport-eyebrow: #52788e;
+
+  --passport-rule: #638d97;     /* 헤어라인 3.39:1 */
+  --passport-rule-2: #82a5ad;
+  --passport-rule-3: #8ca9ae;
+  --passport-gutter: #789ca6;
 }
 
 [data-mode="prep"] {
-  --mode-canvas: var(--prep);
-  --canvas: var(--mode-canvas);
+  --mode-accent: var(--prep-deep);
 }
 
 [data-mode="live"] {
-  --mode-canvas: var(--live);
   --mode-accent: var(--live-accent);
-  --canvas: var(--mode-canvas);
 }
 
 [data-mode="after"] {
-  --mode-canvas: var(--after);
   --mode-accent: var(--after-deep);
-  --canvas: var(--mode-canvas);
 }
 
 @layer base {
@@ -314,12 +374,19 @@
 
 @media (min-width: 30.0625rem) {
   body.bg-canvas {
-    background: var(--color-paper-2);
+    background: var(--color-paper);
   }
 
   .app-rail {
     box-shadow: 0 0 0 1px var(--color-rule),
-      0 16px 40px rgb(25 31 40 / 0.08);
+      0 16px 40px rgb(29 26 43 / 0.08);
+  }
+}
+
+/* Fold에서 실제 여권 면을 보는 동안에만 본문과 하단 내비 레일을 맞춘다. */
+@media (min-width: 700px) and (max-width: 899.98px) {
+  body:has(.app-rail[data-surface="passport"]) [data-bottom-nav-rail] {
+    max-width: calc(100vw - 2rem);
   }
 }
 
@@ -437,7 +504,7 @@
   display: none !important;
 }
 
-/* 토스트 액션 버튼(바로가기 등) — primary 파란 배경 */
+/* 토스트 액션 버튼(바로가기 등) — primary 인디고 배경 */
 [data-sonner-toast] [data-button] {
   background: var(--primary) !important;
   color: var(--primary-foreground) !important;
@@ -522,3 +589,204 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* 회전체에 실린 값이 앞뒤 면까지 내려가야 하므로 상속을 켠다. */
+@property --flip-p {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/**
+ * 여권 넘김 — 왼쪽 제본선을 축으로 종이 한 장이 젖혀진다.
+ * 3D 뒤집기 표준 3층 구조: scene(원근) → card(회전) → faces(앞뒤 면).
+ * `backface-visibility`는 **면에만** 건다 — 회전체에 걸면 90°를 넘는 순간 장 전체가
+ * 사라져 아래 장이 튀어나온다. `perspective-origin`은 기본값(중앙)을 쓴다.
+ * 각도·곡률은 JS(rAF)가 매 프레임 인라인으로 넣으므로 여기엔 애니메이션이 없다.
+ */
+/**
+ * 3D 문맥은 **넘기는 동안에만** 만든다(`[data-turning]`).
+ *
+ * `perspective` + `preserve-3d` + `backface-visibility`를 항상 켜 두면 내지가 늘
+ * 합성 레이어로 승격된다. 모바일 브라우저는 그런 레이어를 기기 픽셀(DPR 3)이 아니라
+ * 더 낮은 배율로 래스터한 뒤 확대해서 보여 주고, 도장의 SVG 필터(feTurbulence·
+ * feDisplacementMap)가 그 확대를 가장 먼저 드러내 잉크 가장자리가 깨져 보인다.
+ * 데스크톱은 래스터 배율이 넉넉해 같은 코드로도 선명하다 — 그래서 모바일에서만 티가 났다.
+ *
+ * 가만히 있을 때 평범한 2D DOM으로 두면 브라우저가 기기 해상도 그대로 그린다.
+ * 넘기는 동안에는 예전과 완전히 같은 3층 구조로 돌아간다.
+ */
+.passport-book[data-turning] {
+  /* 원근이 멀수록 회전이 평면적으로 보인다. 종이 폭의 약 2배. */
+  perspective: 900px;
+}
+
+.passport-leaf {
+  position: relative;
+  z-index: 2;
+  transform-origin: left center;
+  min-width: 0;
+}
+
+.passport-book[data-turning] .passport-leaf {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.passport-under {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/**
+ * 면은 반드시 불투명해야 한다. 비치면 넘기는 도중 아래 장의 도장이 함께 보인다.
+ * 곡률은 기하가 아니라 음영으로만 표현한다(아래 .passport-face::after).
+ */
+.passport-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--passport-paper);
+}
+
+/* 뒤집힌 면을 숨기는 건 회전 중에만 필요하다 — 그리고 이게 레이어 승격의 주범이다. */
+.passport-book[data-turning] .passport-face {
+  backface-visibility: hidden;
+}
+
+/**
+ * 닫힌 표지 — 여권은 펼쳐진 채로 시작하지 않는다.
+ *
+ * 표지도 결국 **제본선을 축으로 젖혀지는 한 장**이므로 쪽 넘김과 같은 장치를 그대로 쓴다:
+ * 같은 `transform-origin`, 같은 90° 범위, 같은 `--flip-p` 곡면 음영(`.passport-face::after`),
+ * 같은 캐스트 섀도, 같은 rAF 구동과 지속 시간. 표지만 CSS `transition`으로 따로 만들면
+ * 곡률도 그림자도 없이 판때기가 도는 것처럼 보여, 바로 다음에 이어지는 쪽 넘김과 어긋난다.
+ */
+.passport-cover-leaf {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  transform-origin: left center;
+  border-radius: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 3D 문맥은 젖히는 동안에만 — 내지와 같은 규칙이다. */
+.passport-book[data-turning] .passport-cover-leaf {
+  transform-style: preserve-3d;
+}
+
+.passport-cover-leaf:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--passport-foil-focus);
+}
+
+/* 표지 앞면. 뒷면(.passport-face--back)보다 위에 온다. */
+.passport-cover-face {
+  z-index: 2;
+}
+
+/**
+ * 탭하라는 신호. 여권 화면에서 **유일하게 반복되는 모션**이다.
+ *
+ * 모션 원칙은 motion-cut에 가깝지만, 여기엔 "눌러야 다음이 있다"를 알릴 다른 수단이 없다.
+ * 표지는 화면을 통째로 덮고 있어서 사용자가 기다리기만 하면 아무 일도 일어나지 않는다.
+ * 대신 튀지 않게 **투명도만** 숨쉬듯 오간다 — 크기·위치는 건드리지 않는다.
+ */
+.passport-cover-hint {
+  animation: passport-cover-hint 2s var(--ease-out) infinite;
+}
+
+@keyframes passport-cover-hint {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passport-cover-hint {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* 앞면만 문서 흐름에 남아 책의 높이를 결정한다. */
+.passport-face--front {
+  position: relative;
+  z-index: 2;
+}
+
+/* 종이의 뒷면 — 도장 없는 내지. 이게 있어야 넘기는 내내 장이 불투명하다. */
+.passport-face--back {
+  z-index: 1;
+  transform: rotateY(180deg);
+}
+
+
+/**
+ * 종이의 부드러운 곡면 — 기하를 휘게 만들지 않고 **음영으로** 굽어 보이게 한다.
+ * StPageFlip이 soft 페이지에 쓰는 방식(접히는 장의 inner shadow + 아래 장에 지는
+ * outer shadow, 둘 다 multi-stop linear-gradient)을 CSS로 옮긴 것이다.
+ * 원통에 빛이 닿듯 제본선 쪽은 어둡고, 마루(--flip-p로 이동)가 가장 밝다.
+ */
+.passport-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: var(--flip-p, 0);
+  background: linear-gradient(
+    to right,
+    rgb(10 30 50 / 0.42) 0%,
+    rgb(10 30 50 / 0.14) calc(14% + 16% * var(--flip-p, 0)),
+    rgb(255 253 244 / 0.5) calc(44% + 24% * var(--flip-p, 0)),
+    rgb(10 30 50 / 0.05) calc(76% + 14% * var(--flip-p, 0)),
+    rgb(10 30 50 / 0.2) 100%
+  );
+}
+
+/* 뒷면은 빛을 반대로 받는다. */
+.passport-face--back::after {
+  background: linear-gradient(
+    to left,
+    rgb(10 30 50 / 0.42) 0%,
+    rgb(10 30 50 / 0.14) calc(14% + 16% * var(--flip-p, 0)),
+    rgb(255 253 244 / 0.42) calc(44% + 24% * var(--flip-p, 0)),
+    rgb(10 30 50 / 0.05) calc(76% + 14% * var(--flip-p, 0)),
+    rgb(10 30 50 / 0.2) 100%
+  );
+}
+
+/* 젖혀진 장이 아래 장에 드리우는 그림자 — 제본선에서 가장 짙다. */
+.passport-cast-shadow {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgb(8 24 40 / 0.55) 0%,
+    rgb(8 24 40 / 0.22) 26%,
+    transparent 62%
+  );
+}
+
+/**
+ * 각도·곡률은 JS(requestAnimationFrame)가 매 프레임 직접 넣는다.
+ * CSS 애니메이션·전환을 쓰지 않으므로 되감기·중복 재생이 생기지 않는다.
+ */
+.passport-leaf[data-dragging] {
+  cursor: grabbing;
+}
+
+/**
+ * 여권 넘김에는 CSS 애니메이션·전환이 없다. reduced-motion은 JS 쪽에서
+ * 손끝 추적과 활공을 건너뛰고 곧바로 쪽수를 확정하는 방식으로 처리한다
+ * (use-passport-page-turn.ts의 `reducedMotion`).
+ */

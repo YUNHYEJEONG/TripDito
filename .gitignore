@@ -45,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local design QA and patch backups
+*.orig
+*.rej
+/.codex/browser-checks/
+/.codex/generated_images/brand/d/rejected-generic-filled-heart/

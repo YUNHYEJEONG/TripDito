@@ -9,7 +9,7 @@ import { useUnreadNotificationCount } from "@/features/notifications/hooks/use-n
 import { withReturnTo } from "@/lib/navigation/return-to";
 import { cn } from "@/lib/utils";
 
-/** 홈 헤더에는 지도 진입만 둔다. 여행 전환과 생성은 상태 대문이 맡는다. */
+/** 현재 화면으로 돌아올 수 있는 지도·알림 액션을 한곳에서 제공한다. */
 export function HeaderNavActions() {
   return (
     <Suspense fallback={<HeaderLinks returnTo="/home" />}>

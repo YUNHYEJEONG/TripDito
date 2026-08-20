@@ -38,11 +38,17 @@ export function useItem(id: string) {
   });
 }
 
-export function useCreateItem(tripId: string) {
+export function useCreateItem(
+  tripId: string,
+  options: { markPurchased?: boolean; purchasedAt?: string } = {},
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: ShoppingItemFormValues) =>
-      itemRepository.create(tripId, input),
+      itemRepository.create(tripId, input, {
+        purchased: options.markPurchased,
+        purchasedAt: options.purchasedAt,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
       void queryClient.invalidateQueries({ queryKey: itemKeys.all });
@@ -95,13 +101,14 @@ export function useCopyItemsToTrip() {
 
 export function useCreateManyItems(
   tripId: string,
-  options: { markPurchased?: boolean } = {},
+  options: { markPurchased?: boolean; purchasedAt?: string } = {},
 ) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (inputs: ShoppingItemFormValues[]) =>
       itemRepository.createMany(tripId, inputs, {
         purchased: options.markPurchased,
+        purchasedAt: options.purchasedAt,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });

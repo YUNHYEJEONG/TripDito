@@ -46,6 +46,19 @@ export function useUpdateTrip(id: string) {
   });
 }
 
+export function useUpdateTripBudget(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      input: Parameters<typeof tripRepository.updateBudget>[1],
+    ) => tripRepository.updateBudget(id, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
+    },
+  });
+}
+
 export function useDeleteTrip() {
   const queryClient = useQueryClient();
   return useMutation({

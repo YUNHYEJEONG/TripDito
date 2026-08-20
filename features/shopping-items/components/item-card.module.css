@@ -1,0 +1,170 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 */
+/* Hallmark · component-scope: shopping-item row
+ * macrostructure: central-instrument task console / compact list rail
+ * genre: playful · theme: TripDito locked custom · tokens: DESIGN.md / globals.css only
+ * states: default · hover · focus · active · disabled · loading · error · success
+ * contrast: pass (40–41) · tokens: pass (48) · responsive: pass (49)
+ * mobile: pass (34, 49, 50–57) at 320 / 375 / 414 / 768
+ */
+
+.swipeShell {
+  overflow: hidden;
+  border-block-end: 1px solid var(--color-rule);
+  border-radius: var(--r-s);
+}
+
+.swipeSurface {
+  --swipe-offset: 0px;
+
+  transform: translate3d(var(--swipe-offset), 0, 0);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.swipeSurface[data-swipe-enabled] {
+  touch-action: pan-y;
+}
+
+.swipeSurface[data-dragging="true"] {
+  transition-duration: 0ms;
+}
+
+.deleteAction {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  width: 72px;
+  min-height: 44px;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  background: var(--color-danger-text);
+  color: var(--color-paper);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.deleteAction:focus-visible {
+  box-shadow: inset 0 0 0 3px var(--color-focus);
+}
+
+.deleteAction:active {
+  transform: scale(0.96);
+}
+
+.deleteAction:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.itemCard::before,
+.itemCard::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-s);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.itemCard::before {
+  z-index: 0;
+  background: var(--color-paper-3);
+}
+
+.itemCard::after {
+  z-index: 5;
+  background: var(--color-ink);
+}
+
+.mediaSurface {
+  filter: saturate(1);
+  opacity: 1;
+  transition:
+    filter var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
+}
+
+.titleText {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleText::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  height: 1px;
+  background: var(--color-ink-2);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.itemCard[data-purchased="true"]::before,
+.itemCard[data-pending="true"]::before {
+  opacity: 1;
+}
+
+.itemCard[data-purchased="true"]::after {
+  opacity: 0.055;
+}
+
+.itemCard[data-purchased="true"] .mediaSurface {
+  filter: saturate(0.45);
+  opacity: 0.62;
+}
+
+.itemCard[data-purchased="true"] .titleText::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.itemCard[data-pending="true"]::after {
+  opacity: 0.035;
+}
+
+.itemCard[data-pending="true"] .mediaSurface {
+  opacity: 0.78;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .itemCard:has(.itemLink:hover)::before {
+    opacity: 1;
+  }
+}
+
+.itemCard:has(.itemLink:focus-visible)::before,
+.itemCard:has(.itemLink:active)::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .itemCard::before,
+  .itemCard::after,
+  .mediaSurface,
+  .titleText::after,
+  .swipeSurface,
+  .deleteAction {
+    transition-duration: 0ms;
+  }
+}

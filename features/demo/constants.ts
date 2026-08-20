@@ -3,9 +3,10 @@ import { storageKeys } from "@/lib/storage/keys";
 
 /**
  * Fixture schema version. Bump this when fixture IDs or relationships change.
- * Existing non-empty browser data is never upgraded automatically.
+ * Only snapshots carrying an older seeded marker and recognizable demo IDs
+ * are upgraded automatically; markerless and user-owned data stay untouched.
  */
-export const DEMO_DATA_VERSION = 2;
+export const DEMO_DATA_VERSION = 3;
 
 export const DEMO_STORAGE_MARKER_KEY = storageKeys.demoBootstrap;
 
@@ -58,6 +59,10 @@ export const demoIds = {
     taipei: "demo-v1-trip-taipei",
     paris: "demo-v1-trip-paris",
     fukuoka: "demo-v1-trip-fukuoka",
+    kyoto: "demo-v1-trip-kyoto",
+    seoul: "demo-v1-trip-seoul",
+    bangkok: "demo-v1-trip-bangkok",
+    rome: "demo-v1-trip-rome",
   },
   items: {
     tokyoSunscreen: "demo-v1-item-tokyo-sunscreen",
@@ -86,6 +91,26 @@ export const demoIds = {
     fukuokaRamen: "demo-v1-item-fukuoka-ramen",
     fukuokaPouch: "demo-v1-item-fukuoka-pouch",
     fukuokaTea: "demo-v1-item-fukuoka-tea",
+    kyotoIncense: "demo-v1-item-kyoto-incense",
+    kyotoFuroshiki: "demo-v1-item-kyoto-furoshiki",
+    kyotoMatcha: "demo-v1-item-kyoto-matcha",
+    kyotoTenugui: "demo-v1-item-kyoto-tenugui",
+    kyotoCeramics: "demo-v1-item-kyoto-ceramics",
+    seoulCandle: "demo-v1-item-seoul-candle",
+    seoulTray: "demo-v1-item-seoul-tray",
+    seoulYakgwa: "demo-v1-item-seoul-yakgwa",
+    seoulBeans: "demo-v1-item-seoul-beans",
+    seoulTeacup: "demo-v1-item-seoul-teacup",
+    bangkokCoconutOil: "demo-v1-item-bangkok-coconut-oil",
+    bangkokRattanBag: "demo-v1-item-bangkok-rattan-bag",
+    bangkokSilkScarf: "demo-v1-item-bangkok-silk-scarf",
+    bangkokHerbBalm: "demo-v1-item-bangkok-herb-balm",
+    bangkokMangoJelly: "demo-v1-item-bangkok-mango-jelly",
+    romeTruffleOil: "demo-v1-item-rome-truffle-oil",
+    romeParmigiano: "demo-v1-item-rome-parmigiano",
+    romeSoap: "demo-v1-item-rome-soap",
+    romeCardWallet: "demo-v1-item-rome-card-wallet",
+    romeMokaPot: "demo-v1-item-rome-moka-pot",
   },
   shots: {
     ownTokyo: "demo-v1-shot-own-tokyo",

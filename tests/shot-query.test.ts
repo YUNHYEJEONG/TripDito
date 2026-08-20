@@ -30,25 +30,28 @@ function shot(
   };
 }
 
+const recentIso = (daysAgo: number) =>
+  new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+
 describe("shot-query", () => {
   const shots = [
     shot({
       id: "1",
       destinationCity: "오사카",
       likeCount: 10,
-      createdAt: "2026-07-20T00:00:00.000Z",
+      createdAt: recentIso(20),
     }),
     shot({
       id: "2",
       destinationCity: "도쿄",
       likeCount: 50,
-      createdAt: "2026-07-10T00:00:00.000Z",
+      createdAt: recentIso(15),
     }),
     shot({
       id: "3",
       destinationCity: "오사카",
       likeCount: 5,
-      createdAt: "2026-07-22T00:00:00.000Z",
+      createdAt: recentIso(5),
     }),
   ];
 

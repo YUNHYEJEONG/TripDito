@@ -13,7 +13,11 @@ export type AnalysisJobStatus = "running" | "done" | "failed";
 export type AnalysisJobIntent =
   | { kind: "shopping-list"; plannedPurchaseDate?: string | null }
   | { kind: "pretrip-candidates" }
-  | { kind: "trip-purchases"; purchasedOn: string };
+  | {
+      kind: "trip-purchases";
+      purchasedOn: string;
+      context?: "live" | "settlement";
+    };
 
 export type AnalysisJob = {
   id: string;
