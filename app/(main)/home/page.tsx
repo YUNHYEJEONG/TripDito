@@ -11,10 +11,7 @@ import { HomeAdBanner } from "@/features/home/components/home-ad-banner";
 import { HomeCouponBanner } from "@/features/home/components/home-coupon-banner";
 import { HomeShoppingEmpty } from "@/features/home/components/home-create-trip-cta";
 import { HomeFxCard } from "@/features/home/components/home-fx-card";
-import {
-  HOME_ADD_FAB_CLEARANCE_CLASSNAME,
-  HomeShoppingTodo,
-} from "@/features/home/components/home-shopping-todo";
+import { HomeShoppingTodo } from "@/features/home/components/home-shopping-todo";
 import { HomeUpcomingTripCard } from "@/features/home/components/home-upcoming-trip-card";
 import { TripSwitchSheet } from "@/features/home/components/trip-switch-sheet";
 import {
@@ -54,12 +51,7 @@ export default function HomePage() {
       : [];
 
   return (
-    // 체크리스트가 있을 때만 FAB가 뜨므로, 그 자리를 비우는 여백도 그때만 준다.
-    <AppShell
-      withBottomNav
-      mode={mode}
-      className={homeTrip ? HOME_ADD_FAB_CLEARANCE_CLASSNAME : undefined}
-    >
+    <AppShell withBottomNav mode={mode}>
       <PageHeader
         brand
         title={appConfig.name}

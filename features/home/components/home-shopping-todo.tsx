@@ -46,14 +46,6 @@ const PAGE_SIZE = 8;
 const ROW_HEIGHT = 62;
 
 /**
- * FAB가 마지막 카드를 덮지 않게 앱셸에 붙이는 아래 여백.
- * 탭바·안전 영역 위에 **FAB 높이(56) + 간격(16)**을 더한 값이다.
- * 이 컴포넌트가 FAB의 주인이므로 여백 값도 여기서 함께 관리한다.
- */
-export const HOME_ADD_FAB_CLEARANCE_CLASSNAME =
-  "pb-[calc(var(--tab-bar-height)+var(--app-bottom-gap)+4.5rem+env(safe-area-inset-bottom))]";
-
-/**
  * `camera` + 추가 배지. lucide에 `camera-plus`가 없어 직접 그리되, **관례를 그대로 따른다.**
  *
  * 구글 Material `add_a_photo`, 애플 SF Symbols `camera.badge.plus` 모두 같은 규칙이다:

@@ -88,8 +88,13 @@ export function HomeUpcomingTripCard({
   const showProgress = label.kind === "ongoing" && typeof progress === "number";
 
   return (
+    /*
+     * `isolate`가 필요하다. 카드 안에서 링크(z-10)와 본문(z-20)을 겹쳐 쌓는데, 자체 쌓임
+     * 맥락이 없으면 그 z-index가 **페이지 전체와 경쟁**한다. sticky 헤더도 z-20이라
+     * DOM 순서상 뒤인 카드 본문이 헤더 위로 올라와 겹쳐 보인다.
+     */
     <section
-      className="group relative min-h-[148px] overflow-hidden rounded-2xl bg-ink"
+      className="group relative isolate min-h-[148px] overflow-hidden rounded-2xl bg-ink"
       style={{
         backgroundImage: `url(${bgSrc})`,
         backgroundSize: "cover",
