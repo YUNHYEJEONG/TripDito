@@ -12,7 +12,11 @@ export type FxRateView = {
   currency: string;
   date: string;
   previousDate: string | null;
-  /** 내부 기준: 1,000원당 외화 */
+  /** 외화 unitSize 단위당 원화 (매매기준율) */
+  unitSize: number;
+  krwPerUnit: number;
+  previousKrwPerUnit: number | null;
+  /** 참고용: 1,000원당 외화 */
   amountPer1000Krw: number;
   previousAmountPer1000Krw: number | null;
   changePct: number | null;

@@ -8,8 +8,12 @@ import {
 } from "@/features/fx/lib/currency-flags";
 import { cn } from "@/lib/utils";
 
-function formatFxAmount(amount: number): string {
-  return amount.toFixed(2);
+/** 원화 금액: 1,234.56 */
+function formatKrw(amount: number): string {
+  return amount.toLocaleString("ko-KR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 /** YYYY-MM-DD → YYYY.MM.DD */
@@ -91,9 +95,12 @@ export function HomeFxCard({ currency }: { currency: string }) {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[18px] font-bold leading-tight tracking-tight">
-                    <span className="text-foreground">{code}</span>{" "}
+                    <span className="text-foreground">
+                      {data.unitSize.toLocaleString("ko-KR")} {code}
+                    </span>
+                    <span className="mx-1 text-muted-foreground">=</span>
                     <span className="text-primary">
-                      {formatFxAmount(data.amountPer1000Krw)}
+                      {formatKrw(data.krwPerUnit)}원
                     </span>
                   </p>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">

@@ -161,8 +161,14 @@ export type KoreaEximCompareResult = {
   currency: string;
   date: string;
   previousDate: string | null;
+  /** 외화 unitSize 단위당 원화 (매매기준율). 예: JPY는 100엔당 원 */
+  unitSize: number;
+  krwPerUnit: number;
+  previousKrwPerUnit: number | null;
+  /** 참고용: 1,000원당 외화 */
   amountPer1000Krw: number;
   previousAmountPer1000Krw: number | null;
+  /** 원화 기준 전일 대비 변동률 (+면 외화 강세) */
   changePct: number | null;
 };
 
@@ -192,16 +198,17 @@ export async function fetchKoreaEximCompare(
   );
 
   const changePct =
-    previous && previous.amountPer1000Krw !== 0
-      ? ((current.amountPer1000Krw - previous.amountPer1000Krw) /
-          previous.amountPer1000Krw) *
-        100
+    previous && previous.dealBasR !== 0
+      ? ((current.dealBasR - previous.dealBasR) / previous.dealBasR) * 100
       : null;
 
   return {
     currency: code,
     date: current.date,
     previousDate: previous?.date ?? null,
+    unitSize: current.unitSize,
+    krwPerUnit: current.dealBasR,
+    previousKrwPerUnit: previous?.dealBasR ?? null,
     amountPer1000Krw: current.amountPer1000Krw,
     previousAmountPer1000Krw: previous?.amountPer1000Krw ?? null,
     changePct,
