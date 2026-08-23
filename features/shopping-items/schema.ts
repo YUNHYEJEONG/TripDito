@@ -11,7 +11,7 @@ export const shoppingItemFormSchema = z.object({
   imageDataUrl: z.string().nullable(),
   /** 예상 구매일 (YYYY-MM-DD). 미입력이면 null */
   plannedPurchaseDate: z.string().nullable(),
-  giftTags: z.array(giftTagSchema).default([]),
+  giftTags: z.array(giftTagSchema),
 });
 
 export type ShoppingItemFormValues = z.infer<typeof shoppingItemFormSchema>;

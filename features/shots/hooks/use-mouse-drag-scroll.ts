@@ -27,6 +27,7 @@ export function useMouseDragScroll(
   useEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return;
+    const root = el;
 
     let dragging = false;
     let capturing = false;
@@ -36,11 +37,11 @@ export function useMouseDragScroll(
     const threshold = 4;
 
     function snapToNearest() {
-      const slide = el.firstElementChild as HTMLElement | null;
-      const width = slide?.getBoundingClientRect().width ?? el.clientWidth;
+      const slide = root.firstElementChild as HTMLElement | null;
+      const width = slide?.getBoundingClientRect().width ?? root.clientWidth;
       if (!width) return;
-      const index = Math.round(el.scrollLeft / width);
-      el.scrollTo({ left: index * width, behavior: "smooth" });
+      const index = Math.round(root.scrollLeft / width);
+      root.scrollTo({ left: index * width, behavior: "smooth" });
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -49,7 +50,7 @@ export function useMouseDragScroll(
       capturing = false;
       moved = false;
       startX = e.clientX;
-      startScroll = el.scrollLeft;
+      startScroll = root.scrollLeft;
     }
 
     function onPointerMove(e: PointerEvent) {
@@ -59,32 +60,32 @@ export function useMouseDragScroll(
 
       if (!moved) {
         moved = true;
-        el.dataset.dragMoved = "1";
+        root.dataset.dragMoved = "1";
         if (snap) {
-          el.style.scrollSnapType = "none";
+          root.style.scrollSnapType = "none";
         }
-        el.classList.add("cursor-grabbing");
+        root.classList.add("cursor-grabbing");
         try {
-          el.setPointerCapture(e.pointerId);
+          root.setPointerCapture(e.pointerId);
           capturing = true;
         } catch {
           /* capture unsupported */
         }
       }
 
-      el.scrollLeft = startScroll - dx;
+      root.scrollLeft = startScroll - dx;
     }
 
     function onPointerUp(e: PointerEvent) {
       if (!dragging) return;
       dragging = false;
       if (snap) {
-        el.style.scrollSnapType = "";
+        root.style.scrollSnapType = "";
       }
-      el.classList.remove("cursor-grabbing");
+      root.classList.remove("cursor-grabbing");
       if (capturing) {
         try {
-          el.releasePointerCapture(e.pointerId);
+          root.releasePointerCapture(e.pointerId);
         } catch {
           /* already released */
         }
@@ -94,41 +95,41 @@ export function useMouseDragScroll(
         if (snap) snapToNearest();
         // click 핸들러가 드래그를 클릭으로 오인하지 않도록 한 틱 유지
         window.setTimeout(() => {
-          delete el.dataset.dragMoved;
+          delete root.dataset.dragMoved;
         }, 0);
       }
     }
 
     function onWheel(e: WheelEvent) {
       if (!wheel) return;
-      const max = el.scrollWidth - el.clientWidth;
+      const max = root.scrollWidth - root.clientWidth;
       if (max <= 0) return;
 
       const mostlyVertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
       const delta = mostlyVertical ? e.deltaY : e.deltaX;
       if (delta === 0) return;
 
-      const next = Math.min(max, Math.max(0, el.scrollLeft + delta));
-      if (next === el.scrollLeft) return;
+      const next = Math.min(max, Math.max(0, root.scrollLeft + delta));
+      if (next === root.scrollLeft) return;
 
       e.preventDefault();
-      el.scrollLeft = next;
+      root.scrollLeft = next;
     }
 
-    el.addEventListener("pointerdown", onPointerDown);
-    el.addEventListener("pointermove", onPointerMove);
-    el.addEventListener("pointerup", onPointerUp);
-    el.addEventListener("pointercancel", onPointerUp);
+    root.addEventListener("pointerdown", onPointerDown);
+    root.addEventListener("pointermove", onPointerMove);
+    root.addEventListener("pointerup", onPointerUp);
+    root.addEventListener("pointercancel", onPointerUp);
     if (wheel) {
-      el.addEventListener("wheel", onWheel, { passive: false });
+      root.addEventListener("wheel", onWheel, { passive: false });
     }
 
     return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      el.removeEventListener("pointermove", onPointerMove);
-      el.removeEventListener("pointerup", onPointerUp);
-      el.removeEventListener("pointercancel", onPointerUp);
-      el.removeEventListener("wheel", onWheel);
+      root.removeEventListener("pointerdown", onPointerDown);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerup", onPointerUp);
+      root.removeEventListener("pointercancel", onPointerUp);
+      root.removeEventListener("wheel", onWheel);
     };
   }, [ref, enabled, snap, wheel]);
 }

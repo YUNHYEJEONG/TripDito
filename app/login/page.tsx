@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
@@ -9,8 +9,17 @@ import { DevLoginForm } from "@/features/auth/components/dev-login-form";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import { appConfig } from "@/config/app";
 
-/** 소셜 로그인 전용 (이메일 가입 경로는 정책상 제공하지 않는다) */
+/** useSearchParams 는 정적 프리렌더 시 Suspense 경계가 필요하다 */
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+/** 소셜 로그인 전용 (이메일 가입 경로는 정책상 제공하지 않는다) */
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn, isLoading } = useIsLoggedIn();

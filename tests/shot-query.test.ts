@@ -30,25 +30,30 @@ function shot(
   };
 }
 
+/** 최근 30일 집계 테스트가 날짜에 묶이지 않도록 "n일 전" ISO 문자열 생성 */
+function daysAgo(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 describe("shot-query", () => {
   const shots = [
     shot({
       id: "1",
       destinationCity: "오사카",
       likeCount: 10,
-      createdAt: "2026-07-20T00:00:00.000Z",
+      createdAt: daysAgo(3),
     }),
     shot({
       id: "2",
       destinationCity: "도쿄",
       likeCount: 50,
-      createdAt: "2026-07-10T00:00:00.000Z",
+      createdAt: daysAgo(13),
     }),
     shot({
       id: "3",
       destinationCity: "오사카",
       likeCount: 5,
-      createdAt: "2026-07-22T00:00:00.000Z",
+      createdAt: daysAgo(1),
     }),
   ];
 
