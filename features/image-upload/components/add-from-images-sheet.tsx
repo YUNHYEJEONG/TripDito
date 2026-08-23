@@ -13,8 +13,12 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { compressImageFiles, type CompressedImage } from "../utils/compress-image";
-import { mockImageAnalyzer } from "@/features/image-analysis/mock-analyzer";
+import {
+  compressImageFiles,
+  IMAGE_PRESETS,
+  type CompressedImage,
+} from "../utils/compress-image";
+import { apiImageAnalyzer } from "@/features/image-analysis/api-analyzer";
 import type { ProposedItem } from "@/features/image-analysis/port";
 import { useCreateManyItems } from "@/features/shopping-items/hooks/use-items";
 
@@ -47,7 +51,10 @@ export function AddFromImagesSheet({
   async function handleFiles(fileList: FileList | null) {
     if (!fileList?.length) return;
     try {
-      const compressed = await compressImageFiles(Array.from(fileList));
+      const compressed = await compressImageFiles(
+        Array.from(fileList),
+        IMAGE_PRESETS.analysis,
+      );
       if (!compressed.length) {
         toast.error("이미지 파일만 업로드할 수 있습니다");
         return;
@@ -62,11 +69,22 @@ export function AddFromImagesSheet({
     if (!images.length) return;
     setAnalyzing(true);
     try {
-      const result = await mockImageAnalyzer.analyze(images);
+      const result = await apiImageAnalyzer.analyze(images);
+      if (!result.length) {
+        toast.error("사진에서 상품을 찾지 못했습니다");
+        return;
+      }
       setProposed(result);
       setStep("review");
-    } catch {
-      toast.error("분석에 실패했습니다");
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      toast.error(
+        code === "UNAUTHORIZED"
+          ? "로그인이 필요합니다"
+          : code === "GEMINI_NOT_CONFIGURED"
+            ? "분석 서비스가 설정되지 않았습니다"
+            : "분석에 실패했습니다",
+      );
     } finally {
       setAnalyzing(false);
     }
@@ -108,7 +126,7 @@ export function AddFromImagesSheet({
           </SheetTitle>
           <SheetDescription>
             {step === "pick"
-              ? "여러 장을 선택한 뒤 데모 분석을 실행합니다."
+              ? "사진에서 상품과 가격을 자동으로 찾아냅니다."
               : "상품 정보를 수정한 뒤 리스트에 추가하세요."}
           </SheetDescription>
         </SheetHeader>
@@ -193,7 +211,7 @@ export function AddFromImagesSheet({
             <div className="flex flex-col gap-3">
               {proposed.map((item, index) => (
                 <div
-                  key={item.sourceImageId}
+                  key={`${item.sourceImageId}-${index}`}
                   className="flex gap-3 rounded-2xl bg-muted/60 p-3"
                 >
                   <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-background">
@@ -260,7 +278,7 @@ export function AddFromImagesSheet({
               onClick={() => void handleAnalyze()}
             >
               {analyzing ? <Loader2 className="animate-spin" /> : <Sparkles />}
-              데모 분석
+              사진 분석
             </Button>
           ) : (
             <div className="flex w-full flex-col gap-2 sm:flex-row">
