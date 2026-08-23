@@ -1,56 +1,46 @@
-import { createId } from "@/lib/storage/id";
-import { getJson, setJson } from "@/lib/storage/local-storage";
-import { storageKeys } from "@/lib/storage/keys";
+import { api } from "@/lib/api/client";
 import type { Trip, TripFormValues } from "../schema";
-import { itemRepository } from "@/features/shopping-items/data/item-repository";
 
-function readTrips(): Trip[] {
-  return getJson<Trip[]>(storageKeys.trips, []);
-}
+/** 서버 /api/trips 응답 (lib/db/trips.ts TripDto) */
+type TripDto = Trip & {
+  countryCode: string;
+  timezone: string;
+  status: "PREP" | "PLANNED" | "ONGOING" | "DONE";
+};
 
-function writeTrips(trips: Trip[]) {
-  setJson(storageKeys.trips, trips);
+function toPayload(input: TripFormValues) {
+  return {
+    name: input.name,
+    country: input.country,
+    city: input.city,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    currency: input.currency,
+    budget: input.budget,
+  };
 }
 
 export const tripRepository = {
-  list(): Trip[] {
-    return readTrips().sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    );
+  list(): Promise<Trip[]> {
+    return api<TripDto[]>("/api/trips");
   },
 
-  getById(id: string): Trip | undefined {
-    return readTrips().find((trip) => trip.id === id);
+  getById(id: string): Promise<Trip> {
+    return api<TripDto>(`/api/trips/${id}`);
   },
 
-  create(input: TripFormValues): Trip {
-    const now = new Date().toISOString();
-    const trip: Trip = {
-      ...input,
-      id: createId(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    writeTrips([trip, ...readTrips()]);
-    return trip;
+  create(input: TripFormValues): Promise<Trip> {
+    return api<TripDto>("/api/trips", { method: "POST", body: toPayload(input) });
   },
 
-  update(id: string, input: TripFormValues): Trip {
-    const trips = readTrips();
-    const index = trips.findIndex((trip) => trip.id === id);
-    if (index < 0) throw new Error("여행을 찾을 수 없습니다");
-    const updated: Trip = {
-      ...trips[index],
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
-    trips[index] = updated;
-    writeTrips(trips);
-    return updated;
+  update(id: string, input: TripFormValues): Promise<Trip> {
+    return api<TripDto>(`/api/trips/${id}`, {
+      method: "PUT",
+      body: toPayload(input),
+    });
   },
 
-  remove(id: string) {
-    writeTrips(readTrips().filter((trip) => trip.id !== id));
-    itemRepository.removeByTripId(id);
+  async remove(id: string): Promise<void> {
+    await api(`/api/trips/${id}`, { method: "DELETE" });
   },
 };

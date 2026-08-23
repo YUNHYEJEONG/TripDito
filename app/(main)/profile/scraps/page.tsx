@@ -6,24 +6,16 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { useScraps } from "@/features/shots/hooks/use-scraps";
-import { useShots } from "@/features/shots/hooks/use-shots";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function ProfileScrapsPage() {
-  const { data: scraps = [], isLoading: scrapsLoading } = useScraps();
-  const { data: shots = [], isLoading: shotsLoading } = useShots();
+  useRequireLogin();
+  const { data: scraps = [], isLoading: loading } = useScraps();
 
-  const scrapedShots = useMemo(() => {
-    const map = new Map(shots.map((shot) => [shot.id, shot]));
-    return scraps
-      .map((scrap) => {
-        const shot = map.get(scrap.shotId);
-        if (!shot) return null;
-        return { scrap, shot };
-      })
-      .filter((row): row is NonNullable<typeof row> => Boolean(row));
-  }, [scraps, shots]);
-
-  const loading = scrapsLoading || shotsLoading;
+  const scrapedShots = useMemo(
+    () => scraps.map((scrap) => ({ scrap, shot: scrap.shot })),
+    [scraps],
+  );
 
   return (
     <AppShell withBottomNav>

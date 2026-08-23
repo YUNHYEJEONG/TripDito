@@ -7,11 +7,10 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { CurrencyText } from "@/components/common/currency-text";
-import { itemRepository } from "@/features/shopping-items/data/item-repository";
 import { useCopyItemsToTrip } from "@/features/shopping-items/hooks/use-items";
-import { tripRepository } from "@/features/trips/data/trip-repository";
 import { useTrips } from "@/features/trips/hooks/use-trips";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
+import { useShotItems } from "@/features/shots/hooks/use-shots";
 import { cn } from "@/lib/utils";
 
 function formatTripStay(startDate: string, endDate: string) {
@@ -37,18 +36,16 @@ export function ShoppingListSheet({
   open,
   onOpenChange,
   nickname,
+  shotId,
   shotAuthorId,
-  tripId,
   destinationCity,
-  itemIds,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   nickname: string;
+  shotId: string;
   shotAuthorId: string;
-  tripId: string;
   destinationCity?: string;
-  itemIds: string[];
 }) {
   const router = useRouter();
   const { data: profile } = useLocalProfile();
@@ -59,16 +56,9 @@ export function ShoppingListSheet({
 
   const isOwnList = Boolean(profile?.id && profile.id === shotAuthorId);
 
-  const items = useMemo(() => {
-    return itemIds
-      .map((id) => itemRepository.getById(id))
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
-  }, [itemIds, open]);
-
-  const trip = useMemo(
-    () => tripRepository.getById(tripId),
-    [tripId, open],
-  );
+  const { data: shotItems } = useShotItems(shotId, open);
+  const items = useMemo(() => shotItems?.items ?? [], [shotItems]);
+  const trip = shotItems?.trip ?? null;
 
   const placeName = trip?.city ?? destinationCity ?? "";
   const stayLabel =
@@ -109,12 +99,12 @@ export function ShoppingListSheet({
     if (selectedIds.length === 0) return;
     try {
       const created = await copyItems.mutateAsync({
-        sourceItemIds: selectedIds,
+        sourceItems: items.filter((item) => selectedIds.includes(item.id)),
         targetTripId,
       });
       setPickOpen(false);
       setSelectedIds([]);
-      const target = tripRepository.getById(targetTripId);
+      const target = trips.find((candidate) => candidate.id === targetTripId);
       const count = created.length;
       toast.success(
         target

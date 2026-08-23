@@ -1,14 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Plus } from "lucide-react";
-import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
-import { StorageUsageBanner } from "@/components/common/storage-usage-banner";
 import { Button } from "@/components/ui/button";
 import {
   GrayCard,
@@ -16,13 +13,9 @@ import {
   GrayCardTitle,
 } from "@/components/ui/gray-card";
 import { TripCard } from "@/features/trips/components/trip-card";
-import { tripKeys, useTrips } from "@/features/trips/hooks/use-trips";
-import { itemKeys, useItems } from "@/features/shopping-items/hooks/use-items";
-import { shotKeys } from "@/features/shots/hooks/use-shots";
-import { scrapKeys } from "@/features/shots/hooks/use-scraps";
-import { profileKeys } from "@/features/profile/hooks/use-local-profile";
+import { useTrips } from "@/features/trips/hooks/use-trips";
+import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { calculateBudget } from "@/features/budget/utils/calculate-budget";
-import { seedDemoData } from "@/lib/storage/seed-demo";
 import { appConfig } from "@/config/app";
 
 function TripCardWithProgress({
@@ -39,19 +32,7 @@ function TripCardWithProgress({
 
 export default function MyTripsPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { data: trips = [], isLoading } = useTrips();
-
-  function handleSeedDemo() {
-    const { trip } = seedDemoData();
-    void queryClient.invalidateQueries({ queryKey: tripKeys.all });
-    void queryClient.invalidateQueries({ queryKey: itemKeys.all });
-    void queryClient.invalidateQueries({ queryKey: shotKeys.all });
-    void queryClient.invalidateQueries({ queryKey: scrapKeys.all });
-    void queryClient.invalidateQueries({ queryKey: profileKeys.all });
-    toast.success("데모 여행을 불러왔습니다");
-    router.push(`/trips/${trip.id}`);
-  }
 
   return (
     <AppShell withBottomNav>
@@ -73,8 +54,6 @@ export default function MyTripsPage() {
         </div>
       </GrayCard>
 
-      <StorageUsageBanner className="mb-4" />
-
       {isLoading ? (
         <p className="py-10 text-center text-[13px] text-muted-foreground">
           불러오는 중…
@@ -82,11 +61,9 @@ export default function MyTripsPage() {
       ) : trips.length === 0 ? (
         <EmptyState
           title="아직 여행이 없어요"
-          description="첫 여행을 만들거나, 데모 데이터로 바로 체험해 보세요."
+          description="첫 여행을 만들고 쇼핑 리스트를 채워 보세요."
           actionLabel="여행 만들기"
           onAction={() => router.push("/trips/new")}
-          secondaryLabel="데모 불러오기"
-          onSecondary={handleSeedDemo}
         />
       ) : (
         <div className="flex flex-col gap-1.5">

@@ -5,10 +5,12 @@ import { useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
-import { useShots } from "@/features/shots/hooks/use-shots";
+import { useLikedShots } from "@/features/shots/hooks/use-shots";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function ProfileLikesPage() {
-  const { data: shots = [], isLoading } = useShots();
+  useRequireLogin();
+  const { data: shots = [], isLoading } = useLikedShots();
 
   const likedShots = useMemo(
     () =>

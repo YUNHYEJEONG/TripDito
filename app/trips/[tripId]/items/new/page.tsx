@@ -9,12 +9,14 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ItemForm } from "@/features/shopping-items/components/item-form";
 import { useCreateItem } from "@/features/shopping-items/hooks/use-items";
 import { useTrip } from "@/features/trips/hooks/use-trips";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function NewItemPage({
   params,
 }: {
   params: Promise<{ tripId: string }>;
 }) {
+  useRequireLogin();
   const { tripId } = use(params);
   const router = useRouter();
   const { data: trip, isLoading } = useTrip(tripId);

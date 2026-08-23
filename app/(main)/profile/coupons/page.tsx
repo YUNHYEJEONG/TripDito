@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 import { CouponCardList } from "@/features/coupons/components/coupon-card-list";
 import { useReceivedCoupons } from "@/features/coupons/hooks/use-received-coupons";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function ProfileCouponsPage() {
+  useRequireLogin();
   const { data: coupons = [], isLoading } = useReceivedCoupons();
 
   return (

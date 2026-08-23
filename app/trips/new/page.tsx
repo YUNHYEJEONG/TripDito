@@ -6,8 +6,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { TripForm } from "@/features/trips/components/trip-form";
 import { useCreateTrip } from "@/features/trips/hooks/use-trips";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function NewTripPage() {
+  useRequireLogin();
   const router = useRouter();
   const createTrip = useCreateTrip();
 

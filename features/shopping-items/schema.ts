@@ -20,6 +20,8 @@ export type ShoppingItem = Omit<ShoppingItemFormValues, "giftTags"> & {
   id: string;
   tripId: string;
   giftTags: z.infer<typeof giftTagSchema>[];
+  /** R2 첨부 묶음 ID (서버 저장 시) */
+  attachmentId?: string | null;
   purchased: boolean;
   purchasedAt: string | null;
   sortOrder: number;

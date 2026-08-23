@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Package, Plus } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CurrencyText } from "@/components/common/currency-text";
 import { buttonVariants } from "@/components/ui/button";
 import {
-  itemKeys,
   useItems,
   useTogglePurchased,
 } from "@/features/shopping-items/hooks/use-items";
@@ -20,7 +18,6 @@ import {
   getTripDayNumber,
 } from "@/features/shopping-items/utils/trip-day";
 import { useMouseDragScroll } from "@/features/shots/hooks/use-mouse-drag-scroll";
-import { migrateShoppingListDemoFields } from "@/features/shopping-items/data/migrate-shopping-demo-fields";
 import {
   GIFT_TAG_OPTIONS,
   type GiftTagId,
@@ -40,20 +37,12 @@ export function HomeShoppingTodo({
   startDate: string;
   endDate: string;
 }) {
-  const queryClient = useQueryClient();
   const { data: items = [], isLoading } = useItems(tripId);
   const togglePurchased = useTogglePurchased(tripId);
   const [dayFilter, setDayFilter] = useState<number | "all">("all");
   const filterScrollerRef = useRef<HTMLDivElement>(null);
 
   useMouseDragScroll(filterScrollerRef, true, { snap: false, wheel: true });
-
-  useEffect(() => {
-    const updated = migrateShoppingListDemoFields();
-    if (updated) {
-      void queryClient.invalidateQueries({ queryKey: itemKeys.all });
-    }
-  }, [queryClient]);
 
   const dayOptions = useMemo(
     () => getTripDayFilterOptions(startDate, endDate),

@@ -295,10 +295,9 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
         open={shoppingOpen}
         onOpenChange={setShoppingOpen}
         nickname={shot.authorNickname}
+        shotId={shot.id}
         shotAuthorId={shot.authorId}
-        tripId={shot.tripId}
         destinationCity={shot.destinationCity}
-        itemIds={shot.shoppingItemIds}
       />
       <CommentsSheet
         open={commentsOpen}

@@ -1,59 +1,56 @@
-import { getJson, setJson } from "@/lib/storage/local-storage";
-import { storageKeys } from "@/lib/storage/keys";
+import { api, isUnauthorized } from "@/lib/api/client";
+import { isDataUrl, uploadImages } from "@/lib/api/upload";
 import { EMPTY_PROFILE } from "../constants";
 import type { LocalProfile } from "../schema";
 
-function readProfile(): LocalProfile {
-  return getJson<LocalProfile>(storageKeys.profile, EMPTY_PROFILE);
+/** 서버 /api/me 응답 */
+type ProfileDto = {
+  id: string;
+  email: string | null;
+  nickname: string | null;
+  profileFileId: string | null;
+  avatarUrl: string | null;
+  status: string;
+};
+
+function fromDto(dto: ProfileDto): LocalProfile {
+  return {
+    id: dto.id,
+    nickname: dto.nickname?.trim() ?? "",
+    avatarDataUrl: dto.avatarUrl,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export type ProfileUpdateInput = {
   nickname?: string;
+  /** 새 이미지(data URL) 또는 null(제거) */
   avatarDataUrl?: string | null;
 };
 
 export const profileRepository = {
-  get(): LocalProfile {
-    const profile = readProfile();
-    return {
-      ...EMPTY_PROFILE,
-      ...profile,
-      id: profile.id || EMPTY_PROFILE.id,
-      nickname: profile.nickname?.trim() ?? "",
-      avatarDataUrl: profile.avatarDataUrl ?? null,
-    };
+  /** 미로그인이면 빈 프로필 */
+  async get(): Promise<LocalProfile> {
+    try {
+      return fromDto(await api<ProfileDto>("/api/me"));
+    } catch (error) {
+      if (isUnauthorized(error)) return EMPTY_PROFILE;
+      throw error;
+    }
   },
 
-  /** 회원가입 직후 등 — 닉네임·아바타 미등록 상태로 초기화 */
-  clear(): LocalProfile {
-    const cleared: LocalProfile = {
-      ...EMPTY_PROFILE,
-      updatedAt: new Date().toISOString(),
-    };
-    setJson(storageKeys.profile, cleared);
-    return cleared;
-  },
-
-  update(input: ProfileUpdateInput): LocalProfile {
-    const current = this.get();
+  async update(input: ProfileUpdateInput): Promise<LocalProfile> {
+    const body: { nickname?: string; profileFileId?: string | null } = {};
     if (input.nickname !== undefined) {
       const next = input.nickname.trim();
       if (!next) throw new Error("닉네임을 입력하세요");
+      body.nickname = next;
     }
-
-    const updated: LocalProfile = {
-      ...current,
-      nickname:
-        input.nickname !== undefined
-          ? input.nickname.trim()
-          : current.nickname,
-      avatarDataUrl:
-        input.avatarDataUrl === undefined
-          ? current.avatarDataUrl
-          : input.avatarDataUrl,
-      updatedAt: new Date().toISOString(),
-    };
-    setJson(storageKeys.profile, updated);
-    return updated;
+    if (input.avatarDataUrl === null) {
+      body.profileFileId = null;
+    } else if (isDataUrl(input.avatarDataUrl)) {
+      body.profileFileId = (await uploadImages("avatars", [input.avatarDataUrl])).id;
+    }
+    return fromDto(await api<ProfileDto>("/api/me", { method: "PATCH", body }));
   },
 };

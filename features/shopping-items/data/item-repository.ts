@@ -1,132 +1,163 @@
-import { createId } from "@/lib/storage/id";
-import { getJson, setJson } from "@/lib/storage/local-storage";
-import { storageKeys } from "@/lib/storage/keys";
+import { api } from "@/lib/api/client";
+import { isDataUrl, uploadImages } from "@/lib/api/upload";
 import type { ShoppingItem, ShoppingItemFormValues } from "../schema";
+import type { GiftTagId } from "../constants/gift-tags";
 
-function readItems(): ShoppingItem[] {
-  return getJson<ShoppingItem[]>(storageKeys.items, []);
+/** 서버 /api/items 응답 (lib/db/items.ts ShoppingItemDto) */
+export type ShoppingItemDto = {
+  id: string;
+  tripId: string;
+  name: string;
+  estimatedPrice: number;
+  quantity: number;
+  memo: string;
+  attachmentId: string | null;
+  imageUrl: string | null;
+  plannedPurchaseDate: string | null;
+  giftTags: string[];
+  purchased: boolean;
+  purchasedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function fromItemDto(dto: ShoppingItemDto): ShoppingItem {
+  return {
+    id: dto.id,
+    tripId: dto.tripId,
+    name: dto.name,
+    estimatedPrice: dto.estimatedPrice,
+    quantity: dto.quantity,
+    memo: dto.memo,
+    imageDataUrl: dto.imageUrl,
+    attachmentId: dto.attachmentId,
+    plannedPurchaseDate: dto.plannedPurchaseDate,
+    giftTags: dto.giftTags as GiftTagId[],
+    purchased: dto.purchased,
+    purchasedAt: dto.purchasedAt,
+    sortOrder: new Date(dto.createdAt).getTime(),
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
+  };
 }
 
-function writeItems(items: ShoppingItem[]) {
-  setJson(storageKeys.items, items);
+/**
+ * 폼 값 → API 페이로드. 이미지가 새 data URL 이면 R2 에 올리고 첨부 ID 로 바꾼다.
+ * 기존 URL 그대로면 현재 attachmentId 유지, null 이면 이미지 제거.
+ */
+async function toPayload(
+  input: ShoppingItemFormValues,
+  current?: Pick<ShoppingItem, "imageDataUrl" | "attachmentId"> | null,
+) {
+  let attachmentId: string | null | undefined;
+  if (isDataUrl(input.imageDataUrl)) {
+    attachmentId = (await uploadImages("items", [input.imageDataUrl])).id;
+  } else if (!input.imageDataUrl) {
+    attachmentId = null;
+  } else if (current && input.imageDataUrl === current.imageDataUrl) {
+    attachmentId = current.attachmentId ?? null;
+  } else {
+    attachmentId = current?.attachmentId ?? null;
+  }
+
+  return {
+    name: input.name,
+    estimatedPrice: input.estimatedPrice,
+    quantity: input.quantity,
+    memo: input.memo ?? "",
+    attachmentId,
+    plannedPurchaseDate: input.plannedPurchaseDate ?? null,
+    giftTags: input.giftTags ?? [],
+  };
 }
 
 export const itemRepository = {
-  listByTrip(tripId: string): ShoppingItem[] {
-    return readItems()
-      .filter((item) => item.tripId === tripId)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
+  async listByTrip(tripId: string): Promise<ShoppingItem[]> {
+    const rows = await api<ShoppingItemDto[]>(`/api/trips/${tripId}/items`);
+    return rows.map(fromItemDto);
   },
 
-  getById(id: string): ShoppingItem | undefined {
-    return readItems().find((item) => item.id === id);
+  async getById(id: string): Promise<ShoppingItem> {
+    return fromItemDto(await api<ShoppingItemDto>(`/api/items/${id}`));
   },
 
-  create(tripId: string, input: ShoppingItemFormValues): ShoppingItem {
-    const now = new Date().toISOString();
-    const item: ShoppingItem = {
-      ...input,
-      memo: input.memo ?? "",
-      imageDataUrl: input.imageDataUrl ?? null,
-      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
-      giftTags: input.giftTags ?? [],
-      id: createId(),
-      tripId,
-      purchased: false,
-      purchasedAt: null,
-      sortOrder: Date.now(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    writeItems([item, ...readItems()]);
-    return item;
+  async create(
+    tripId: string,
+    input: ShoppingItemFormValues,
+  ): Promise<ShoppingItem> {
+    const body = await toPayload(input);
+    return fromItemDto(
+      await api<ShoppingItemDto>(`/api/trips/${tripId}/items`, {
+        method: "POST",
+        body,
+      }),
+    );
   },
 
-  /** 다른 사람 쇼핑리스트 상품을 내 여행 리스트로 퍼가기 */
-  copyToTrip(sourceItemId: string, targetTripId: string): ShoppingItem {
-    const source = readItems().find((item) => item.id === sourceItemId);
-    if (!source) throw new Error("상품을 찾을 수 없습니다");
-    return this.create(targetTripId, {
-      name: source.name,
-      estimatedPrice: source.estimatedPrice,
-      quantity: source.quantity,
-      memo: source.memo,
-      imageDataUrl: source.imageDataUrl,
-      plannedPurchaseDate: source.plannedPurchaseDate ?? null,
-      giftTags: source.giftTags ?? [],
-    });
-  },
-
-  copyManyToTrip(sourceItemIds: string[], targetTripId: string): ShoppingItem[] {
-    return sourceItemIds.map((id) => this.copyToTrip(id, targetTripId));
-  },
-
-  createMany(tripId: string, inputs: ShoppingItemFormValues[]): ShoppingItem[] {
-    const now = new Date().toISOString();
-    const created = inputs.map((input, index) => {
-      const item: ShoppingItem = {
-        ...input,
-        memo: input.memo ?? "",
-        imageDataUrl: input.imageDataUrl ?? null,
-        plannedPurchaseDate: input.plannedPurchaseDate ?? null,
-        giftTags: input.giftTags ?? [],
-        id: createId(),
-        tripId,
-        purchased: false,
-        purchasedAt: null,
-        sortOrder: Date.now() + index,
-        createdAt: now,
-        updatedAt: now,
-      };
-      return item;
-    });
-    writeItems([...created, ...readItems()]);
+  /** 사진 분석 결과 등 여러 건 일괄 등록 (순차 호출) */
+  async createMany(
+    tripId: string,
+    inputs: ShoppingItemFormValues[],
+  ): Promise<ShoppingItem[]> {
+    const created: ShoppingItem[] = [];
+    for (const input of inputs) {
+      created.push(await this.create(tripId, input));
+    }
     return created;
   },
 
-  update(id: string, input: ShoppingItemFormValues): ShoppingItem {
-    const items = readItems();
-    const index = items.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error("상품을 찾을 수 없습니다");
-    const updated: ShoppingItem = {
-      ...items[index],
-      ...input,
-      memo: input.memo ?? "",
-      imageDataUrl: input.imageDataUrl ?? null,
-      plannedPurchaseDate: input.plannedPurchaseDate ?? null,
-      giftTags: input.giftTags ?? [],
-      updatedAt: new Date().toISOString(),
-    };
-    items[index] = updated;
-    writeItems(items);
-    return updated;
+  /** 다른 사람 때샷의 쇼핑품목을 내 여행 리스트로 퍼가기 (첨부 ID 재사용) */
+  async copyToTrip(
+    source: ShoppingItem,
+    targetTripId: string,
+  ): Promise<ShoppingItem> {
+    return fromItemDto(
+      await api<ShoppingItemDto>(`/api/trips/${targetTripId}/items`, {
+        method: "POST",
+        body: {
+          name: source.name,
+          estimatedPrice: source.estimatedPrice,
+          quantity: source.quantity,
+          memo: source.memo,
+          attachmentId: source.attachmentId ?? null,
+          plannedPurchaseDate: source.plannedPurchaseDate ?? null,
+          giftTags: source.giftTags ?? [],
+        },
+      }),
+    );
   },
 
-  togglePurchased(id: string): ShoppingItem {
-    const items = readItems();
-    const index = items.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error("상품을 찾을 수 없습니다");
-    const current = items[index];
-    const purchased = !current.purchased;
-    const updated: ShoppingItem = {
-      ...current,
-      purchased,
-      purchasedAt: purchased ? new Date().toISOString() : null,
-      updatedAt: new Date().toISOString(),
-    };
-    items[index] = updated;
-    writeItems(items);
-    return updated;
+  async copyManyToTrip(
+    sources: ShoppingItem[],
+    targetTripId: string,
+  ): Promise<ShoppingItem[]> {
+    const created: ShoppingItem[] = [];
+    for (const source of sources) {
+      created.push(await this.copyToTrip(source, targetTripId));
+    }
+    return created;
   },
 
-  remove(id: string) {
-    writeItems(readItems().filter((item) => item.id !== id));
+  async update(
+    id: string,
+    input: ShoppingItemFormValues,
+    current?: ShoppingItem | null,
+  ): Promise<ShoppingItem> {
+    const body = await toPayload(input, current);
+    return fromItemDto(
+      await api<ShoppingItemDto>(`/api/items/${id}`, { method: "PUT", body }),
+    );
   },
 
-  removeByTripId(tripId: string) {
-    writeItems(readItems().filter((item) => item.tripId !== tripId));
+  async togglePurchased(id: string): Promise<ShoppingItem> {
+    return fromItemDto(
+      await api<ShoppingItemDto>(`/api/items/${id}/purchase`, {
+        method: "POST",
+      }),
+    );
+  },
+
+  async remove(id: string): Promise<void> {
+    await api(`/api/items/${id}`, { method: "DELETE" });
   },
 };

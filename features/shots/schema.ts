@@ -59,12 +59,16 @@ export type Shot = {
   authorAvatarDataUrl: string | null;
   destinationCountry: string;
   destinationCity: string;
+  /** R2 첨부 묶음 ID */
+  attachmentId?: string;
   images: string[];
   pins: ImagePin[];
   body: string;
   shoppingItemIds: string[];
   likeCount: number;
   likedByMe: boolean;
+  scrappedByMe?: boolean;
+  isMine?: boolean;
   shareCount: number;
   comments: ShotComment[];
   createdAt: string;
@@ -75,4 +79,6 @@ export type Scrap = {
   id: string;
   shotId: string;
   createdAt: string;
+  /** 스크랩한 게시글 (서버 응답에 포함) */
+  shot: Shot;
 };

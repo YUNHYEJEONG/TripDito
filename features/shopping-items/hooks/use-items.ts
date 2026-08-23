@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemRepository } from "../data/item-repository";
-import type { ShoppingItemFormValues } from "../schema";
+import type { ShoppingItem, ShoppingItemFormValues } from "../schema";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export const itemKeys = {
   all: ["items"] as const,
@@ -11,18 +12,20 @@ export const itemKeys = {
 };
 
 export function useItems(tripId: string) {
+  const { isLoggedIn } = useIsLoggedIn();
   return useQuery({
     queryKey: itemKeys.byTrip(tripId),
     queryFn: () => itemRepository.listByTrip(tripId),
-    enabled: Boolean(tripId),
+    enabled: Boolean(tripId) && isLoggedIn,
   });
 }
 
 export function useItem(id: string) {
+  const { isLoggedIn } = useIsLoggedIn();
   return useQuery({
     queryKey: itemKeys.detail(id),
-    queryFn: () => itemRepository.getById(id) ?? null,
-    enabled: Boolean(id),
+    queryFn: () => itemRepository.getById(id),
+    enabled: Boolean(id) && isLoggedIn,
   });
 }
 
@@ -41,12 +44,12 @@ export function useCopyItemToTrip() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      sourceItemId,
+      sourceItem,
       targetTripId,
     }: {
-      sourceItemId: string;
+      sourceItem: ShoppingItem;
       targetTripId: string;
-    }) => itemRepository.copyToTrip(sourceItemId, targetTripId),
+    }) => itemRepository.copyToTrip(sourceItem, targetTripId),
     onSuccess: (item) => {
       void queryClient.invalidateQueries({
         queryKey: itemKeys.byTrip(item.tripId),
@@ -60,12 +63,12 @@ export function useCopyItemsToTrip() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      sourceItemIds,
+      sourceItems,
       targetTripId,
     }: {
-      sourceItemIds: string[];
+      sourceItems: ShoppingItem[];
       targetTripId: string;
-    }) => itemRepository.copyManyToTrip(sourceItemIds, targetTripId),
+    }) => itemRepository.copyManyToTrip(sourceItems, targetTripId),
     onSuccess: (items) => {
       const tripId = items[0]?.tripId;
       if (tripId) {
@@ -93,7 +96,14 @@ export function useUpdateItem(tripId: string, itemId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: ShoppingItemFormValues) =>
-      itemRepository.update(itemId, input),
+      itemRepository.update(
+        itemId,
+        input,
+        queryClient.getQueryData<ShoppingItem>(itemKeys.detail(itemId)) ??
+          queryClient
+            .getQueryData<ShoppingItem[]>(itemKeys.byTrip(tripId))
+            ?.find((item) => item.id === itemId),
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
       void queryClient.invalidateQueries({ queryKey: itemKeys.detail(itemId) });
@@ -112,7 +122,7 @@ export function useTogglePurchased(tripId: string) {
       );
       queryClient.setQueryData(
         itemKeys.byTrip(tripId),
-        (old: ReturnType<typeof itemRepository.listByTrip> | undefined) => {
+        (old: ShoppingItem[] | undefined) => {
           if (!old) return old;
           return old.map((item) => {
             if (item.id !== itemId) return item;
@@ -143,7 +153,7 @@ export function useDeleteItem(tripId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (itemId: string) => {
-      itemRepository.remove(itemId);
+      await itemRepository.remove(itemId);
       return itemId;
     },
     onSuccess: () => {

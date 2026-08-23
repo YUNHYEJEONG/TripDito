@@ -1,216 +1,219 @@
-import { createId } from "@/lib/storage/id";
+import { api } from "@/lib/api/client";
+import { isDataUrl, uploadImages } from "@/lib/api/upload";
 import { getJson, setJson } from "@/lib/storage/local-storage";
 import { storageKeys } from "@/lib/storage/keys";
-import { tripRepository } from "@/features/trips/data/trip-repository";
-import { profileRepository } from "@/features/profile/data/profile-repository";
-import { authRepository } from "@/features/auth/data/auth-repository";
-import type { Shot, ShotComment, ShotFormValues, Scrap } from "../schema";
+import {
+  fromItemDto,
+  type ShoppingItemDto,
+} from "@/features/shopping-items/data/item-repository";
+import type { ShoppingItem } from "@/features/shopping-items/types";
+import type { Trip } from "@/features/trips/types";
+import type { Shot, ShotFormValues } from "../schema";
 
-function normalizeShot(shot: Shot): Shot {
+/** 서버 /api/shots 응답 (lib/db/shots.ts ShotDto) */
+type ShotDto = {
+  id: string;
+  channel: "shots" | "community";
+  tripId: string;
+  authorId: string;
+  authorNickname: string;
+  authorAvatarUrl: string | null;
+  destinationCountry: string;
+  destinationCity: string;
+  attachmentId: string;
+  images: Array<{ seq: number; path: string; url: string | null }>;
+  pins: Array<{
+    id: string;
+    imageIndex: number;
+    xPct: number;
+    yPct: number;
+    text: string;
+  }>;
+  body: string;
+  shoppingItemIds: string[];
+  comments: Array<{
+    id: string;
+    parentId: string | null;
+    authorId: string;
+    authorNickname: string;
+    text: string;
+    deleted: boolean;
+    createdAt: string;
+  }>;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+  scrappedByMe: boolean;
+  isMine: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ShotListFilter = {
+  channel?: "shots" | "community";
+  sort?: "newest" | "likes";
+  country?: string;
+  city?: string;
+  author?: "me" | string;
+  liked?: "me";
+  limit?: number;
+  offset?: number;
+};
+
+/** 공유 횟수는 서버 스키마에 없어 브라우저에만 보관한다 */
+function readShareCounts(): Record<string, number> {
+  return getJson<Record<string, number>>(`${storageKeys.shots}:shares`, {});
+}
+
+export function fromShotDto(dto: ShotDto): Shot {
   return {
-    ...shot,
-    shareCount: shot.shareCount ?? 0,
-    pins: shot.pins ?? [],
-    comments: shot.comments ?? [],
-    shoppingItemIds: shot.shoppingItemIds ?? [],
+    id: dto.id,
+    channel: dto.channel,
+    tripId: dto.tripId,
+    authorId: dto.authorId,
+    authorNickname: dto.authorNickname,
+    authorAvatarDataUrl: dto.authorAvatarUrl,
+    destinationCountry: dto.destinationCountry,
+    destinationCity: dto.destinationCity,
+    attachmentId: dto.attachmentId,
+    images: dto.images.map((f) => f.url ?? ""),
+    pins: dto.pins,
+    body: dto.body,
+    shoppingItemIds: dto.shoppingItemIds,
+    likeCount: dto.likeCount,
+    likedByMe: dto.likedByMe,
+    scrappedByMe: dto.scrappedByMe,
+    isMine: dto.isMine,
+    shareCount: readShareCounts()[dto.id] ?? 0,
+    comments: dto.comments
+      .filter((c) => !c.deleted)
+      .map((c) => ({
+        id: c.id,
+        authorId: c.authorId,
+        authorNickname: c.authorNickname,
+        text: c.text,
+        createdAt: c.createdAt,
+      })),
+    createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
   };
 }
 
-function readShots(): Shot[] {
-  return getJson<Shot[]>(storageKeys.shots, []).map(normalizeShot);
+function buildQuery(filter: ShotListFilter = {}) {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(filter)) {
+    if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
+  }
+  const q = p.toString();
+  return q ? `?${q}` : "";
 }
 
-function writeShots(shots: Shot[]) {
-  setJson(storageKeys.shots, shots);
+/**
+ * 폼 이미지 → 첨부 ID. 새 이미지(data URL)가 하나라도 있거나 구성이 바뀌면 새로 올리고,
+ * 기존 게시글 이미지 그대로면 기존 attachmentId 를 재사용한다.
+ */
+async function resolveAttachment(images: string[], current?: Shot | null) {
+  const unchanged =
+    current?.attachmentId &&
+    images.length === current.images.length &&
+    images.every((src, i) => !isDataUrl(src) && src === current.images[i]);
+  if (unchanged) return current.attachmentId!;
+  return (await uploadImages("shots", images)).id;
+}
+
+async function toPayload(input: ShotFormValues, current?: Shot | null) {
+  return {
+    channel: input.channel,
+    tripId: input.tripId,
+    attachmentId: await resolveAttachment(input.images, current),
+    body: input.body?.trim() ?? "",
+    pins: (input.pins ?? []).map((p) => ({
+      imageIndex: p.imageIndex,
+      xPct: p.xPct,
+      yPct: p.yPct,
+      text: p.text,
+    })),
+    shoppingItemIds:
+      input.channel === "shots" ? input.shoppingItemIds : [],
+  };
 }
 
 export const shotRepository = {
-  list(): Shot[] {
-    return readShots().sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  async list(filter?: ShotListFilter): Promise<Shot[]> {
+    const rows = await api<ShotDto[]>(`/api/shots${buildQuery(filter)}`);
+    return rows.map(fromShotDto);
+  },
+
+  async getById(id: string): Promise<Shot> {
+    return fromShotDto(await api<ShotDto>(`/api/shots/${id}`));
+  },
+
+  async create(input: ShotFormValues): Promise<Shot> {
+    const body = await toPayload(input);
+    return fromShotDto(
+      await api<ShotDto>("/api/shots", { method: "POST", body }),
     );
   },
 
-  getById(id: string): Shot | undefined {
-    return readShots().find((shot) => shot.id === id);
+  async update(
+    id: string,
+    input: ShotFormValues,
+    current?: Shot | null,
+  ): Promise<Shot> {
+    const body = await toPayload(input, current);
+    return fromShotDto(
+      await api<ShotDto>(`/api/shots/${id}`, { method: "PUT", body }),
+    );
   },
 
-  create(input: ShotFormValues): Shot {
-    if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 업로드할 수 있습니다");
-    }
-    const trip = tripRepository.getById(input.tripId);
-    if (!trip) throw new Error("여행을 찾을 수 없습니다");
-    const profile = profileRepository.get();
-    const now = new Date().toISOString();
-    const shoppingItemIds =
-      input.channel === "shots" ? input.shoppingItemIds : [];
-
-    const shot: Shot = {
-      id: createId(),
-      channel: input.channel,
-      tripId: input.tripId,
-      authorId: profile.id,
-      authorNickname: profile.nickname,
-      authorAvatarDataUrl: profile.avatarDataUrl,
-      destinationCountry: trip.country,
-      destinationCity: trip.city,
-      images: input.images,
-      pins: input.pins ?? [],
-      body: input.body?.trim() ?? "",
-      shoppingItemIds,
-      likeCount: 0,
-      likedByMe: false,
-      shareCount: 0,
-      comments: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    writeShots([shot, ...readShots()]);
-    return shot;
+  async remove(id: string): Promise<void> {
+    await api(`/api/shots/${id}`, { method: "DELETE" });
   },
 
-  toggleLike(id: string): Shot {
-    const shots = readShots();
-    const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
-    const current = shots[index];
-    const likedByMe = !current.likedByMe;
-    const updated: Shot = {
-      ...current,
-      likedByMe,
-      likeCount: Math.max(0, current.likeCount + (likedByMe ? 1 : -1)),
-      updatedAt: new Date().toISOString(),
-    };
-    shots[index] = updated;
-    writeShots(shots);
-    return updated;
+  async toggleLike(id: string): Promise<Shot> {
+    return fromShotDto(
+      await api<ShotDto>(`/api/shots/${id}/like`, { method: "POST" }),
+    );
   },
 
-  incrementShare(id: string): Shot {
-    const shots = readShots();
-    const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
-    const updated: Shot = {
-      ...shots[index],
-      shareCount: (shots[index].shareCount ?? 0) + 1,
-      updatedAt: new Date().toISOString(),
-    };
-    shots[index] = updated;
-    writeShots(shots);
-    return updated;
+  async toggleScrap(id: string): Promise<Shot> {
+    return fromShotDto(
+      await api<ShotDto>(`/api/shots/${id}/scrap`, { method: "POST" }),
+    );
   },
 
-  addComment(id: string, text: string): Shot {
-    if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 댓글을 달 수 있습니다");
-    }
+  async addComment(id: string, text: string): Promise<Shot> {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("댓글을 입력하세요");
-    const shots = readShots();
-    const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
-    const profile = profileRepository.get();
-    const comment: ShotComment = {
-      id: createId(),
-      authorId: profile.id,
-      authorNickname: profile.nickname,
-      text: trimmed,
-      createdAt: new Date().toISOString(),
-    };
-    const updated: Shot = {
-      ...shots[index],
-      comments: [...shots[index].comments, comment],
-      updatedAt: new Date().toISOString(),
-    };
-    shots[index] = updated;
-    writeShots(shots);
-    return updated;
+    await api(`/api/shots/${id}/comments`, {
+      method: "POST",
+      body: { text: trimmed },
+    });
+    return this.getById(id);
   },
 
-  removeComment(shotId: string, commentId: string): Shot {
-    const shots = readShots();
-    const index = shots.findIndex((shot) => shot.id === shotId);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
-    const shot = shots[index];
-    const comment = shot.comments.find((item) => item.id === commentId);
-    if (!comment) throw new Error("댓글을 찾을 수 없습니다");
-
-    const profile = profileRepository.get();
-    const canDelete =
-      profile.id === shot.authorId || profile.id === comment.authorId;
-    if (!canDelete) throw new Error("댓글을 삭제할 권한이 없습니다");
-
-    const updated: Shot = {
-      ...shot,
-      comments: shot.comments.filter((item) => item.id !== commentId),
-      updatedAt: new Date().toISOString(),
-    };
-    shots[index] = updated;
-    writeShots(shots);
-    return updated;
+  async removeComment(shotId: string, commentId: string): Promise<Shot> {
+    await api(`/api/shots/${shotId}/comments/${commentId}`, {
+      method: "DELETE",
+    });
+    return this.getById(shotId);
   },
 
-  update(id: string, input: ShotFormValues): Shot {
-    if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 수정할 수 있습니다");
-    }
-    const shots = readShots();
-    const index = shots.findIndex((shot) => shot.id === id);
-    if (index < 0) throw new Error("피드를 찾을 수 없습니다");
-
-    const current = shots[index];
-    const profile = profileRepository.get();
-    if (profile.id !== current.authorId) {
-      throw new Error("피드를 수정할 권한이 없습니다");
-    }
-
-    const trip = tripRepository.getById(input.tripId);
-    if (!trip) throw new Error("여행을 찾을 수 없습니다");
-
-    const shoppingItemIds =
-      input.channel === "shots" ? input.shoppingItemIds : [];
-
-    const updated: Shot = {
-      ...current,
-      channel: input.channel,
-      tripId: input.tripId,
-      destinationCountry: trip.country,
-      destinationCity: trip.city,
-      images: input.images,
-      pins: input.pins ?? [],
-      body: input.body?.trim() ?? "",
-      shoppingItemIds,
-      authorNickname: profile.nickname,
-      authorAvatarDataUrl: profile.avatarDataUrl,
-      updatedAt: new Date().toISOString(),
-    };
-    shots[index] = updated;
-    writeShots(shots);
-    return updated;
+  /** 공유 횟수 (브라우저 로컬 카운터) */
+  async incrementShare(id: string): Promise<Shot> {
+    const counts = readShareCounts();
+    counts[id] = (counts[id] ?? 0) + 1;
+    setJson(`${storageKeys.shots}:shares`, counts);
+    return this.getById(id);
   },
 
-  remove(id: string) {
-    if (!authRepository.get().isLoggedIn) {
-      throw new Error("로그인 후 삭제할 수 있습니다");
-    }
-    const shots = readShots();
-    const shot = shots.find((item) => item.id === id);
-    if (!shot) throw new Error("피드를 찾을 수 없습니다");
-
-    const profile = profileRepository.get();
-    if (profile.id !== shot.authorId) {
-      throw new Error("피드를 삭제할 권한이 없습니다");
-    }
-
-    writeShots(shots.filter((item) => item.id !== id));
-
-    const scraps = getJson<Scrap[]>(storageKeys.scraps, []);
-    setJson(
-      storageKeys.scraps,
-      scraps.filter((scrap) => scrap.shotId !== id),
+  /** 때샷에 연결된 쇼핑품목 + 여행 요약 */
+  async listItems(
+    shotId: string,
+  ): Promise<{ items: ShoppingItem[]; trip: Trip | null }> {
+    const data = await api<{ items: ShoppingItemDto[]; trip: Trip | null }>(
+      `/api/shots/${shotId}/items`,
     );
+    return { items: data.items.map(fromItemDto), trip: data.trip };
   },
 };

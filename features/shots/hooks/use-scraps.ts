@@ -2,15 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { scrapRepository } from "../data/scrap-repository";
+import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export const scrapKeys = {
   all: ["scraps"] as const,
 };
 
 export function useScraps() {
+  const { isLoggedIn } = useIsLoggedIn();
   return useQuery({
     queryKey: scrapKeys.all,
     queryFn: () => scrapRepository.list(),
+    enabled: isLoggedIn,
   });
 }
 
@@ -22,9 +25,10 @@ export function useIsScrapped(shotId: string) {
 export function useToggleScrap() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (shotId: string) => scrapRepository.toggle(shotId),
+    mutationFn: (shotId: string) => scrapRepository.toggle(shotId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: scrapKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ["shots"] });
     },
   });
 }

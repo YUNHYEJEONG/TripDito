@@ -11,7 +11,6 @@ import {
   headerIconButtonClassName,
 } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
-import { StorageUsageBanner } from "@/components/common/storage-usage-banner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ItemCard } from "@/features/shopping-items/components/item-card";
 import { ItemToolbar } from "@/features/shopping-items/components/item-toolbar";
@@ -33,12 +32,14 @@ import { useTrip } from "@/features/trips/hooks/use-trips";
 import { AddFromImagesSheet } from "@/features/image-upload/components/add-from-images-sheet";
 import { formatDateRange } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function TripDetailPage({
   params,
 }: {
   params: Promise<{ tripId: string }>;
 }) {
+  useRequireLogin();
   const { tripId } = use(params);
   const router = useRouter();
   const { data: trip, isLoading: tripLoading } = useTrip(tripId);
@@ -94,7 +95,6 @@ export default function TripDetailPage({
       />
 
       <div className="flex flex-col gap-4">
-        <StorageUsageBanner />
         <ListSummary summary={summary} currency={trip.currency} />
         <ItemToolbar
           query={query}

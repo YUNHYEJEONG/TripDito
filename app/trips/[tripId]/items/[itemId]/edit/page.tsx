@@ -15,12 +15,14 @@ import {
   useUpdateItem,
 } from "@/features/shopping-items/hooks/use-items";
 import { useTrip } from "@/features/trips/hooks/use-trips";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function EditItemPage({
   params,
 }: {
   params: Promise<{ tripId: string; itemId: string }>;
 }) {
+  useRequireLogin();
   const { tripId, itemId } = use(params);
   const router = useRouter();
   const { data: trip, isLoading: tripLoading } = useTrip(tripId);

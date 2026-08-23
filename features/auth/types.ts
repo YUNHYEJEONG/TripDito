@@ -1,11 +1,13 @@
-export type AuthProvider = "email" | "kakao" | "naver";
+export type AuthProvider = "google" | "kakao" | "naver" | "dev";
 
 export type AuthSession = {
   isLoggedIn: boolean;
-  /** 로그인 시각 (ISO) */
+  /** 로그인 시각 (ISO) — 서버 세션에서는 제공하지 않음 */
   loggedInAt: string | null;
   provider: AuthProvider | null;
   email: string | null;
+  /** USER_UUID */
+  userId: string | null;
 };
 
 export const DEFAULT_AUTH_SESSION: AuthSession = {
@@ -13,12 +15,5 @@ export const DEFAULT_AUTH_SESSION: AuthSession = {
   loggedInAt: null,
   provider: null,
   email: null,
-};
-
-export type LocalAccount = {
-  email: string;
-  /** SHA-256 hex */
-  passwordHash: string;
-  nickname: string;
-  createdAt: string;
+  userId: null,
 };

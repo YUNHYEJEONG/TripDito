@@ -14,12 +14,14 @@ import {
   useTrip,
   useUpdateTrip,
 } from "@/features/trips/hooks/use-trips";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function EditTripPage({
   params,
 }: {
   params: Promise<{ tripId: string }>;
 }) {
+  useRequireLogin();
   const { tripId } = use(params);
   const router = useRouter();
   const { data: trip, isLoading } = useTrip(tripId);

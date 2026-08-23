@@ -18,12 +18,14 @@ import {
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import type { ShotFormValues } from "@/features/shots/schema";
+import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
 
 export default function EditShotPage({
   params,
 }: {
   params: Promise<{ shotId: string }>;
 }) {
+  useRequireLogin();
   const { shotId } = use(params);
   const router = useRouter();
   const { data: shot, isLoading } = useShot(shotId);

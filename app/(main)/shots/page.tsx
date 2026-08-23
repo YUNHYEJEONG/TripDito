@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
-import { migrateDemoShotImages } from "@/lib/storage/seed-demo";
-import { shotKeys, useShots } from "@/features/shots/hooks/use-shots";
+import { useShots } from "@/features/shots/hooks/use-shots";
 import type { ShotSort } from "@/features/shots/schema";
 import { queryShots } from "@/features/shots/utils/shot-query";
 import {
@@ -25,9 +22,8 @@ import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export default function ShotsPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { data: shots = [], isLoading } = useShots();
-  const { isLoggedIn } = useIsLoggedIn();
+  const { isLoggedIn, isLoading: authLoading } = useIsLoggedIn();
 
   const [tab, setTab] = useState<ShotsTab>("shots");
   const [sheetDestination, setSheetDestination] =
@@ -48,13 +44,6 @@ export default function ShotsPage() {
       }),
     [shots, destination, sort],
   );
-
-  useEffect(() => {
-    const updated = migrateDemoShotImages();
-    if (!updated) return;
-    void queryClient.invalidateQueries({ queryKey: shotKeys.all });
-    toast.success("데모 때샷 이미지를 업데이트했습니다");
-  }, [queryClient]);
 
   function handleSheetDestinationChange(value: DestinationValue) {
     setSheetDestination(value);
@@ -104,7 +93,16 @@ export default function ShotsPage() {
             />
           </div>
 
-          {isLoading ? (
+          {!authLoading && !isLoggedIn ? (
+            <div className="px-4 pt-6 sm:px-5 md:px-6 lg:px-8">
+              <EmptyState
+                title="로그인하고 때샷을 구경해 보세요"
+                description="다른 여행자의 쇼핑 순간을 보려면 로그인이 필요해요."
+                actionLabel="로그인"
+                onAction={() => router.push("/login")}
+              />
+            </div>
+          ) : isLoading || authLoading ? (
             <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">
               불러오는 중…
             </p>
