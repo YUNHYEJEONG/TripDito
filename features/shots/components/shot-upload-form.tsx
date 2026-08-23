@@ -17,7 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SheetCloseHeader } from "@/components/common/sheet-close-header";
 import { FieldLabel } from "@/components/common/field-label";
-import { compressImageFiles } from "@/features/image-upload/utils/compress-image";
+import {
+  compressImageFiles,
+  IMAGE_PRESETS,
+} from "@/features/image-upload/utils/compress-image";
 import { useTrips } from "@/features/trips/hooks/use-trips";
 import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { createId } from "@/lib/storage/id";
@@ -60,10 +63,14 @@ export function ShotUploadForm({
   const { data: trips = [] } = useTrips();
   const [pinImageIndex, setPinImageIndex] = useState(0);
   const [pinDraft, setPinDraft] = useState<{
+    id?: string;
     xPct: number;
     yPct: number;
   } | null>(null);
   const [pinText, setPinText] = useState("");
+  const pinInputRef = useRef<HTMLInputElement>(null);
+  /** blur 와 click 이 연달아 commitPin 을 부를 때 같은 초안을 두 번 저장하지 않도록 */
+  const committedDraftRef = useRef<object | null>(null);
   const [shoppingOpen, setShoppingOpen] = useState(false);
   const [compressing, setCompressing] = useState(false);
 
@@ -86,6 +93,10 @@ export function ShotUploadForm({
     setPinDraft(null);
   }, [pinImageIndex]);
 
+  useEffect(() => {
+    if (pinDraft) pinInputRef.current?.focus();
+  }, [pinDraft]);
+
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
     const remaining = MAX_SHOT_IMAGES - images.length;
@@ -97,6 +108,7 @@ export function ShotUploadForm({
     try {
       const compressed = await compressImageFiles(
         [...files].slice(0, remaining),
+        IMAGE_PRESETS.shot,
       );
       form.setValue("images", [...images, ...compressed.map((c) => c.dataUrl)], {
         shouldValidate: true,
@@ -158,6 +170,11 @@ export function ShotUploadForm({
   function handleImageTap(e: React.MouseEvent<HTMLDivElement>) {
     if (pinScrollerRef.current?.dataset.dragMoved) return;
     if (!images[pinImageIndex]) return;
+    // 편집 중이면 이미지 탭은 닫기(저장/폐기)로만 동작
+    if (pinDraft) {
+      commitPin();
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const xPct = ((e.clientX - rect.left) / rect.width) * 100;
     const yPct = ((e.clientY - rect.top) / rect.height) * 100;
@@ -168,16 +185,42 @@ export function ShotUploadForm({
     setPinText("");
   }
 
-  function confirmPin() {
-    if (!pinDraft || !pinText.trim()) return;
-    const pin: ImagePin = {
-      id: createId(),
-      imageIndex: pinImageIndex,
-      xPct: pinDraft.xPct,
-      yPct: pinDraft.yPct,
-      text: pinText.trim(),
-    };
-    form.setValue("pins", [...pins, pin], { shouldValidate: true });
+  function openPin(pin: ImagePin) {
+    setPinDraft({ id: pin.id, xPct: pin.xPct, yPct: pin.yPct });
+    setPinText(pin.text);
+  }
+
+  /** 비어 있으면 만들지 않고(기존 핀이면 삭제), 내용이 있으면 저장 */
+  function commitPin() {
+    if (!pinDraft || committedDraftRef.current === pinDraft) return;
+    committedDraftRef.current = pinDraft;
+    const text = pinText.trim();
+    if (!text) {
+      if (pinDraft.id) removePin(pinDraft.id);
+    } else if (pinDraft.id) {
+      form.setValue(
+        "pins",
+        pins.map((p) => (p.id === pinDraft.id ? { ...p, text } : p)),
+        { shouldValidate: true },
+      );
+    } else {
+      const pin: ImagePin = {
+        id: createId(),
+        imageIndex: pinImageIndex,
+        xPct: pinDraft.xPct,
+        yPct: pinDraft.yPct,
+        text,
+      };
+      form.setValue("pins", [...pins, pin], { shouldValidate: true });
+    }
+    setPinDraft(null);
+    setPinText("");
+  }
+
+  function removePin(id: string) {
+    form.setValue("pins", pins.filter((p) => p.id !== id), {
+      shouldValidate: true,
+    });
     setPinDraft(null);
     setPinText("");
   }
@@ -349,7 +392,7 @@ export function ShotUploadForm({
       {images.length > 0 && channel === "shots" ? (
         <Field label="이미지 코멘트">
           <p className="mb-2 text-[12px] text-muted-foreground">
-            이미지를 탭하고 코멘트를 달아보세요.
+            이미지를 탭해 코멘트를 남기고, 핀을 다시 탭하면 수정할 수 있어요.
           </p>
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F2F4F6]">
             <div
@@ -374,36 +417,84 @@ export function ShotUploadForm({
                     draggable={false}
                   />
                   {index === pinImageIndex
-                    ? currentPins.map((pin) => (
-                        <button
-                          key={pin.id}
-                          type="button"
-                          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md"
-                          style={{ left: `${pin.xPct}%`, top: `${pin.yPct}%` }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            form.setValue(
-                              "pins",
-                              pins.filter((p) => p.id !== pin.id),
-                              { shouldValidate: true },
-                            );
-                          }}
-                          aria-label="핀 삭제"
-                        >
-                          <Plus className="size-4" strokeWidth={2.5} />
-                        </button>
-                      ))
+                    ? currentPins
+                        .filter((pin) => pin.id !== pinDraft?.id)
+                        .map((pin) => (
+                          <button
+                            key={pin.id}
+                            type="button"
+                            className="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md"
+                            style={{ left: `${pin.xPct}%`, top: `${pin.yPct}%` }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openPin(pin);
+                            }}
+                            aria-label="코멘트 수정"
+                          >
+                            <Plus className="size-4" strokeWidth={2.5} />
+                          </button>
+                        ))
                     : null}
                   {index === pinImageIndex && pinDraft ? (
-                    <span
-                      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary/80 text-white"
-                      style={{
-                        left: `${pinDraft.xPct}%`,
-                        top: `${pinDraft.yPct}%`,
-                      }}
-                    >
-                      <Plus className="size-4" strokeWidth={2.5} />
-                    </span>
+                    <>
+                      <span
+                        className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white ring-4 ring-primary/30"
+                        style={{
+                          left: `${pinDraft.xPct}%`,
+                          top: `${pinDraft.yPct}%`,
+                        }}
+                      >
+                        <Plus className="size-4" strokeWidth={2.5} />
+                      </span>
+                      <div
+                        className={cn(
+                          "absolute z-20 flex w-[min(78%,260px)] items-center gap-1 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-black/10",
+                          pinDraft.xPct > 55 && "-translate-x-full",
+                          pinDraft.yPct > 80 && "-translate-y-full",
+                        )}
+                        style={{
+                          left: `calc(${pinDraft.xPct}% ${pinDraft.xPct > 55 ? "- 22px" : "+ 22px"})`,
+                          top: `calc(${pinDraft.yPct}% ${pinDraft.yPct > 80 ? "- 22px" : "- 18px"})`,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          ref={pinInputRef}
+                          value={pinText}
+                          onChange={(e) => setPinText(e.target.value)}
+                          onBlur={commitPin}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              commitPin();
+                            } else if (e.key === "Escape") {
+                              e.preventDefault();
+                              setPinDraft(null);
+                              setPinText("");
+                            }
+                          }}
+                          placeholder="코멘트 입력 후 Enter"
+                          maxLength={80}
+                          className="h-8 min-w-0 flex-1 bg-transparent px-2 text-[13px] outline-none placeholder:text-[#A0A7AE]"
+                        />
+                        <button
+                          type="button"
+                          aria-label="코멘트 삭제"
+                          // input blur 보다 먼저 실행되도록 mousedown 에서 처리
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (pinDraft.id) removePin(pinDraft.id);
+                            else {
+                              setPinDraft(null);
+                              setPinText("");
+                            }
+                          }}
+                          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#848C94] hover:bg-[#F2F4F6] hover:text-red-500"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </>
                   ) : null}
                 </div>
               ))}
@@ -430,30 +521,6 @@ export function ShotUploadForm({
               </>
             ) : null}
           </div>
-          {pinDraft ? (
-            <div className="mt-2 flex flex-col gap-2">
-              <Textarea
-                value={pinText}
-                onChange={(e) => setPinText(e.target.value)}
-                placeholder="생생한 코멘트를 남겨보세요!"
-                rows={2}
-                className="min-h-16"
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setPinDraft(null)}
-                >
-                  취소
-                </Button>
-                <Button type="button" size="sm" onClick={confirmPin}>
-                  추가
-                </Button>
-              </div>
-            </div>
-          ) : null}
           {pins.length > 0 ? (
             <ul className="mt-2 space-y-1.5">
               {pins.map((pin) => (
@@ -473,13 +540,7 @@ export function ShotUploadForm({
                     type="button"
                     aria-label="핀 삭제"
                     className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background"
-                    onClick={() =>
-                      form.setValue(
-                        "pins",
-                        pins.filter((p) => p.id !== pin.id),
-                        { shouldValidate: true },
-                      )
-                    }
+                    onClick={() => removePin(pin.id)}
                   >
                     <Trash2 className="size-3.5" />
                   </button>

@@ -25,7 +25,10 @@ import { ProfileMenuLink } from "@/features/profile/components/profile-menu-link
 import { useScraps } from "@/features/shots/hooks/use-scraps";
 import { useShots } from "@/features/shots/hooks/use-shots";
 import { useReceivedCoupons } from "@/features/coupons/hooks/use-received-coupons";
-import { compressImageFile } from "@/features/image-upload/utils/compress-image";
+import {
+  compressImageFile,
+  IMAGE_PRESETS,
+} from "@/features/image-upload/utils/compress-image";
 import { useIsLoggedIn, useLogout, useAuthSession } from "@/features/auth/hooks/use-auth";
 import {
   GUEST_AVATAR_INITIAL,
@@ -84,7 +87,7 @@ export default function ProfilePage() {
 
     setUploadingAvatar(true);
     try {
-      const compressed = await compressImageFile(file);
+      const compressed = await compressImageFile(file, IMAGE_PRESETS.avatar);
       await updateProfile.mutateAsync({
         avatarDataUrl: compressed.dataUrl,
       });
