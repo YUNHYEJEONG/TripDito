@@ -28,7 +28,7 @@ import {
 import { formatCurrency } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 import {
-  BudgetReservoirArtwork,
+  BudgetPiggyBankArtwork,
   TripStatusSuitcaseArtwork,
 } from "./trip-status-artwork";
 import styles from "./trip-status-overview.module.css";
@@ -108,6 +108,17 @@ export function TripStatusBadge({
   );
 }
 
+function ProgressTransferBridge() {
+  return (
+    <span className={styles.progressBridge} aria-hidden>
+      <svg viewBox="0 0 48 72" focusable="false">
+        <path className={styles.progressBridgePath} d="M3 50c11-19 25-22 38-10" />
+        <path className={styles.progressBridgeArrow} d="m36 34 9 7-11 3Z" />
+      </svg>
+    </span>
+  );
+}
+
 export function TripStatusOverviewLoading({
   mode,
   className,
@@ -136,23 +147,29 @@ export function TripStatusOverviewLoading({
         className={styles.overviewBody}
         data-has-budget-reservoir={hasReservoir ? "true" : "false"}
       >
-        {hasReservoir ? (
-          <div className={styles.reservoirRail} aria-hidden>
-            <span
-              className={cn(
-                styles.loadingReservoir,
-                "animate-pulse motion-reduce:animate-none",
-              )}
-            />
-          </div>
-        ) : null}
         <div
-          data-trip-status-stage={scene}
-          className={styles.instrumentStage}
-          aria-hidden
+          className={styles.progressScene}
+          data-has-budget-reservoir={hasReservoir ? "true" : "false"}
         >
-          <div className={styles.loadingInstrument}>
-            <SuitcaseGauge mode={scene} gauge={suitcase} size="overview" />
+          {hasReservoir ? (
+            <div className={styles.reservoirRail} aria-hidden>
+              <span
+                className={cn(
+                  styles.loadingReservoir,
+                  "animate-pulse motion-reduce:animate-none",
+                )}
+              />
+            </div>
+          ) : null}
+          {hasReservoir ? <ProgressTransferBridge /> : null}
+          <div
+            data-trip-status-stage={scene}
+            className={styles.instrumentStage}
+            aria-hidden
+          >
+            <div className={styles.loadingInstrument}>
+              <SuitcaseGauge mode={scene} gauge={suitcase} size="overview" />
+            </div>
           </div>
         </div>
         <div
@@ -241,7 +258,6 @@ export function TripStatusOverview({
           currency={currency}
           suitcaseGauge={suitcaseGauge}
           hasPriceReview={hasPriceReview}
-          suitcaseCelebrationNonce={suitcaseCelebrationNonce}
         />
       )}
     </section>
@@ -270,18 +286,24 @@ function StatusOverviewFrame({
       className={styles.overviewBody}
       data-has-budget-reservoir={hasReservoir ? "true" : "false"}
     >
-      {hasReservoir && budgetGauge && currency ? (
-        <div className={styles.reservoirRail}>
-          <ReservoirColumn mode={mode} gauge={budgetGauge} currency={currency} />
+      <div
+        className={styles.progressScene}
+        data-has-budget-reservoir={hasReservoir ? "true" : "false"}
+      >
+        {hasReservoir && budgetGauge && currency ? (
+          <div className={styles.reservoirRail}>
+            <ReservoirColumn mode={mode} gauge={budgetGauge} currency={currency} />
+          </div>
+        ) : null}
+        {hasReservoir ? <ProgressTransferBridge /> : null}
+        <div data-trip-status-stage={mode} className={styles.instrumentStage}>
+          <SuitcaseGauge
+            mode={mode}
+            gauge={suitcaseGauge}
+            size="overview"
+            suitcaseCelebrationNonce={suitcaseCelebrationNonce}
+          />
         </div>
-      ) : null}
-      <div data-trip-status-stage={mode} className={styles.instrumentStage}>
-        <SuitcaseGauge
-          mode={mode}
-          gauge={suitcaseGauge}
-          size="overview"
-          suitcaseCelebrationNonce={suitcaseCelebrationNonce}
-        />
       </div>
       <div data-trip-status-rail={mode} className={styles.informationRail}>
         {children}
@@ -364,20 +386,14 @@ function CompletedOverview({
   currency,
   suitcaseGauge,
   hasPriceReview,
-  suitcaseCelebrationNonce,
 }: {
   summary: BudgetSummary;
   currency: string;
   suitcaseGauge: StatusSuitcaseGauge;
   hasPriceReview: boolean;
-  suitcaseCelebrationNonce: number;
 }) {
   return (
-    <StatusOverviewFrame
-      mode="after"
-      suitcaseGauge={suitcaseGauge}
-      suitcaseCelebrationNonce={suitcaseCelebrationNonce}
-    >
+    <StatusOverviewFrame mode="after" suitcaseGauge={suitcaseGauge}>
       <div className={cn(styles.summaryRail, styles.completedRail)}>
         <Metric label="구매한 상품" emphasis="after" align="left" priority="primary">
           {summary.purchasedCount}개
@@ -778,7 +794,7 @@ function BudgetReservoir({
       className={cn(styles.budgetReservoir, styles[`${mode}Reservoir`])}
       {...progressProps}
     >
-      <BudgetReservoirArtwork fillPercent={displayPercent} />
+      <BudgetPiggyBankArtwork fillPercent={displayPercent} />
     </div>
   );
 }
@@ -841,7 +857,7 @@ function SuitcaseGauge({
     gauge.totalCount > 0 &&
     gauge.purchasedCount === gauge.totalCount;
   const hasCelebrationSignal = celebrationNonce > initialCelebrationNonce;
-  const isCelebrating = isComplete && hasCelebrationSignal;
+  const isCelebrating = mode === "live" && isComplete && hasCelebrationSignal;
   const accentClass =
     mode === "prep"
       ? "text-prep-deep"
@@ -882,12 +898,12 @@ function SuitcaseGauge({
         isCelebrating ? celebrationNonce : undefined
       }
       className={cn("relative shrink-0", styles.suitcaseGauge)}
-      aria-live="polite"
+      aria-live={mode === "after" ? undefined : "polite"}
       aria-atomic="true"
       {...ariaProps}
     >
       <div
-        key={hasCelebrationSignal ? `celebration-${celebrationNonce}` : "steady"}
+        key={isCelebrating ? `celebration-${celebrationNonce}` : "steady"}
         aria-hidden
         className={styles.suitcaseCanvas}
       >
@@ -896,7 +912,7 @@ function SuitcaseGauge({
           className={cn(
             styles.suitcaseArtwork,
             isCollection && styles.packingRefresh,
-            hasCelebrationSignal && styles.suitcaseJump,
+            isCelebrating && styles.suitcaseJump,
           )}
         >
           <TripStatusSuitcaseArtwork
@@ -905,9 +921,10 @@ function SuitcaseGauge({
             activeSlots={gauge.activeSlots}
             overflowCount={gauge.overflowCount}
             purchasedCount={gauge.purchasedCount}
+            totalCount={gauge.totalCount}
           />
         </div>
-        {hasCelebrationSignal ? (
+        {isCelebrating ? (
           <span className={cn(styles.confettiBurst, accentClass)}>
             {suitcaseConfettiPieces.map((piece) => (
               <span key={piece} className={styles.confettiPiece} />

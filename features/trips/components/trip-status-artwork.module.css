@@ -1,295 +1,338 @@
-.reservoirSvg,
+/*
+ * 여행 상태 아트워크.
+ *
+ * 좌표는 전부 **PNG에서 실측한 값**이다(v5 자산 기준). 예전에는 캔버스 전체를 기준으로
+ * 눈대중 퍼센트를 넣었는데, 자산에 빈 여백이 크게 붙어 있어서 그림은 작아 보이고 물건은
+ * 가방 밖으로 튀어나왔다. 자산을 그림 경계로 잘라낸 뒤 다시 측정한 값이다.
+ *
+ *   돼지 배 절개면   : left 13.4%  top 16.1%  w 68.8%  h 67.3%   (1287x917)
+ *   여행가방 내부창  : left  6.8%  top 24.6%  w 69.9%  h 62.2%   (1111x1416)
+ *
+ * 절개면은 PNG에서 실제로 뚫려 있다(알파 0). 그 위에 크림색 가짜 판을 덧그리지 않는다 —
+ * 모양이 어긋나 테두리가 두 겹으로 보였다.
+ */
+
+.piggyArtwork,
 .suitcaseArtwork {
   display: block;
+  position: relative;
   width: 100%;
   height: 100%;
-}
-
-.reservoirSvg {
-  overflow: visible;
-}
-
-.reservoirShadow {
-  fill: rgb(17 109 95 / 0.12);
-}
-
-.reservoirGlassBack {
-  fill: color-mix(in srgb, var(--color-paper) 86%, #b8ddd4);
-  fill-opacity: 0.78;
-}
-
-.reservoirSideShade {
-  fill: rgb(22 110 100 / 0.08);
-}
-
-.reservoirEmptyWell {
-  fill: color-mix(in srgb, var(--color-paper) 78%, #d9efea);
-}
-
-.reservoirLiquidGroup {
-  opacity: 1;
-  transform: translateY(var(--reservoir-fill-offset, 106px));
-  transform-box: view-box;
-  transform-origin: 50% 100%;
-  transition:
-    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 180ms ease-out;
-}
-
-.reservoirSvg[data-has-fill="false"] .reservoirLiquidGroup {
-  opacity: 0;
-}
-
-.reservoirMeniscus {
-  fill: #43bbb3;
-  stroke: rgb(255 255 255 / 0.38);
-  stroke-width: 0.8;
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: reservoir-surface-settle 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.reservoirGlassOutline {
-  fill: rgb(255 255 255 / 0.06);
-  stroke: #167a70;
-  stroke-width: 1.85;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.reservoirRimOuter {
-  fill: color-mix(in srgb, var(--color-paper) 86%, #b8ddd4);
-  stroke: #167a70;
-  stroke-width: 1.8;
-}
-
-.reservoirRimInner {
-  fill: color-mix(in srgb, var(--color-paper) 72%, #b8ddd4);
-  stroke: #65aa9e;
-  stroke-width: 0.9;
-}
-
-.reservoirReflectionDot {
-  fill: rgb(255 255 255 / 0.94);
-  stroke: rgb(22 122 112 / 0.18);
-  stroke-width: 0.7;
-}
-
-.reservoirReflectionGlint {
-  fill: none;
-  stroke: rgb(255 255 255 / 0.82);
-  stroke-linecap: round;
-  stroke-width: 1.85;
-}
-
-.suitcaseArtwork {
-  position: relative;
   overflow: visible;
   isolation: isolate;
 }
 
+.piggyScene,
 .suitcaseScene {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: var(--suitcase-scene-width);
+  transform: translate3d(-50%, -50%, 0);
+}
+
+/* ── 저금통 ─────────────────────────────────────────────────────── */
+
+.piggyScene {
+  width: 100%;
+  aspect-ratio: 1287 / 917;
+}
+
+.piggyFrame,
+.suitcaseFrame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+}
+
+.piggyFrame {
+  background-image: url("/trip-status/v5/piggy-cutaway.png");
+}
+
+/* 배 절개면. 배경을 칠하지 않는다 — 그림에 이미 뚫려 있고 분홍 테두리도 그려져 있다. */
+.piggyCoinChamber {
+  position: absolute;
+  z-index: 2;
+  top: 16.1%;
+  left: 13.4%;
+  width: 68.8%;
+  height: 67.3%;
+  pointer-events: none;
+}
+
+/*
+ * 동전은 배 안에서 **알아볼 수 있어야** 한다. 예전에는 칸의 34%(≈24px)에 스프라이트가
+ * 셀의 58%만 채워서 실제로 보이는 동전이 13px밖에 안 됐다. 스프라이트를 정규화(92%)하고
+ * 칸도 키워 실측 30px 안팎이 되게 한다.
+ */
+.budgetCoin {
+  --coin-rotation: 0deg;
+
+  position: absolute;
+  width: 38%;
+  aspect-ratio: 1;
+  opacity: var(--milestone-opacity, 0);
+  transform: translate3d(0, var(--milestone-offset, -7px), 0)
+    rotate(var(--coin-rotation)) scale(var(--milestone-scale, 0.72));
+  transform-origin: 50% 70%;
+  transition:
+    opacity 220ms ease-out,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 바닥에 쌓이는 순서. 아래 세 개가 먼저 차고 위 두 개가 나중에 얹힌다. */
+.budgetCoin:nth-child(1) {
+  --coin-rotation: -2deg;
+
+  bottom: 2%;
+  left: 31%;
+}
+
+.budgetCoin:nth-child(2) {
+  --coin-rotation: -9deg;
+
+  bottom: 6%;
+  left: 4%;
+}
+
+.budgetCoin:nth-child(3) {
+  --coin-rotation: 9deg;
+
+  right: 4%;
+  bottom: 6%;
+}
+
+.budgetCoin:nth-child(4) {
+  --coin-rotation: 6deg;
+
+  bottom: 36%;
+  left: 15%;
+}
+
+.budgetCoin:nth-child(5) {
+  --coin-rotation: -6deg;
+
+  right: 14%;
+  bottom: 37%;
+}
+
+.budgetCoinSprite,
+.purchaseObjectSprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+}
+
+.purchaseObjectSprite {
+  background-image: url("/trip-status/v5/purchase-objects.png");
+  background-size: 400% 200%;
+}
+
+.budgetCoinSprite {
+  background-image: url("/trip-status/v7/budget-coin-gold.png");
+  background-position: center;
+  background-size: contain;
+}
+
+/* ── 여행가방 ───────────────────────────────────────────────────── */
+
+.suitcaseScene {
+  width: auto;
   height: var(--suitcase-scene-height);
-  transform: translate(-50%, -50%);
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: var(--suitcase-scene-ratio);
 }
 
 .suitcaseArtwork[data-approved-suitcase-scene="packing"] {
-  --suitcase-scene-width: 190px;
-  --suitcase-scene-height: 149px;
-  --suitcase-frame: url("/trip-status/v2/packing-frame.png");
+  --artwork-image: url("/trip-status/v4/packing-flat.png");
+  --suitcase-scene-height: 154px;
+  --suitcase-scene-ratio: 649 / 562;
 }
 
 .suitcaseArtwork[data-approved-suitcase-scene="transit"] {
-  --suitcase-scene-width: 197px;
-  --suitcase-scene-height: 150px;
-  --suitcase-frame: url("/trip-status/v2/transit-frame.png");
-  --suitcase-mask: url("/trip-status/v2/transit-fill-mask.png");
-  --suitcase-window-top: 27.7%;
-  --suitcase-window-height: 52.3%;
-  --suitcase-reflection-top: 36%;
-  --suitcase-reflection-left: 17%;
+  --artwork-image: url("/trip-status/v5/transit-cutaway.png");
+  --suitcase-scene-height: 154px;
+  --suitcase-scene-ratio: 1111 / 1416;
 }
 
 .suitcaseArtwork[data-approved-suitcase-scene="unpacking"] {
-  --suitcase-scene-width: 175px;
-  --suitcase-scene-height: 150px;
-  --suitcase-frame: url("/trip-status/v2/complete-frame.png");
-  --suitcase-mask: url("/trip-status/v2/complete-fill-mask.png");
-  --suitcase-window-top: 45.4%;
-  --suitcase-window-height: 40.5%;
-  --suitcase-reflection-top: 52%;
-  --suitcase-reflection-left: 15%;
+  --artwork-image: url("/trip-status/v6/complete-stacked.png");
+  --suitcase-scene-ratio: 904 / 1100;
 }
 
-.suitcaseFrame,
-.suitcaseFillMask {
-  position: absolute;
-  inset: 0;
+.suitcaseArtwork[data-approved-suitcase-scene="unpacking"][data-complete-variant="one-missing"] {
+  --artwork-image: url("/trip-status/v7/complete-stacked-one-missing.png");
+}
+
+.suitcaseArtwork[data-approved-suitcase-scene="unpacking"] .suitcaseScene {
+  width: 100%;
+  height: 100%;
 }
 
 .suitcaseFrame {
+  background-image: var(--artwork-image);
+}
+
+/*
+ * 물건이 담기는 자리. **실측한 내부창과 정확히 같다.**
+ * 예전에는 물건을 캔버스 기준 `left/right 6~8%`에 놓았는데, 가방 몸통은 81%에서 끝나고
+ * 내부창은 77%에서 끝나므로 물건이 옆구리를 뚫고 나왔다.
+ */
+.purchaseObjectLayer {
+  position: absolute;
   z-index: 3;
-  background-image: var(--suitcase-frame);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  pointer-events: none;
-}
-
-.suitcaseFillMask {
-  z-index: 1;
   overflow: hidden;
-  -webkit-mask-image: var(--suitcase-mask);
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
-  mask-image: var(--suitcase-mask);
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: 100% 100%;
-}
-
-.suitcaseWindowBase {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 24% 16%, rgb(255 255 255 / 0.86), transparent 18%),
-    linear-gradient(145deg, #edf8f6 0%, #dcefeb 100%);
-}
-
-.suitcaseLiquid {
-  position: absolute;
-  top: var(--suitcase-window-top);
-  right: 0;
-  left: 0;
-  height: var(--suitcase-window-height);
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 0.18), transparent 25%),
-    linear-gradient(180deg, #36aaa3 0%, #118682 62%, #087370 100%);
-  box-shadow:
-    inset 0 5px 8px rgb(255 255 255 / 0.11),
-    inset 0 -7px 12px rgb(3 83 80 / 0.12);
-  opacity: 1;
-  transform: translateY(var(--suitcase-fill-offset, 100%));
-  transform-origin: 50% 100%;
-  transition:
-    transform 760ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 180ms ease-out;
-}
-
-.suitcaseArtwork[data-has-fill="false"] .suitcaseLiquid {
-  opacity: 0;
-}
-
-.suitcaseMeniscus {
-  position: absolute;
-  top: -3px;
-  right: -3%;
-  left: -3%;
-  height: 7px;
-  border: 1px solid rgb(255 255 255 / 0.3);
-  border-radius: 52% 48% 46% 54%;
-  background: #48bab2;
-  box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.2);
-  transform-origin: 50% 50%;
-  animation: suitcase-surface-settle 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.suitcaseReflectionDot,
-.suitcaseReflectionGlint {
-  position: absolute;
-  z-index: 2;
-  left: var(--suitcase-reflection-left);
-  background: rgb(255 255 255 / 0.78);
   pointer-events: none;
 }
 
-.suitcaseReflectionDot {
-  top: var(--suitcase-reflection-top);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgb(5 102 98 / 0.08);
+.suitcaseArtwork[data-approved-suitcase-scene="transit"] .purchaseObjectLayer {
+  top: 24.6%;
+  left: 6.8%;
+  width: 69.9%;
+  height: 62.2%;
 }
 
-.suitcaseReflectionGlint {
-  top: calc(var(--suitcase-reflection-top) + 8px);
-  width: 3px;
-  height: 18px;
+.purchaseObject {
+  position: absolute;
+  display: block;
+  aspect-ratio: 1;
+  opacity: var(--purchase-object-opacity, 0);
+  transform: translate3d(0, var(--purchase-object-offset, 8px), 0)
+    scale(var(--purchase-object-scale, 0.82));
+  transform-origin: 50% 90%;
+  transition:
+    opacity 210ms ease-out,
+    transform 290ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.purchaseObject[data-purchase-object="gift"] .purchaseObjectSprite {
+  background-position: 33.333% 0;
+}
+
+.purchaseObject[data-purchase-object="lavender-bag"] .purchaseObjectSprite {
+  background-position: 66.667% 0;
+}
+
+.purchaseObject[data-purchase-object="coral-bag"] .purchaseObjectSprite {
+  background-position: 100% 0;
+}
+
+.purchaseObject[data-purchase-object="parcels"] .purchaseObjectSprite {
+  background-position: 0 100%;
+}
+
+.purchaseObject[data-purchase-object="travel-roll"] .purchaseObjectSprite {
+  background-position: 33.333% 100%;
+}
+
+.purchaseObject[data-purchase-object="souvenir-pouch"] .purchaseObjectSprite {
+  background-position: 66.667% 100%;
+}
+
+.purchaseObject[data-purchase-object="receipt"] .purchaseObjectSprite {
+  background-position: 100% 100%;
+}
+
+.purchaseObjectOverflow {
+  position: absolute;
+  right: -3px;
+  bottom: 0;
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 3px;
+  place-items: center;
+  border: 1px solid #fffdf7;
   border-radius: 999px;
-  transform: rotate(4deg);
+  background: #4949d7;
+  color: #fffdf7;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
 }
 
-@keyframes reservoir-surface-settle {
-  0% {
-    transform: translateX(-1.5px) rotate(-2deg);
-  }
-  52% {
-    transform: translateX(1px) rotate(1.2deg);
-  }
-  100% {
-    transform: translateX(0) rotate(0);
-  }
+/*
+ * 내부창 안에서 2열 × 3단으로 쌓는다. 칸 대비 42%(실측 ≈36px, 스프라이트가 92%를 채우므로
+ * 보이는 물건은 ≈33px)로 승인 기준인 28~40px 안에 든다. 단 간격을 물건 높이보다 좁게 두어
+ * 살짝 겹치게 하면 "눌러 담은" 느낌이 나면서 6칸이 모두 창 안에 들어온다.
+ */
+.suitcaseArtwork[data-approved-suitcase-scene="transit"] .purchaseObject {
+  width: 42%;
 }
 
-@keyframes suitcase-surface-settle {
-  0% {
-    transform: translateX(-2%) rotate(-1.2deg);
-  }
-  55% {
-    transform: translateX(1.2%) rotate(0.7deg);
-  }
-  100% {
-    transform: translateX(0) rotate(0);
-  }
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(1) {
+  bottom: 1%;
+  left: 2%;
 }
+
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(2) {
+  right: 2%;
+  bottom: 3%;
+}
+
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(3) {
+  bottom: 30%;
+  left: 4%;
+}
+
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(4) {
+  right: 4%;
+  bottom: 32%;
+}
+
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(5) {
+  bottom: 60%;
+  left: 3%;
+}
+
+.suitcaseArtwork[data-approved-suitcase-scene="transit"]
+  .purchaseObject:nth-child(6) {
+  right: 3%;
+  bottom: 62%;
+}
+
+/* ── 반응형 ─────────────────────────────────────────────────────── */
 
 @media (max-width: 340px) {
-  .suitcaseArtwork[data-approved-suitcase-scene="packing"] {
-    --suitcase-scene-width: 176px;
-    --suitcase-scene-height: 138px;
-  }
-
+  .suitcaseArtwork[data-approved-suitcase-scene="packing"],
   .suitcaseArtwork[data-approved-suitcase-scene="transit"] {
-    --suitcase-scene-width: 181px;
-    --suitcase-scene-height: 138px;
+    --suitcase-scene-height: 130px;
   }
 
-  .suitcaseArtwork[data-approved-suitcase-scene="unpacking"] {
-    --suitcase-scene-width: 161px;
-    --suitcase-scene-height: 138px;
-  }
 }
 
 @media (max-height: 640px) {
   .suitcaseArtwork[data-approved-suitcase-scene="packing"] {
-    --suitcase-scene-width: 158px;
-    --suitcase-scene-height: 124px;
+    --suitcase-scene-height: 130px;
   }
 
   .suitcaseArtwork[data-approved-suitcase-scene="transit"] {
-    --suitcase-scene-width: 163px;
-    --suitcase-scene-height: 124px;
+    --suitcase-scene-height: 144px;
   }
 
-  .suitcaseArtwork[data-approved-suitcase-scene="unpacking"] {
-    --suitcase-scene-width: 145px;
-    --suitcase-scene-height: 124px;
+}
+
+@media (max-width: 340px) and (max-height: 640px) {
+  .suitcaseArtwork[data-approved-suitcase-scene="packing"],
+  .suitcaseArtwork[data-approved-suitcase-scene="transit"] {
+    --suitcase-scene-height: 110px;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reservoirLiquidGroup,
-  .suitcaseLiquid {
+  .budgetCoin,
+  .purchaseObject {
     transition: none;
-  }
-
-  .reservoirMeniscus,
-  .suitcaseMeniscus {
-    animation: none;
   }
 }

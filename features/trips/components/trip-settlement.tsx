@@ -7,7 +7,6 @@ import {
   AlertCircle,
   Camera,
   Check,
-  Circle,
   Glasses,
   Gift,
   Headphones,
@@ -409,16 +408,12 @@ export function SettlementProductGrid({
   startDate,
   endDate,
   returnTo,
-  togglingItemId,
-  onTogglePurchased,
 }: {
   items: ShoppingItem[];
   currency: string;
   startDate: string;
   endDate: string;
   returnTo: string;
-  togglingItemId?: string;
-  onTogglePurchased: (itemId: string) => void;
 }) {
   const detailsId = useId();
   const gridRef = useRef<HTMLElement>(null);
@@ -454,8 +449,6 @@ export function SettlementProductGrid({
               endDate={endDate}
               detailsId={detailsId}
               expanded={detailsOpen && selectedItemId === item.id}
-              toggling={togglingItemId === item.id}
-              onTogglePurchased={() => onTogglePurchased(item.id)}
               onOpenDetails={(trigger) => {
                 lastTriggerRef.current = trigger;
                 setSelectedItemId(item.id);
@@ -474,8 +467,6 @@ export function SettlementProductGrid({
           startDate={startDate}
           endDate={endDate}
           returnTo={returnTo}
-          toggling={togglingItemId === selectedItem.id}
-          onTogglePurchased={() => onTogglePurchased(selectedItem.id)}
         />
       ) : null}
     </Sheet>
@@ -489,9 +480,7 @@ function SettlementProductTile({
   endDate,
   detailsId,
   expanded,
-  toggling,
   onOpenDetails,
-  onTogglePurchased,
 }: {
   item: ShoppingItem;
   currency: string;
@@ -499,9 +488,7 @@ function SettlementProductTile({
   endDate: string;
   detailsId: string;
   expanded: boolean;
-  toggling: boolean;
   onOpenDetails: (trigger: HTMLButtonElement) => void;
-  onTogglePurchased: () => void;
 }) {
   const giftLabels = getSettlementGiftLabels(item);
   const dayLabel = getSettlementPurchaseDayLabel(item, startDate, endDate);
@@ -567,20 +554,12 @@ function SettlementProductTile({
         </p>
       </div>
 
-      <button
-        type="button"
-        aria-label={
-          item.purchased
-            ? `${item.name} 구매 완료 해제`
-            : `${item.name} 구매 완료로 표시`
-        }
-        aria-pressed={item.purchased}
-        disabled={toggling}
-        className="absolute top-0 left-0 z-30 flex size-11 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50"
-        onClick={onTogglePurchased}
+      <span
+        data-purchase-status={item.purchased ? "purchased" : "unpurchased"}
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 z-30 flex size-11 items-center justify-center"
       >
         <span
-          aria-hidden
           className={cn(
             "flex size-7 items-center justify-center rounded-md border-2",
             item.purchased
@@ -590,7 +569,7 @@ function SettlementProductTile({
         >
           <Check className="size-4" strokeWidth={3} />
         </span>
-      </button>
+      </span>
 
       {giftLabels.length > 0 ? (
         <div
@@ -635,8 +614,6 @@ function SettlementProductDetails({
   startDate,
   endDate,
   returnTo,
-  toggling,
-  onTogglePurchased,
 }: {
   id: string;
   item: ShoppingItem;
@@ -644,8 +621,6 @@ function SettlementProductDetails({
   startDate: string;
   endDate: string;
   returnTo: string;
-  toggling: boolean;
-  onTogglePurchased: () => void;
 }) {
   const toggleFavorited = useToggleFavorited(item.tripId);
   const giftLabels = getSettlementGiftLabels(item);
@@ -739,25 +714,6 @@ function SettlementProductDetails({
           <Pencil aria-hidden />
           상품 수정
         </Link>
-        <Button
-          type="button"
-          variant={item.purchased ? "secondary" : "default"}
-          size="icon-lg"
-          aria-label={
-            item.purchased
-              ? `${item.name} 구매 완료 해제`
-              : `${item.name} 구매 완료로 표시`
-          }
-          aria-pressed={item.purchased}
-          disabled={toggling}
-          onClick={onTogglePurchased}
-        >
-          {item.purchased ? (
-            <Check className="size-5" strokeWidth={3} aria-hidden />
-          ) : (
-            <Circle className="size-5" strokeWidth={2} aria-hidden />
-          )}
-        </Button>
         <Button
           type="button"
           variant="secondary"

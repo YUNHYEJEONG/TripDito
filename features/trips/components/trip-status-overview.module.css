@@ -1,7 +1,7 @@
-/* Hallmark · component: trip status overview · macrostructure: edge HP + central line-volume device + summary rail
- * Design read: Toss-inspired information hierarchy with TripDito's flat-color line language.
- * Dials: variance 5 · motion 5 · density 5.
- * Motion communicates liquid level, packing change, purchase fill, and earned completion.
+/* Hallmark · component: trip status overview · macrostructure: budget pig + travel suitcase + summary rail
+ * Design read: preserve the cute line language while moving every status illustration to flat 2D.
+ * Dials: variance 4 · motion 4 · density 5.
+ * Motion communicates budget and purchase changes only once, at the moment state changes.
  */
 
 .shortViewportCard {
@@ -27,51 +27,111 @@
 
 .overviewBody {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  grid-template-rows: 152px auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 156px auto;
   min-width: 0;
   min-height: 204px;
 }
 
 .overviewBody[data-has-budget-reservoir="false"] {
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 196px;
+  min-height: 200px;
+}
+
+.progressScene {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  /* 저금통 열을 넓히고 가운데 빈 열을 줄인다. 동전이 알아볼 수 있는 크기(≈30px)가
+     되려면 배 절개면이 최소 86px는 되어야 한다. 총합은 368px로 이전(366px)과 같은 수준. */
+  grid-template-columns:
+    minmax(92px, 126px)
+    clamp(16px, 4vw, 24px)
+    minmax(150px, 218px);
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding-inline: 2px;
+}
+
+.progressScene[data-has-budget-reservoir="false"] {
+  grid-template-columns: minmax(0, 218px);
 }
 
 .reservoirRail {
   grid-column: 1;
-  grid-row: 1 / 3;
+  grid-row: 1;
+  display: grid;
   min-width: 0;
   min-height: 0;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--status-deep) 7%, var(--status-surface)),
-    transparent
-  );
+  place-items: center;
+}
+
+.progressBridge {
+  position: relative;
+  z-index: 0;
+  grid-column: 2;
+  grid-row: 1;
+  display: block;
+  width: 78px;
+  height: 72px;
+  align-self: center;
+  justify-self: start;
+  margin-inline-end: -50px;
+  transform: translateY(-2px);
+  pointer-events: none;
+}
+
+.progressBridge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.progressBridgePath {
+  fill: none;
+  stroke: color-mix(in srgb, var(--status-deep) 48%, #f7656a);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 5;
+}
+
+.progressBridgeArrow {
+  fill: #f7656a;
+  stroke: color-mix(in srgb, var(--status-deep) 74%, #f7656a);
+  stroke-width: 1;
+  stroke-linejoin: round;
 }
 
 .instrumentStage {
   position: relative;
-  z-index: 1;
-  grid-column: 1 / 3;
+  z-index: 2;
+  grid-column: 3;
   grid-row: 1;
   display: grid;
   min-width: 0;
+  min-height: 0;
   place-items: center;
-  padding: 2px var(--space-2) 0;
+  padding-block-start: 2px;
+}
+
+.instrumentStage .suitcaseGauge {
+  max-width: 100%;
 }
 
 .informationRail {
   position: relative;
   z-index: 2;
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
   min-width: 0;
-  padding: 0 10px 7px var(--space-2);
+  padding: 0 10px 7px;
 }
 
-.overviewBody[data-has-budget-reservoir="false"] .instrumentStage,
-.overviewBody[data-has-budget-reservoir="false"] .informationRail {
+.progressScene[data-has-budget-reservoir="false"] .instrumentStage {
   grid-column: 1;
 }
 
@@ -105,17 +165,17 @@
 .reservoirColumn {
   display: grid;
   grid-template-rows: minmax(0, 1fr);
-  place-items: stretch center;
+  place-items: center;
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 6px 3px;
+  padding: 10px 6px 8px;
 }
 
 .budgetReservoir {
   position: relative;
-  width: min(58px, 100%);
-  height: 100%;
+  width: min(126px, 100%);
+  height: min(98px, 100%);
   min-height: 0;
   overflow: visible;
   color: var(--status-deep);
@@ -363,11 +423,11 @@
 }
 
 .loadingReservoir {
-  align-self: stretch;
+  width: 82px;
+  height: 68px;
+  align-self: center;
   justify-self: center;
-  width: 38px;
-  margin: var(--space-2) 0 var(--space-6);
-  border-radius: var(--r-m);
+  border-radius: 48% 44% 42% 46%;
   background: var(--status-rule);
   opacity: 0.76;
 }
@@ -394,8 +454,8 @@
   --suitcase-line: var(--prep-deep);
   --suitcase-tint: var(--prep-tint);
 
-  width: 228px;
-  height: 150px;
+  width: 218px;
+  height: 154px;
   overflow: visible;
   color: var(--suitcase-line);
 }
@@ -408,6 +468,10 @@
 .suitcaseGauge[data-suitcase-scene="unpacking"] {
   --suitcase-line: var(--after-deep);
   --suitcase-tint: var(--after-tint);
+
+  width: auto;
+  height: 196px;
+  aspect-ratio: 904 / 1100;
 }
 
 .suitcaseCanvas {
@@ -418,9 +482,7 @@
 .suitcaseArtwork {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
   transform-origin: 50% 82%;
-  perspective: 360px;
 }
 
 .suitcaseGround {
@@ -1193,6 +1255,10 @@
     animation: reservoir-water-surface 2.2s ease-in-out infinite alternate;
   }
 
+  .progressBridge {
+    animation: none;
+  }
+
   .packingRefresh {
     animation: suitcase-packing-settle var(--dur-slow) var(--ease-out) both;
   }
@@ -1200,7 +1266,13 @@
 
 @media (max-width: 340px) {
   .overviewBody {
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-rows: 134px auto;
+    min-height: 184px;
+  }
+
+  .progressScene {
+    grid-template-columns: 78px 22px minmax(0, 174px);
+    padding-inline: 0;
   }
 
   .informationRail {
@@ -1217,12 +1289,17 @@
   }
 
   .reservoirColumn {
-    padding-inline: 3px;
+    padding-inline: 4px;
+  }
+
+  .budgetReservoir {
+    width: min(78px, 100%);
+    height: min(76px, 100%);
   }
 
   .suitcaseGauge {
-    width: 204px;
-    height: 140px;
+    width: 188px;
+    height: 132px;
   }
 
   .suitcaseArtwork {
@@ -1236,21 +1313,30 @@
 
 @media (max-height: 640px) {
   .overviewBody {
-    grid-template-rows: 128px auto;
-    min-height: 190px;
+    grid-template-rows: 136px auto;
+    min-height: 184px;
+  }
+
+  .progressScene {
+    grid-template-columns: 96px 30px minmax(0, 210px);
   }
 
   .overviewBody[data-has-budget-reservoir="false"] {
-    min-height: 176px;
+    min-height: 188px;
   }
 
   .reservoirColumn {
     padding-block: 3px;
   }
 
+  .budgetReservoir {
+    width: min(94px, 100%);
+    height: min(86px, 100%);
+  }
+
   .suitcaseGauge {
     width: 204px;
-    height: 128px;
+    height: 134px;
   }
 
   .shortViewportCard:is(
@@ -1260,8 +1346,8 @@
       [data-trip-status-loading="after"]
     )
     .overviewBody {
-    grid-template-rows: 124px 42px;
-    min-height: 166px;
+    grid-template-rows: 146px 42px;
+    min-height: 188px;
   }
 
   .shortViewportCard:is(
@@ -1302,8 +1388,8 @@
       [data-trip-status-loading="after"]
     )
     .suitcaseGauge {
-    width: 198px;
-    height: 124px;
+    width: 210px;
+    height: 146px;
   }
 
   .shortViewportCard:is(
@@ -1322,6 +1408,38 @@
     )
     .reservoirColumn {
     padding-block: 3px;
+  }
+}
+
+@media (max-width: 340px) and (max-height: 640px) {
+  .overviewBody {
+    grid-template-rows: 106px auto;
+    min-height: 154px;
+  }
+
+  .progressScene {
+    grid-template-columns: 74px 20px minmax(0, 166px);
+  }
+
+  .overviewBody[data-has-budget-reservoir="false"] {
+    min-height: 146px;
+  }
+
+  .budgetReservoir {
+    width: min(72px, 100%);
+    height: min(68px, 100%);
+  }
+
+  .suitcaseGauge,
+  .shortViewportCard:is(
+      [data-trip-status-overview="live"],
+      [data-trip-status-loading="live"],
+      [data-trip-status-overview="after"],
+      [data-trip-status-loading="after"]
+    )
+    .suitcaseGauge {
+    width: 166px;
+    height: 104px;
   }
 }
 
@@ -1346,5 +1464,52 @@
 
   .confettiBurst {
     display: none;
+  }
+}
+
+/*
+ * 완료 장면은 세로로 쌓인 하나의 합성 일러스트다. 공통 218×154 박스에 억지로 맞추면
+ * 다시 눌리므로 높이만 정하고 원본 904×1100 비율로 폭을 계산한다.
+ */
+.shortViewportCard[data-trip-status-overview="after"] .overviewBody {
+  grid-template-rows: 200px auto;
+  min-height: 244px;
+}
+
+@media (max-width: 340px) {
+  .shortViewportCard[data-trip-status-overview="after"] .overviewBody {
+    grid-template-rows: 186px auto;
+    min-height: 230px;
+  }
+
+  .shortViewportCard[data-trip-status-overview="after"]
+    .suitcaseGauge[data-suitcase-scene="unpacking"] {
+    height: 182px;
+  }
+}
+
+@media (max-height: 640px) {
+  .shortViewportCard[data-trip-status-overview="after"] .overviewBody {
+    grid-template-rows: 150px 42px;
+    min-height: 192px;
+  }
+
+  .shortViewportCard[data-trip-status-overview="after"]
+    .suitcaseGauge[data-suitcase-scene="unpacking"] {
+    width: auto;
+    height: 146px;
+  }
+}
+
+@media (max-width: 340px) and (max-height: 640px) {
+  .shortViewportCard[data-trip-status-overview="after"] .overviewBody {
+    grid-template-rows: 186px 42px;
+    min-height: 228px;
+  }
+
+  .shortViewportCard[data-trip-status-overview="after"]
+    .suitcaseGauge[data-suitcase-scene="unpacking"] {
+    width: auto;
+    height: 182px;
   }
 }

@@ -182,6 +182,26 @@ describe("demo fixture", () => {
         .filter((item) => item.tripId === demoIds.trips.taipei)
         .every((item) => item.purchased),
     );
+    const partiallyCompletedKyotoItems = fixture.items.filter(
+      (item) => item.tripId === demoIds.trips.kyoto,
+    );
+    assert.equal(partiallyCompletedKyotoItems.length, 5);
+    assert.equal(
+      partiallyCompletedKyotoItems.filter((item) => item.purchased).length,
+      4,
+    );
+    assert.deepEqual(
+      partiallyCompletedKyotoItems
+        .filter((item) => !item.purchased)
+        .map((item) => item.id),
+      [demoIds.items.kyotoCeramics],
+    );
+    assert.equal(
+      partiallyCompletedKyotoItems.find(
+        (item) => item.id === demoIds.items.kyotoCeramics,
+      )?.purchasedAt,
+      null,
+    );
     const tokyoItems = fixture.items.filter(
       (item) => item.tripId === demoIds.trips.tokyo,
     );

@@ -33,12 +33,31 @@ export type StatusSuitcaseGauge = {
 
 export const SUITCASE_ITEM_SLOTS = 5;
 
+export type CompletedSuitcaseArtworkVariant = "complete" | "one-missing";
+
 function finiteNonNegative(value: number) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 
 function finiteCount(value: number) {
   return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+/**
+ * Completed trips stay static, but a list with exactly one pending item uses a
+ * dedicated composition with one fewer souvenir. Other incomplete counts keep
+ * the neutral completed artwork until a matching approved asset exists.
+ */
+export function getCompletedSuitcaseArtworkVariant(
+  totalCount: number,
+  purchasedCount: number,
+): CompletedSuitcaseArtworkVariant {
+  const safeTotal = finiteCount(totalCount);
+  const safePurchased = Math.min(safeTotal, finiteCount(purchasedCount));
+
+  return safeTotal > 0 && safeTotal - safePurchased === 1
+    ? "one-missing"
+    : "complete";
 }
 
 /**

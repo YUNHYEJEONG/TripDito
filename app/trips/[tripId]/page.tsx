@@ -171,7 +171,7 @@ export default function TripDetailPage({
   const visibleItems = sortItems(filterItems(items, filter, query), sort);
 
   function toggleItemPurchased(itemId: string) {
-    if (purchaseToggleInFlightRef.current) return;
+    if (mode !== "live" || purchaseToggleInFlightRef.current) return;
 
     const currentItem = items.find((item) => item.id === itemId);
     if (!currentItem) return;
@@ -196,10 +196,7 @@ export default function TripDetailPage({
 
     togglePurchased.mutate(itemId, {
       onSuccess: (updatedItem) => {
-        if (
-          (mode !== "live" && mode !== "after") ||
-          updatedItem.id !== currentItem.id
-        ) {
+        if (mode !== "live" || updatedItem.id !== currentItem.id) {
           return;
         }
 
@@ -417,12 +414,6 @@ export default function TripDetailPage({
               startDate={trip.startDate}
               endDate={trip.endDate}
               returnTo={returnTo}
-              togglingItemId={
-                togglePurchased.isPending
-                  ? togglePurchased.variables
-                  : undefined
-              }
-              onTogglePurchased={toggleItemPurchased}
             />
           ) : (
             <div className="grid grid-cols-1 gap-y-2">

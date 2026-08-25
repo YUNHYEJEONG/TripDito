@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { BudgetSummary } from "../features/budget/utils/calculate-budget";
 import { tripRepository } from "../features/trips/data/trip-repository";
 import {
+  getCompletedSuitcaseArtworkVariant,
   getNextSuitcaseCelebrationNonce,
   getStatusBudgetGauge,
   getStatusBudgetDisplayPercent,
@@ -202,6 +203,13 @@ describe("trip status budget gauge", () => {
 });
 
 describe("trip status suitcase gauge", () => {
+  it("uses a one-missing completed artwork only when exactly one item is unchecked", () => {
+    assert.equal(getCompletedSuitcaseArtworkVariant(5, 5), "complete");
+    assert.equal(getCompletedSuitcaseArtworkVariant(5, 4), "one-missing");
+    assert.equal(getCompletedSuitcaseArtworkVariant(5, 3), "complete");
+    assert.equal(getCompletedSuitcaseArtworkVariant(0, 0), "complete");
+  });
+
   it("reveals deterministic planned props and reports exact overflow without a fake percent", () => {
     assert.deepEqual(getStatusSuitcaseGauge("prep", 8, 0), {
       kind: "collection",
@@ -215,10 +223,19 @@ describe("trip status suitcase gauge", () => {
     assert.equal(getStatusSuitcaseGauge("idle", 2, 0).activeSlots, 2);
   });
 
-  it("fills live and completed suitcases from purchased items only", () => {
+  it("maps live and completed purchase progress from purchased items only", () => {
     assert.equal(getStatusSuitcaseGauge("live", 5, 2).rawPercent, 40);
     assert.equal(getStatusSuitcaseGauge("after", 5, 5).visualPercent, 100);
     assert.equal(getStatusSuitcaseGauge("after", 5, 99).purchasedCount, 5);
+    assert.deepEqual(getStatusSuitcaseGauge("after", 5, 4), {
+      kind: "purchase-progress",
+      rawPercent: 80,
+      visualPercent: 80,
+      activeSlots: 4,
+      overflowCount: 0,
+      totalCount: 5,
+      purchasedCount: 4,
+    });
   });
 
   it("celebrates every successful incomplete-to-complete transition", () => {

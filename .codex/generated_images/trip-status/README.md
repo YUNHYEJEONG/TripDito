@@ -1,12 +1,19 @@
 # Trip status artwork index
 
-현재 앱에 승인된 최종 스타일과 자산은 [`v2/APPROVED_STYLE.md`](./v2/APPROVED_STYLE.md)를 따른다.
+여행 상세 화면에서 실제 사용하는 승인 자산만 보관한다. `public/trip-status`
+파일은 아래 canonical master와 바이트 단위로 같아야 한다.
 
-- 기준 이미지: `v2/*-frame.png`, `v2/*-fill-mask.png`
-- 생성 원본 보관: `v2/source-*.png`
-- 앱 런타임 복사본: `public/trip-status/v2`
-- 최종 화면 증거: `.codex/browser-checks/trip-status-v2-approved`
+| 상태/역할 | Canonical master | Runtime path |
+| --- | --- | --- |
+| 출발 예정 열린 가방 | `v4/packing-flat.png` | `/trip-status/v4/packing-flat.png` |
+| 예산 저금통 | `v5/piggy-cutaway.png` | `/trip-status/v5/piggy-cutaway.png` |
+| 여행 중 가방 | `v5/transit-cutaway.png` | `/trip-status/v5/transit-cutaway.png` |
+| 구매 물건 스프라이트 | `v5/purchase-objects.png` | `/trip-status/v5/purchase-objects.png` |
+| 여행 완료 전체 구매 | `v6/final/complete-stacked.png` | `/trip-status/v6/complete-stacked.png` |
+| 일반 금색 동전 | `v7/final/budget-coin-gold.png` | `/trip-status/v7/budget-coin-gold.png` |
+| 여행 완료 1개 미구매 | `v7/final/complete-stacked-one-missing.png` | `/trip-status/v7/complete-stacked-one-missing.png` |
 
-`approved-trip-status-concept.png`는 과거 후보를 모은 참고 이미지다. 앱에서 직접 사용하거나, 여기서 새 크롭을 만들어 현재 v2 자산을 덮어쓰지 않는다.
-
-새 후보가 필요하면 v2를 보존하고 v3 폴더에 별도로 만든 뒤 사용자 승인 후 교체한다.
+세부 스타일과 동작 계약은 각 버전의 `APPROVED_STYLE.md`를 따른다. 생성기의
+`raw/`, 비교용 `candidates/`, 브라우저 캡처와 감사 산출물은 로컬 작업물이며
+`.gitignore` 대상이다. 새 자산을 승인할 때만 canonical master와 runtime copy를
+함께 추가하고, 런타임에서 더 이상 참조하지 않는 이미지는 두 위치에서 함께 제거한다.

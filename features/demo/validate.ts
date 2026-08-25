@@ -106,11 +106,25 @@ export function validateDemoDataFixture(
   ) {
     issues.push("live trip needs both pending and purchased items");
   }
-  const afterItems = fixture.items.filter((item) =>
-    tripsByMode.after.some((trip) => trip.id === item.tripId),
+  const afterItemGroups = tripsByMode.after.map((trip) =>
+    fixture.items.filter((item) => item.tripId === trip.id),
   );
-  if (afterItems.some((item) => !item.purchased)) {
-    issues.push("settlement trip items must be purchased");
+  if (
+    !afterItemGroups.some(
+      (tripItems) =>
+        tripItems.length > 0 && tripItems.every((item) => item.purchased),
+    )
+  ) {
+    issues.push("settlement mode needs a fully purchased trip");
+  }
+  if (
+    !afterItemGroups.some(
+      (tripItems) =>
+        tripItems.length > 0 &&
+        tripItems.filter((item) => !item.purchased).length === 1,
+    )
+  ) {
+    issues.push("settlement mode needs a trip with exactly one pending item");
   }
 
   for (const item of fixture.items) {
