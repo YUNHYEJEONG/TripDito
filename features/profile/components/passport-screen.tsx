@@ -102,11 +102,11 @@ const emblemPetalPath = "M20 13.6C15.2 10.8 15.2 6.6 20 4 24.8 6.6 24.8 10.8 20 
  * 공통으로 쓰는 **형식**(원형 메달리온 + 다섯 꽃잎)만 빌리고, 가운데 태극 자리에는
  * 여행 제품에 맞는 나침반을 넣은 디토 고유 마크다.
  */
-function DitoPassportEmblem() {
+function DitoPassportEmblem({ className = "size-8" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 40 40"
-      className="size-8 shrink-0"
+      className={cn("shrink-0", className)}
       fill="none"
       role="presentation"
     >
@@ -1292,16 +1292,52 @@ function PassportBook({
                 종이 쪼가리처럼 보인다 — 쪽 넘김에서 이미 겪고 고친 문제다.
               */}
               <span className="passport-face passport-cover-face" style={coverStyle}>
-                <span className="flex size-full flex-col items-center justify-center gap-3 text-[var(--passport-foil)]">
-                  <DitoPassportEmblem />
-                  <span className="text-[19px] leading-[1.2] font-black tracking-[0.14em] [text-shadow:0_1px_0_rgba(255,255,255,0.1)]">
-                    DITO PASSPORT
-                  </span>
-                  {coverState === "closed" ? (
-                    <span className="passport-cover-hint mt-3 rounded-full border border-[var(--passport-foil)]/45 px-3 py-1.5 text-[11px] font-bold tracking-[0.1em]">
-                      눌러서 펼치기
+                {/*
+                  실제 여권 표지의 형식을 따른다 — 상단 국명 자리에 서비스명,
+                  중앙 문장(紋章), 하단 「여권 / PASSPORT」, 맨 아래 전자여권 칩 마크.
+                */}
+                <span className="flex size-full flex-col items-center justify-between py-[9%] text-[var(--passport-foil)]">
+                  <span className="flex flex-col items-center gap-1.5">
+                    <span className="text-[17px] leading-[1.2] font-bold tracking-[0.42em] [text-shadow:0_1px_0_rgba(255,255,255,0.08)]">
+                      트립디토
                     </span>
-                  ) : null}
+                    <span className="text-[10px] font-semibold tracking-[0.32em] opacity-80">
+                      TRIPDITO
+                    </span>
+                  </span>
+
+                  <span className="flex flex-col items-center gap-5">
+                    <DitoPassportEmblem className="size-16 min-[360px]:size-20" />
+                    {coverState === "closed" ? (
+                      <span className="passport-cover-hint rounded-full border border-[var(--passport-foil)]/45 px-3 py-1.5 text-[11px] font-bold tracking-[0.1em]">
+                        눌러서 펼치기
+                      </span>
+                    ) : (
+                      <span className="h-8" aria-hidden />
+                    )}
+                  </span>
+
+                  <span className="flex flex-col items-center gap-1.5">
+                    <span className="text-[15px] leading-[1.2] font-bold tracking-[0.5em] [text-shadow:0_1px_0_rgba(255,255,255,0.08)]">
+                      여&nbsp;권
+                    </span>
+                    <span className="text-[10px] font-semibold tracking-[0.32em] opacity-80">
+                      PASSPORT
+                    </span>
+                    {/* 전자여권(바이오메트릭) 칩 심볼 */}
+                    <svg
+                      viewBox="0 0 26 18"
+                      className="mt-2 h-3.5 w-auto opacity-85"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      role="presentation"
+                    >
+                      <rect x="1" y="1" width="24" height="16" rx="2.5" />
+                      <circle cx="13" cy="9" r="3.4" />
+                      <path d="M1 9h8.6M16.4 9H25" />
+                    </svg>
+                  </span>
                 </span>
               </span>
               {/* 표지 안쪽 — 도장 없는 면지. */}
@@ -1406,13 +1442,22 @@ export function PassportScreen({
         </h2>
       ) : (
         <header className="flex min-h-16 items-end justify-between gap-3 px-2 pb-1">
-          <div>
-            <p className="text-[10px] font-extrabold tracking-[0.18em] text-[var(--passport-eyebrow)]">
-              DITO TRAVEL MEMORY
-            </p>
-            <h1 className="mt-0.5 text-[24px] leading-8 font-extrabold tracking-[-0.04em] text-foreground">
-              나의 여권
-            </h1>
+          <div className="flex items-end gap-1.5">
+            <Link
+              href="/my-trips"
+              aria-label="내여행으로 돌아가기"
+              className="-ml-1 flex size-11 shrink-0 items-center justify-center self-end rounded-full text-foreground outline-none transition-colors active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ArrowLeft className="size-5" aria-hidden />
+            </Link>
+            <div>
+              <p className="text-[10px] font-extrabold tracking-[0.18em] text-[var(--passport-eyebrow)]">
+                DITO TRAVEL MEMORY
+              </p>
+              <h1 className="mt-0.5 text-[24px] leading-8 font-extrabold tracking-[-0.04em] text-foreground">
+                나의 여권
+              </h1>
+            </div>
           </div>
           <p className="pb-1 text-right text-[12px] font-semibold text-[var(--passport-ink-2)]">
             <span role="status">
