@@ -71,14 +71,17 @@
 }
 
 :root {
-  /* Brand reference palette (accent use) */
-  --sky-blue-light: #8ecae6;
-  --blue-green: #219ebc;
-  --deep-space-blue: #191f28;
-  --amber-flame: #ffb703;
-  --princeton-orange: #fb8500;
+  /* TripDito 로고 팔레트 (트립디토_로고_20260828) */
+  --brand-primary: #3182f6;
+  --brand-secondary: #62cbff;
+  --brand-ink: #191f28;
+  --brand-gradient: linear-gradient(
+    135deg,
+    var(--brand-secondary) 0%,
+    var(--brand-primary) 100%
+  );
 
-  /* Toss / 오늘의집 계열: 화이트 베이스 + 강한 블루 CTA */
+  /* 화이트 베이스 + 로고 블루 CTA */
   --background: #ffffff;
   --foreground: #191f28;
   --canvas: #ffffff;
@@ -92,10 +95,10 @@
   --secondary-foreground: #191f28;
   --muted: #f2f4f6;
   --muted-foreground: #8b95a1;
-  --accent: #ffb703;
-  --accent-foreground: #191f28;
-  --highlight: #fb8500;
-  --highlight-foreground: #ffffff;
+  --accent: #e8f3ff;
+  --accent-foreground: #1b64da;
+  --highlight: #62cbff;
+  --highlight-foreground: #191f28;
   --brand-soft: #e8f3ff;
   /* 서비스 설명용 회색 카드 (추가 에셋) */
   --surface-gray: #f2f4f6;
@@ -114,11 +117,11 @@
   --border: #e5e8eb;
   --input: #f2f4f6;
   --ring: #3182f6;
-  --chart-1: #8ecae6;
+  --chart-1: #62cbff;
   --chart-2: #3182f6;
-  --chart-3: #191f28;
-  --chart-4: #ffb703;
-  --chart-5: #fb8500;
+  --chart-3: #1b64da;
+  --chart-4: #191f28;
+  --chart-5: #8b95a1;
   --radius: 0.75rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #191f28;
@@ -149,10 +152,10 @@
   --secondary-foreground: #f2f4f6;
   --muted: #2c2c34;
   --muted-foreground: #8b95a1;
-  --accent: #ffb703;
-  --accent-foreground: #191f28;
-  --highlight: #fb8500;
-  --highlight-foreground: #ffffff;
+  --accent: #1c2e4a;
+  --accent-foreground: #8fc4ff;
+  --highlight: #62cbff;
+  --highlight-foreground: #191f28;
   --brand-soft: #1c2e4a;
   --surface-gray: #2c2c34;
   --surface-gray-foreground: #f2f4f6;
@@ -170,11 +173,11 @@
   --border: #ffffff14;
   --input: #2c2c34;
   --ring: #4593fc;
-  --chart-1: #8ecae6;
+  --chart-1: #62cbff;
   --chart-2: #4593fc;
-  --chart-3: #f2f4f6;
-  --chart-4: #ffb703;
-  --chart-5: #fb8500;
+  --chart-3: #8fc4ff;
+  --chart-4: #f2f4f6;
+  --chart-5: #8b95a1;
   --sidebar: #212129;
   --sidebar-foreground: #f2f4f6;
   --sidebar-primary: #4593fc;
@@ -220,6 +223,19 @@
 }
 
 @layer utilities {
+  /* 로고 그라데이션 (#62CBFF → #3182F6) — 스플래시·CTA·포인트 요소 */
+  .brand-gradient {
+    background-image: var(--brand-gradient);
+    color: #ffffff;
+  }
+
+  .text-brand-gradient {
+    background-image: var(--brand-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
   .neu-raised {
     background: var(--background);
     box-shadow: var(--neu-shadow);
