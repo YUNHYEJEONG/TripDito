@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { Check, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +66,8 @@ export function ShotUploadForm({
     id?: string;
     xPct: number;
     yPct: number;
+    /** 코멘트에 연결한 쇼핑 아이템 */
+    itemId?: string | null;
   } | null>(null);
   const [pinText, setPinText] = useState("");
   const pinInputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +88,8 @@ export function ShotUploadForm({
   const shoppingItemIds = form.watch("shoppingItemIds") ?? [];
 
   const { data: items = [] } = useItems(tripId);
+  /** 쇼핑리스트에서 체크(구매 완료)한 아이템 — 핀 코멘트 빠른 입력용 */
+  const purchasedItems = items.filter((item) => item.purchased);
 
   useMouseDragScroll(pinScrollerRef, images.length > 1);
 
@@ -186,7 +190,12 @@ export function ShotUploadForm({
   }
 
   function openPin(pin: ImagePin) {
-    setPinDraft({ id: pin.id, xPct: pin.xPct, yPct: pin.yPct });
+    setPinDraft({
+      id: pin.id,
+      xPct: pin.xPct,
+      yPct: pin.yPct,
+      itemId: pin.itemId ?? null,
+    });
     setPinText(pin.text);
   }
 
@@ -200,7 +209,11 @@ export function ShotUploadForm({
     } else if (pinDraft.id) {
       form.setValue(
         "pins",
-        pins.map((p) => (p.id === pinDraft.id ? { ...p, text } : p)),
+        pins.map((p) =>
+          p.id === pinDraft.id
+            ? { ...p, text, itemId: pinDraft.itemId ?? null }
+            : p,
+        ),
         { shouldValidate: true },
       );
     } else {
@@ -210,6 +223,7 @@ export function ShotUploadForm({
         xPct: pinDraft.xPct,
         yPct: pinDraft.yPct,
         text,
+        itemId: pinDraft.itemId ?? null,
       };
       form.setValue("pins", [...pins, pin], { shouldValidate: true });
     }
@@ -448,7 +462,7 @@ export function ShotUploadForm({
                       </span>
                       <div
                         className={cn(
-                          "absolute z-20 flex w-[min(78%,260px)] items-center gap-1 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-black/10",
+                          "absolute z-20 flex w-[min(78%,260px)] flex-col gap-1 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-black/10",
                           pinDraft.xPct > 55 && "-translate-x-full",
                           pinDraft.yPct > 80 && "-translate-y-full",
                         )}
@@ -458,10 +472,17 @@ export function ShotUploadForm({
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        <div className="flex w-full items-center gap-1">
                         <input
                           ref={pinInputRef}
                           value={pinText}
-                          onChange={(e) => setPinText(e.target.value)}
+                          onChange={(e) => {
+                            setPinText(e.target.value);
+                            // 직접 수정하면 아이템 연결 해제
+                            if (pinDraft.itemId) {
+                              setPinDraft({ ...pinDraft, itemId: null });
+                            }
+                          }}
                           onBlur={commitPin}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -493,6 +514,47 @@ export function ShotUploadForm({
                         >
                           <Trash2 className="size-3.5" />
                         </button>
+                        </div>
+                        {purchasedItems.length > 0 ? (
+                          /* 쇼핑리스트에서 체크한 아이템 — 탭하면 코멘트로 연결 */
+                          <div className="scrollbar-none -mx-0.5 flex w-full gap-1 overflow-x-auto px-0.5 pb-0.5">
+                            {purchasedItems.map((item) => {
+                              const selected = pinDraft.itemId === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  // input blur(commitPin)보다 먼저 실행되도록 mousedown 처리
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    if (selected) {
+                                      setPinDraft({ ...pinDraft, itemId: null });
+                                      return;
+                                    }
+                                    setPinText(item.name);
+                                    setPinDraft({ ...pinDraft, itemId: item.id });
+                                    pinInputRef.current?.focus();
+                                  }}
+                                  className={cn(
+                                    "flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium whitespace-nowrap transition-colors",
+                                    selected
+                                      ? "border-primary bg-primary text-white"
+                                      : "border-[#E5E8EB] bg-white text-foreground active:bg-[#F2F4F6]",
+                                  )}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "size-3",
+                                      selected ? "text-white" : "text-primary",
+                                    )}
+                                    strokeWidth={3}
+                                  />
+                                  {item.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                     </>
                   ) : null}

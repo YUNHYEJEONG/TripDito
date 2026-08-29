@@ -23,6 +23,8 @@ export type ShotPinDto = {
   xPct: number;
   yPct: number;
   text: string;
+  /** 연결된 쇼핑 아이템 (없으면 null) */
+  itemId: string | null;
 };
 
 export type ShotCommentDto = {
@@ -73,6 +75,7 @@ export const shotInputSchema = z
           xPct: z.number().min(0).max(100),
           yPct: z.number().min(0).max(100),
           text: z.string().trim().min(1).max(200),
+          itemId: z.string().regex(/^\d+$/).nullable().optional(),
         }),
       )
       .default([]),
@@ -136,7 +139,8 @@ const SELECT = `
          EXISTS (SELECT 1 FROM shot_scrp_info c WHERE c.shot_sn = s.shot_sn AND c.user_sn = $1) AS scrapped,
          (SELECT json_agg(json_build_object(
               'id', p.shot_pin_sn, 'imageIndex', p.atcm_file_seq,
-              'xPct', p.x_pstn_rt, 'yPct', p.y_pstn_rt, 'text', p.pin_cn) ORDER BY p.shot_pin_sn)
+              'xPct', p.x_pstn_rt, 'yPct', p.y_pstn_rt, 'text', p.pin_cn,
+              'itemId', p.item_sn) ORDER BY p.shot_pin_sn)
             FROM shot_pin_info p WHERE p.shot_sn = s.shot_sn AND p.use_at = 'Y') AS pins,
          (SELECT array_agg(m.shop_item_sn ORDER BY m.rgst_dttm)
             FROM shot_item_mpng m WHERE m.shot_sn = s.shot_sn) AS item_sns,
@@ -173,6 +177,7 @@ async function toDtos(rows: ShotRow[], viewerSn: number): Promise<ShotDto[]> {
         xPct: string | number;
         yPct: string | number;
         text: string;
+        itemId: number | string | null;
       }>;
       return {
         id: String(r.shot_sn),
@@ -193,6 +198,7 @@ async function toDtos(rows: ShotRow[], viewerSn: number): Promise<ShotDto[]> {
           xPct: Number(p.xPct),
           yPct: Number(p.yPct),
           text: p.text,
+          itemId: p.itemId == null ? null : String(p.itemId),
         })),
         body: r.body_cn ?? "",
         shoppingItemIds: (r.item_sns ?? []).map(String),
@@ -272,6 +278,16 @@ async function requireOwnShot(userSn: number, shotId: string) {
   return row;
 }
 
+/** 검증 대상 아이템: 쇼핑리스트 연결 + 핀에 연결된 아이템 */
+function collectItemIds(input: ShotInput) {
+  return [
+    ...new Set([
+      ...input.shoppingItemIds,
+      ...input.pins.flatMap((p) => (p.itemId ? [p.itemId] : [])),
+    ]),
+  ];
+}
+
 async function validateItems(userSn: number, tripId: string, itemIds: string[]) {
   if (itemIds.length === 0) return;
   const sql = getSql();
@@ -286,7 +302,7 @@ async function validateItems(userSn: number, tripId: string, itemIds: string[]) 
 
 export async function createShot(userSn: number, input: ShotInput) {
   await requireTrip(userSn, input.tripId);
-  await validateItems(userSn, input.tripId, input.shoppingItemIds);
+  await validateItems(userSn, input.tripId, collectItemIds(input));
   const sql = getSql();
   const att = (await sql.query(
     `SELECT file_cnt FROM atcm_file_info WHERE atcm_file_id = $1 AND use_at = 'Y'`,
@@ -310,7 +326,7 @@ export async function createShot(userSn: number, input: ShotInput) {
 export async function updateShot(userSn: number, shotId: string, input: ShotInput) {
   await requireOwnShot(userSn, shotId);
   await requireTrip(userSn, input.tripId);
-  await validateItems(userSn, input.tripId, input.shoppingItemIds);
+  await validateItems(userSn, input.tripId, collectItemIds(input));
   const sql = getSql();
   await sql.query(
     `UPDATE shot_info SET trip_sn = $2, chnl_cd = $3, atcm_file_id = $4, body_cn = $5
@@ -337,9 +353,9 @@ async function writePins(shotId: string, pins: ShotInput["pins"]) {
   const sql = getSql();
   for (const p of pins) {
     await sql.query(
-      `INSERT INTO shot_pin_info (shot_sn, atcm_file_seq, x_pstn_rt, y_pstn_rt, pin_cn)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [shotId, p.imageIndex + 1, p.xPct, p.yPct, p.text],
+      `INSERT INTO shot_pin_info (shot_sn, atcm_file_seq, x_pstn_rt, y_pstn_rt, pin_cn, item_sn)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [shotId, p.imageIndex + 1, p.xPct, p.yPct, p.text, p.itemId ?? null],
     );
   }
 }

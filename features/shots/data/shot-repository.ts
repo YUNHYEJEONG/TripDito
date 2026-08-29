@@ -28,6 +28,7 @@ type ShotDto = {
     xPct: number;
     yPct: number;
     text: string;
+    itemId: string | null;
   }>;
   body: string;
   shoppingItemIds: string[];
@@ -132,6 +133,7 @@ async function toPayload(input: ShotFormValues, current?: Shot | null) {
       xPct: p.xPct,
       yPct: p.yPct,
       text: p.text,
+      itemId: p.itemId ?? null,
     })),
     shoppingItemIds:
       input.channel === "shots" ? input.shoppingItemIds : [],

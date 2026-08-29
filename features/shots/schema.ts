@@ -12,6 +12,8 @@ export const imagePinSchema = z.object({
   xPct: z.number().min(0).max(100),
   yPct: z.number().min(0).max(100),
   text: z.string().trim().min(1).max(200),
+  /** 연결된 쇼핑 아이템 (사진 속 물건) */
+  itemId: z.string().nullable().optional(),
 });
 
 export type ImagePin = z.infer<typeof imagePinSchema>;

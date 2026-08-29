@@ -244,6 +244,8 @@ CREATE TABLE IF NOT EXISTS user_cpn_info (
 -- ---------- 기존 DB 보정: 공통 컬럼 누락분 추가 (정의서 p.8, 전 테이블 공통) ----------
 ALTER TABLE shot_pin_info  ADD COLUMN IF NOT EXISTS use_at    CHAR(1)     NOT NULL DEFAULT 'Y';
 ALTER TABLE shot_pin_info  ADD COLUMN IF NOT EXISTS altr_dttm TIMESTAMPTZ NOT NULL DEFAULT now();
+-- 핀-쇼핑아이템 연결 (사진 속 물건이 어떤 아이템인지)
+ALTER TABLE shot_pin_info  ADD COLUMN IF NOT EXISTS item_sn   BIGINT;
 ALTER TABLE shot_cmnt_info ADD COLUMN IF NOT EXISTS use_at    CHAR(1)     NOT NULL DEFAULT 'Y';
 ALTER TABLE user_cpn_info  ADD COLUMN IF NOT EXISTS use_at    CHAR(1)     NOT NULL DEFAULT 'Y';
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ImagePin } from "../schema";
 import { useMouseDragScroll } from "../hooks/use-mouse-drag-scroll";
@@ -125,6 +125,13 @@ export function ShotImageCarousel({
             </button>
             {open ? (
               <div className="absolute top-1/2 left-1/2 z-20 mt-1 w-48 -translate-x-1/2 rounded-xl bg-white px-3 py-2 text-[12px] leading-snug text-foreground shadow-lg">
+                {pin.itemId ? (
+                  /* 쇼핑리스트 아이템과 연결된 핀 — 실제 산 물건 표시 */
+                  <span className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold text-primary">
+                    <ShoppingBag className="size-3" aria-hidden />
+                    쇼핑리스트 아이템
+                  </span>
+                ) : null}
                 {pin.text}
               </div>
             ) : null}
