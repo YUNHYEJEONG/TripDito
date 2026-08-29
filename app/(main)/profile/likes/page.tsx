@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  FeedSkeleton,
+  LoadingRegion,
+} from "@/components/common/loading-skeletons";
 import { EmptyState } from "@/components/common/empty-state";
 import { useLikedShots } from "@/features/shots/hooks/use-shots";
 import { useRequireLogin } from "@/features/auth/hooks/use-require-login";
@@ -28,9 +32,9 @@ export default function ProfileLikesPage() {
       <PageHeader title="좋아요 누른 피드" backHref="/profile" />
 
       {isLoading ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
+        <LoadingRegion>
+          <FeedSkeleton />
+        </LoadingRegion>
       ) : likedShots.length === 0 ? (
         <EmptyState
           title="좋아요한 피드가 없어요"

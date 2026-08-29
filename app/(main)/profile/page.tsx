@@ -6,6 +6,10 @@ import { Bookmark, Camera, Heart, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  LoadingRegion,
+  ProfileSkeleton,
+} from "@/components/common/loading-skeletons";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,9 +119,9 @@ export default function ProfilePage() {
       <PageHeader title="프로필" actions={<HeaderNavActions />} />
 
       {isLoading || authLoading || !profile ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
+        <LoadingRegion>
+          <ProfileSkeleton />
+        </LoadingRegion>
       ) : (
         <div className="flex flex-col gap-4">
           <GrayCard>

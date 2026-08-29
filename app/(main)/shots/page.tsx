@@ -7,6 +7,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
+import {
+  FeedSkeleton,
+  LoadingRegion,
+} from "@/components/common/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import { useShots } from "@/features/shots/hooks/use-shots";
 import type { ShotSort } from "@/features/shots/schema";
@@ -103,9 +107,9 @@ export default function ShotsPage() {
               />
             </div>
           ) : isLoading || authLoading ? (
-            <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">
-              불러오는 중…
-            </p>
+            <LoadingRegion>
+              <FeedSkeleton />
+            </LoadingRegion>
           ) : feed.length === 0 ? (
             <div className="px-4 pt-6 sm:px-5 md:px-6 lg:px-8">
               <EmptyState
