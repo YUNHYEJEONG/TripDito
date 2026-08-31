@@ -1,11 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, Plus } from "lucide-react";
+import { Camera, ChevronRight, Plus, Stamp } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { EmptyState } from "@/components/common/empty-state";
+import {
+  CardListSkeleton,
+  LoadingRegion,
+} from "@/components/common/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import {
   GrayCard,
@@ -16,6 +21,7 @@ import { TripCard } from "@/features/trips/components/trip-card";
 import { useTrips } from "@/features/trips/hooks/use-trips";
 import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { calculateBudget } from "@/features/budget/utils/calculate-budget";
+import { getCompletedPassportTrips } from "@/features/profile/utils/passport-trips";
 import { appConfig } from "@/config/app";
 
 function TripCardWithProgress({
@@ -33,6 +39,7 @@ function TripCardWithProgress({
 export default function MyTripsPage() {
   const router = useRouter();
   const { data: trips = [], isLoading } = useTrips();
+  const completedTripCount = getCompletedPassportTrips(trips).length;
 
   return (
     <AppShell withBottomNav>
@@ -54,10 +61,31 @@ export default function MyTripsPage() {
         </div>
       </GrayCard>
 
+      {/* 나의 여권 — 다녀온 여행을 입국 도장으로 모아 보기 */}
+      <Link
+        href="/passport"
+        className="mb-4 flex items-center gap-2.5 rounded-xl bg-[var(--passport-cover)] px-3.5 py-3 transition-opacity active:opacity-90"
+      >
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+          <Stamp className="size-4 text-[var(--passport-foil)]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-semibold text-white">
+            나의 여권
+          </span>
+          <span className="mt-0.5 block text-[12px] text-white/70">
+            {completedTripCount > 0
+              ? `완료한 여행 ${completedTripCount}개, 입국 도장으로 모았어요`
+              : "여행을 완료하면 입국 도장이 찍혀요"}
+          </span>
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-white/60" />
+      </Link>
+
       {isLoading ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
+        <LoadingRegion>
+          <CardListSkeleton />
+        </LoadingRegion>
       ) : trips.length === 0 ? (
         <EmptyState
           title="아직 여행이 없어요"

@@ -26,7 +26,7 @@ export default function LandingPage() {
   }, [router]);
 
   return (
-    <main className="relative flex min-h-dvh min-w-[320px] flex-col items-center justify-center overflow-hidden bg-white px-6">
+    <main className="brand-gradient relative flex min-h-dvh min-w-[320px] flex-col items-center justify-center overflow-hidden px-6">
       <div
         className={[
           "relative z-10 flex flex-col items-center gap-4 transition-all duration-500 ease-out",
@@ -39,23 +39,23 @@ export default function LandingPage() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={appConfig.brand.symbolSrc}
+          src={appConfig.brand.symbolWhiteSrc}
           alt=""
           className={[
-            "size-[4.5rem] object-contain transition-transform duration-700 ease-out",
+            "size-16 object-contain transition-transform duration-700 ease-out",
             phase === "hold" ? "scale-100" : "scale-95",
           ].join(" ")}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={appConfig.brand.logoSrc}
+          src={appConfig.brand.logoTextWhiteSrc}
           alt={appConfig.name}
           className={[
             "h-12 w-auto max-w-[min(240px,70vw)] object-contain transition-transform duration-700 ease-out md:h-14",
             phase === "hold" ? "scale-100" : "scale-95",
           ].join(" ")}
         />
-        <p className="text-center text-[14px] font-medium text-muted-foreground">
+        <p className="text-center text-[14px] font-medium text-white/85">
           {appConfig.tagline}
         </p>
       </div>

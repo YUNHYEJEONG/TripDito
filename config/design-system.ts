@@ -1,16 +1,21 @@
 /**
- * Trip Ditto 디자인 시스템
- * - 레퍼런스: 오늘의집(1), 토스(2)
- * - 화이트 베이스 + 강한 블루 CTA + 회색 설명 카드
+ * TripDito 디자인 시스템
+ * - 기준: 트립디토 로고 (트립디토_로고_20260828) — 블루 그라데이션 아이덴티티
+ * - 화이트 베이스 + 로고 블루 CTA + 회색 설명 카드
  */
 export const designSystem = {
   brand: {
-    skyBlueLight: "#8ECAE6",
-    blueGreen: "#219EBC",
+    /** 로고 primary 블루 */
+    primary: "#3182F6",
+    /** 로고 secondary 스카이 블루 */
+    secondary: "#62CBFF",
+    /** 로고 그라데이션 (secondary → primary) */
+    gradient: "linear-gradient(135deg, #62CBFF 0%, #3182F6 100%)",
+    /** 소프트 블루 서피스 (배지·배너) */
+    brandSoft: "#E8F3FF",
+    /** 딥 블루 텍스트 (로고 black) */
     deepSpaceBlue: "#191F28",
-    amberFlame: "#FFB703",
-    princetonOrange: "#FB8500",
-    /** 주요 액션 (토스형 강한 블루) */
+    /** 주요 액션 블루 (= primary) */
     actionBlue: "#3182F6",
     /** 서비스 설명용 회색 카드 */
     surfaceGray: "#F2F4F6",

@@ -50,7 +50,7 @@ export function HomeUpcomingTripCard({
             {label.kind === "ongoing" ? "여행중인 이곳" : "다가오는 여행"}
           </h2>
 
-          <span className="absolute top-3.5 right-3 z-10 rounded-md bg-[#8ECAE6]/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+          <span className="absolute top-3.5 right-3 z-10 rounded-md bg-[#62CBFF]/60 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
             {badge}
           </span>
 

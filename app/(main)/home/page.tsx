@@ -2,6 +2,10 @@
 
 import { useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import {
+  HomeSkeleton,
+  LoadingRegion,
+} from "@/components/common/loading-skeletons";
 import { CardStack } from "@/components/layout/card-stack";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
@@ -62,9 +66,9 @@ export default function HomePage() {
       />
 
       {isLoading ? (
-        <p className="py-10 text-center text-[13px] text-muted-foreground">
-          불러오는 중…
-        </p>
+        <LoadingRegion>
+          <HomeSkeleton />
+        </LoadingRegion>
       ) : (
         <CardStack>
           {upcoming ? (

@@ -28,10 +28,10 @@ export const metadata: Metadata = {
   applicationName: appConfig.name,
   icons: {
     icon: [
-      { url: "/brand/favicon.ico?v=3" },
-      { url: "/brand/favicon.png?v=3", type: "image/png", sizes: "32x32" },
+      { url: "/brand/favicon.ico?v=5" },
+      { url: "/brand/favicon.png?v=5", type: "image/png", sizes: "32x32" },
     ],
-    apple: [{ url: "/brand/app-icon.png?v=3" }],
+    apple: [{ url: "/brand/app-icon.png?v=5" }],
   },
 };
 
