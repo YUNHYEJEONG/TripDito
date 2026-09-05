@@ -4,6 +4,12 @@ export const appConfig = {
   /** 영문 브랜드명 (필요 시 사용) */
   nameEn: "Trip Ditto",
   tagline: "복잡함 없이, 여행 쇼핑",
+  /** 배포 도메인 — OG/파비콘 절대 URL 기준 (NEXT_PUBLIC_SITE_URL, Vercel 프로덕션 도메인, 로컬 순) */
+  siteUrl:
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"),
   storagePrefix: "trip-shopping",
   storageVersion: 1,
   defaultCurrency: "JPY" as const,
@@ -20,17 +26,17 @@ export const appConfig = {
   },
   brand: {
     /** 워드마크 로고 (헤더·랜딩, 라이트 배경) */
-    logoSrc: "/brand/logo.svg?v=5",
+    logoSrc: "/brand/logo.svg?v=6",
     /** 워드마크 로고 (다크 배경용 화이트, 그라데이션 마크 포함) */
-    logoWhiteSrc: "/brand/logo-white.svg?v=5",
+    logoWhiteSrc: "/brand/logo-white.svg?v=6",
     /** 텍스트 전용 화이트 워드마크 (그라데이션 배경 위 스플래시용) */
-    logoTextWhiteSrc: "/brand/logo-text-white.svg?v=5",
+    logoTextWhiteSrc: "/brand/logo-text-white.svg?v=6",
     /** 하트 체크 마크 심볼 (아이콘용) */
-    symbolSrc: "/brand/symbol.svg?v=5",
+    symbolSrc: "/brand/symbol.svg?v=6",
     /** 하트 체크 마크 (다크·그라데이션 배경용 화이트) */
-    symbolWhiteSrc: "/brand/symbol-white.svg?v=5",
-    symbolPngSrc: "/brand/symbol.png?v=5",
-    appIconSrc: "/brand/app-icon.png?v=5",
-    faviconSrc: "/brand/favicon.png?v=5",
+    symbolWhiteSrc: "/brand/symbol-white.svg?v=6",
+    symbolPngSrc: "/brand/symbol.png?v=6",
+    appIconSrc: "/brand/app-icon.png?v=6",
+    faviconSrc: "/brand/favicon.png?v=6",
   },
 } as const;
