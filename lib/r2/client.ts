@@ -2,6 +2,7 @@ import "server-only";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -78,6 +79,21 @@ export async function putObject(
       ContentType: contentType,
     }),
   );
+}
+
+/** 오브젝트 존재 여부와 크기. 없으면 null (presigned 업로드가 실제로 끝났는지 확인용) */
+export async function headObject(key: string) {
+  try {
+    const res = await getR2().send(
+      new HeadObjectCommand({ Bucket: r2Bucket(), Key: key }),
+    );
+    return { size: res.ContentLength ?? 0, contentType: res.ContentType ?? null };
+  } catch (error) {
+    const name = (error as { name?: string })?.name;
+    const status = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+    if (name === "NotFound" || name === "NoSuchKey" || status === 404) return null;
+    throw error;
+  }
 }
 
 export async function deleteObject(key: string) {

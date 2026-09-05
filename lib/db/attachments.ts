@@ -98,6 +98,16 @@ function toFile(r: DetlRow): AttachmentFile {
   };
 }
 
+/** 이미 등록된 첨부 ID 인지 (재등록으로 다른 사람 첨부를 덮어쓰는 것을 막는다) */
+export async function attachmentExists(id: string) {
+  const sql = getSql();
+  const rows = (await sql.query(
+    `SELECT 1 FROM atcm_file_info WHERE atcm_file_id = $1`,
+    [id],
+  )) as unknown[];
+  return rows.length > 0;
+}
+
 export async function getAttachment(id: string): Promise<Attachment | null> {
   const map = await getAttachments([id]);
   return map.get(id) ?? null;

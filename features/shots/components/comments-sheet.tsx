@@ -52,11 +52,11 @@ export function CommentsSheet({
     if (!isLoggedIn) return;
     const trimmed = text.trim();
     if (!trimmed) return;
+    setText("");
     try {
       await addComment.mutateAsync({ id: shotId, text: trimmed });
-      setText("");
-      toast.success("댓글을 남겼습니다");
     } catch {
+      setText(trimmed);
       toast.error("댓글 등록에 실패했습니다");
     }
   }
@@ -64,7 +64,6 @@ export function CommentsSheet({
   async function handleDelete(commentId: string) {
     try {
       await removeComment.mutateAsync({ shotId, commentId });
-      toast.success("댓글을 삭제했습니다");
     } catch {
       toast.error("댓글 삭제에 실패했습니다");
     }

@@ -117,3 +117,16 @@ export async function compressImageFiles(
   }
   return images;
 }
+
+/**
+ * 이미 data URL 인 이미지를 다른 프리셋으로 다시 압축한다.
+ * (예: 분석용 1600px 사진을 품목 썸네일용 1024px 로 줄여 저장)
+ */
+export async function recompressDataUrl(
+  dataUrl: string,
+  options: CompressOptions = {},
+): Promise<string> {
+  const blob = await (await fetch(dataUrl)).blob();
+  const file = new File([blob], "image.jpg", { type: blob.type || "image/jpeg" });
+  return (await compressImageFile(file, options)).dataUrl;
+}

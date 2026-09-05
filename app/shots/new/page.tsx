@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import {
   PageHeader,
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ShotUploadForm } from "@/features/shots/components/shot-upload-form";
 import { useCreateShot } from "@/features/shots/hooks/use-shots";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
+import { pendingShots } from "@/features/shots/store/pending-shots";
 
 export default function NewShotPage() {
   const router = useRouter();
@@ -45,15 +45,11 @@ export default function NewShotPage() {
       />
       <ShotUploadForm
         formId="shot-upload-form"
-        onSubmit={async (values) => {
-          try {
-            await createShot.mutateAsync(values);
-            router.push("/shots");
-          } catch (error) {
-            const message =
-              error instanceof Error ? error.message : "저장에 실패했습니다";
-            toast.error(message);
-          }
+        onSubmit={(values) => {
+          // 업로드는 백그라운드로 보내고 피드로 바로 이동 → 맨 위에 "업로드 중" 카드가 보인다
+          // 결과 토스트는 훅(useCreateShot)에서 띄운다 — 이 화면은 곧 언마운트되므로
+          createShot.mutate({ input: values, pendingId: pendingShots.newId() });
+          router.push("/shots");
         }}
       />
       <div className="fixed inset-x-0 bottom-0 z-30 bg-canvas px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:px-8">

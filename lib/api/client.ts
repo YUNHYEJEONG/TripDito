@@ -26,6 +26,10 @@ const MESSAGES: Record<string, string> = {
   INVALID_SHOPPING_ITEMS: "연결한 쇼핑품목이 올바르지 않습니다",
   R2_NOT_CONFIGURED: "이미지 저장소(R2)가 아직 설정되지 않았습니다",
   UNSUPPORTED_IMAGE_TYPE: "jpg·png·webp·gif 이미지만 올릴 수 있어요",
+  UPLOAD_NOT_FOUND: "이미지 업로드가 완료되지 않았습니다. 다시 시도해 주세요",
+  INVALID_UPLOAD_KEY: "잘못된 업로드 요청입니다",
+  FILE_TOO_LARGE: "이미지는 10MB 이하만 올릴 수 있어요",
+  ATTACHMENT_ALREADY_REGISTERED: "이미 등록된 이미지입니다",
   VALIDATION: "입력값을 확인하세요",
 };
 

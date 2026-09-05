@@ -1,4 +1,4 @@
-import type { AnalyzableImage, ImageAnalyzer, ProposedItem } from "./port";
+import type { AnalyzableImage, AnalyzeOutcome, ImageAnalyzer } from "./port";
 
 const MOCK_CATALOG = [
   { name: "돈키호테 스낵 세트", price: 1280 },
@@ -16,9 +16,9 @@ function pickCatalog(index: number) {
 }
 
 export const mockImageAnalyzer: ImageAnalyzer = {
-  async analyze(images: AnalyzableImage[]): Promise<ProposedItem[]> {
+  async analyze(images: AnalyzableImage[]): Promise<AnalyzeOutcome> {
     await new Promise((resolve) => setTimeout(resolve, 700));
-    return images.map((image, index) => {
+    const items = images.map((image, index) => {
       const catalog = pickCatalog(index);
       const fromName = image.fileName?.replace(/\.[^.]+$/, "").trim();
       return {
@@ -30,5 +30,6 @@ export const mockImageAnalyzer: ImageAnalyzer = {
         imageDataUrl: image.dataUrl,
       };
     });
+    return { items, failedImageIds: [] };
   },
 };

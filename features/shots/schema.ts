@@ -75,6 +75,8 @@ export type Shot = {
   comments: ShotComment[];
   createdAt: string;
   updatedAt: string;
+  /** 업로드 진행 중인 낙관적 카드 (서버 응답 전) */
+  pending?: boolean;
 };
 
 export type Scrap = {
