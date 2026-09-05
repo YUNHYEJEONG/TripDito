@@ -43,4 +43,17 @@ export const tripRepository = {
   async remove(id: string): Promise<void> {
     await api(`/api/trips/${id}`, { method: "DELETE" });
   },
+
+  /** 여행 마치기 (상태 DONE) */
+  complete(id: string): Promise<Trip> {
+    return api<TripDto>(`/api/trips/${id}/complete`, { method: "POST" });
+  },
+
+  /** 여권 도장 페이지 저장 */
+  setPassportPage(id: string, pageNumber: number): Promise<Trip> {
+    return api<TripDto>(`/api/trips/${id}/passport-page`, {
+      method: "PUT",
+      body: { pageNumber },
+    });
+  },
 };

@@ -19,7 +19,7 @@ const MESSAGES: Record<string, string> = {
   COMMENT_NOT_FOUND: "댓글을 찾을 수 없습니다",
   COUPON_NOT_FOUND: "쿠폰을 찾을 수 없습니다",
   FORBIDDEN: "권한이 없습니다",
-  INVALID_COUNTRY: "지원하지 않는 국가입니다 (일본·중국·대만·태국·한국)",
+  INVALID_COUNTRY: "지원하지 않는 국가입니다",
   INVALID_CURRENCY: "지원하지 않는 통화입니다",
   INVALID_GIFT_TAG: "지원하지 않는 선물 태그입니다",
   INVALID_ATTACHMENT: "이미지를 1장 이상 10장 이하로 등록하세요",

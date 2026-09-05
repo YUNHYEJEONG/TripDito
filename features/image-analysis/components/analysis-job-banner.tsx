@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Sparkles, X } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { analysisJobs, useAnalysisJobs } from "../store/analysis-jobs";
 
@@ -33,26 +32,12 @@ export function AnalysisJobBanner() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [running.length]);
 
-  // 완료 순간 한 번만 토스트. 이미 그 여행 화면에 있으면 시트를 바로 연다
+  // 완료 알림은 하단 배너 하나로만. 이미 그 여행 화면에 있으면 검토 시트를 바로 연다
   useEffect(() => {
     for (const job of list) {
-      if (job.status === "running" || notified.current.has(`${job.tripId}:${job.finishedAt}`)) continue;
+      if (job.status !== "done" || notified.current.has(`${job.tripId}:${job.finishedAt}`)) continue;
       notified.current.add(`${job.tripId}:${job.finishedAt}`);
-      if (job.status === "done") {
-        if (pathname === `/trips/${job.tripId}`) {
-          analysisJobs.requestReview(job.tripId);
-        } else {
-          toast.success(`${job.tripName} 사진 분석 완료`, {
-            description: `상품 ${job.items.length}개를 찾았어요`,
-            action: {
-              label: "결과 보기",
-              onClick: () => openReview(job.tripId),
-            },
-          });
-        }
-      } else {
-        toast.error(`${job.tripName} 사진 분석 실패`);
-      }
+      if (pathname === `/trips/${job.tripId}`) analysisJobs.requestReview(job.tripId);
     }
     // list 의 상태 변화만 보면 된다
     // eslint-disable-next-line react-hooks/exhaustive-deps

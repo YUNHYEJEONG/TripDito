@@ -248,6 +248,8 @@ ALTER TABLE shot_pin_info  ADD COLUMN IF NOT EXISTS altr_dttm TIMESTAMPTZ NOT NU
 ALTER TABLE shot_pin_info  ADD COLUMN IF NOT EXISTS item_sn   BIGINT;
 ALTER TABLE shot_cmnt_info ADD COLUMN IF NOT EXISTS use_at    CHAR(1)     NOT NULL DEFAULT 'Y';
 ALTER TABLE user_cpn_info  ADD COLUMN IF NOT EXISTS use_at    CHAR(1)     NOT NULL DEFAULT 'Y';
+-- 여권 도장을 찍은 내지 페이지 번호 (NULL = 아직 안 찍음). 기기 간 동기화를 위해 서버에 저장
+ALTER TABLE trip_info      ADD COLUMN IF NOT EXISTS psprt_page_no SMALLINT CHECK (psprt_page_no BETWEEN 1 AND 100);
 
 -- ---------- ALTR_DTTM 자동 갱신 트리거 ----------
 DO $$

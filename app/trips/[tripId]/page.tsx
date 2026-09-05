@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Camera, Plus, Settings2 } from "lucide-react";
+import { Camera, Plus, Settings2, Stamp } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import {
@@ -11,6 +11,7 @@ import {
   headerIconButtonClassName,
 } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/common/empty-state";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ItemCard } from "@/features/shopping-items/components/item-card";
 import { ItemToolbar } from "@/features/shopping-items/components/item-toolbar";
@@ -28,7 +29,9 @@ import type {
   ItemSort,
 } from "@/features/shopping-items/types";
 import { calculateBudget } from "@/features/budget/utils/calculate-budget";
-import { useTrip } from "@/features/trips/hooks/use-trips";
+import { useCompleteTrip, useTrip } from "@/features/trips/hooks/use-trips";
+import { isPassportCompletedTrip } from "@/features/profile/utils/passport-trips";
+import { getPassportStampIntentHref } from "@/features/profile/utils/passport-view";
 import { AddFromImagesSheet } from "@/features/image-upload/components/add-from-images-sheet";
 import { formatDateRange } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -45,11 +48,13 @@ export default function TripDetailPage({
   const { data: trip, isLoading: tripLoading } = useTrip(tripId);
   const { data: items = [], isLoading: itemsLoading } = useItems(tripId);
   const togglePurchased = useTogglePurchased(tripId);
+  const completeTrip = useCompleteTrip();
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ItemPurchaseFilter>("all");
   const [sort, setSort] = useState<ItemSort>("createdAt_desc");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   if (tripLoading) {
     return (
@@ -76,6 +81,18 @@ export default function TripDetailPage({
 
   const summary = calculateBudget(trip.budget, items);
   const visibleItems = sortItems(filterItems(items, filter, query), sort);
+  const completed = isPassportCompletedTrip(trip);
+  const stamped = typeof trip.passportPage === "number";
+  const stampHref = getPassportStampIntentHref(tripId, `/trips/${tripId}`);
+
+  function handleComplete() {
+    // 상태는 즉시 DONE 으로 바뀌고(낙관적), 여권 화면으로 넘어가 도장 찍기가 시작된다
+    setCompleteOpen(false);
+    completeTrip.mutate(tripId, {
+      onError: () => toast.error("여행을 마치지 못했습니다. 다시 시도해 주세요"),
+    });
+    router.push(stampHref);
+  }
 
   return (
     <AppShell className="pb-28">
@@ -96,6 +113,37 @@ export default function TripDetailPage({
 
       <div className="flex flex-col gap-4">
         <ListSummary summary={summary} currency={trip.currency} />
+
+        {/* 여행 마치기 → 여권 도장. 이미 찍었으면 여권으로 보러 가기 */}
+        {stamped ? (
+          <Link
+            href="/passport?view=stamps"
+            className="flex items-center gap-3 rounded-xl bg-[var(--passport-cover)] px-3.5 py-3 text-[13px] text-white transition-opacity active:opacity-90"
+          >
+            <Stamp className="size-4 shrink-0 text-[var(--passport-foil)]" />
+            <span className="flex-1">이 여행의 입국 도장이 여권 {trip.passportPage}쪽에 찍혀 있어요</span>
+          </Link>
+        ) : completed ? (
+          <Link
+            href={stampHref}
+            className="flex items-center gap-3 rounded-xl bg-primary px-3.5 py-3 text-[13px] font-semibold text-primary-foreground transition-opacity active:opacity-90"
+          >
+            <Stamp className="size-4 shrink-0" />
+            <span className="flex-1">여행을 다녀왔어요. 여권에 입국 도장 찍기</span>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setCompleteOpen(true)}
+            className="flex items-center gap-3 rounded-xl border border-border/70 bg-background px-3.5 py-3 text-left text-[13px] transition-colors hover:bg-muted/60"
+          >
+            <Stamp className="size-4 shrink-0 text-primary" />
+            <span className="flex-1">
+              <span className="font-semibold">여행 마치기</span>
+              <span className="text-muted-foreground"> · 여권에 입국 도장이 찍혀요</span>
+            </span>
+          </button>
+        )}
         <ItemToolbar
           query={query}
           onQueryChange={setQuery}
@@ -164,6 +212,15 @@ export default function TripDetailPage({
         tripId={tripId}
         open={uploadOpen}
         onOpenChange={setUploadOpen}
+      />
+      <ConfirmDialog
+        open={completeOpen}
+        onOpenChange={setCompleteOpen}
+        title="여행을 마칠까요?"
+        description="완료한 여행으로 표시되고, 여권에 입국 도장을 찍으러 이동해요. 쇼핑 리스트는 그대로 남아요."
+        confirmLabel="여행 마치기"
+        confirmVariant="default"
+        onConfirm={handleComplete}
       />
     </AppShell>
   );

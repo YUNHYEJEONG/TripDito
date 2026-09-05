@@ -88,6 +88,27 @@ const TRIPS: TripSeed[] = [
       { name: "코코넛 오일", price: 250, qty: 2, planOffset: 2 },
     ],
   },
+  // ── 여권 도장 확인용: 도안이 있는 나라마다 완료한 여행 하나씩 (오래된 순으로 뒤로 갈수록 과거)
+  ...([
+    ["타이베이 야시장 투어", "TW", "타이베이", "Asia/Taipei", "TWD", 9000, 40, [["펑리수", 350, 4, ["FAMILY"]], ["우롱차", 600, 2]]],
+    ["상하이 출장", "CN", "상하이", "Asia/Shanghai", "CNY", 3000, 60, [["백주 미니어처", 120, 2, ["COWORK"]], ["실크 스카프", 260, 1]]],
+    ["부산 주말 여행", "KR", "부산", "Asia/Seoul", "KRW", 300000, 75, [["씨앗호떡 믹스", 8000, 3], ["어묵 세트", 15000, 2, ["FAMILY"]]]],
+    ["치앙마이 한 달 살기", "TH", "치앙마이", "Asia/Bangkok", "THB", 30000, 95, [["코끼리 바지", 200, 3, ["FRIEND"]], ["허브 밤", 90, 5]]],
+    ["다낭 휴양", "VN", "다낭", "Asia/Ho_Chi_Minh", "VND", 6000000, 120, [["G7 커피", 90000, 4, ["COWORK"]], ["라탄 가방", 250000, 1]]],
+    ["싱가포르 미식 투어", "SG", "싱가포르", "Asia/Singapore", "SGD", 900, 150, [["카야잼", 8, 3, ["FAMILY"]], ["바쿠테 티백", 12, 2]]],
+    ["뉴욕 출장", "US", "뉴욕", "America/New_York", "USD", 1500, 190, [["MoMA 굿즈", 45, 2, ["FRIEND"]], ["센트럴파크 후드", 60, 1]]],
+    ["시드니 여름휴가", "AU", "시드니", "Australia/Sydney", "AUD", 1800, 240, [["팀탐", 5, 6, ["COWORK"]], ["유칼립투스 오일", 18, 2]]],
+    ["파리 신혼여행", "FR", "파리", "Europe/Paris", "EUR", 2500, 300, [["마카롱 세트", 32, 2, ["FAMILY"]], ["향수", 120, 1, ["SELF"]]]],
+    ["런던 뮤지컬 여행", "GB", "런던", "Europe/London", "GBP", 1400, 360, [["얼그레이 틴", 14, 3, ["ACQNT"]], ["해리포터 굿즈", 40, 1]]],
+    ["로마 미술관 투어", "IT", "로마", "Europe/Rome", "EUR", 1700, 420, [["올리브 오일", 22, 2, ["FAMILY"]], ["가죽 지갑", 85, 1]]],
+    ["바르셀로나 건축 기행", "ES", "바르셀로나", "Europe/Madrid", "EUR", 1600, 480, [["하몽", 30, 2, ["FRIEND"]], ["가우디 타일 마그넷", 9, 4]]],
+  ] as const).map(([name, ntn, city, tz, crncy, budget, agoDays, items]): TripSeed => ({
+    name, ntn, city, tz, crncy, budget, status: "DONE",
+    begin: iso(-agoDays - 4), end: iso(-agoDays),
+    items: items.map(([itemName, price, qty, tags]) => ({
+      name: itemName, price, qty, tags: tags ? [...tags] : undefined, planOffset: 1, purchased: true,
+    })),
+  })),
 ];
 
 const SHOTS: ShotSeed[] = [

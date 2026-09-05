@@ -13,16 +13,15 @@ function ids(count: number) {
 }
 
 describe("passport pagination", () => {
-  it("fills each complete physical page with up to four stamps", () => {
+  it("fills each complete physical page with up to three stamps", () => {
     const expected = new Map<number, number[]>([
       [0, [0]],
       [1, [1]],
       [3, [3]],
-      [4, [4]],
-      [5, [4, 1]],
-      [8, [4, 4]],
-      [9, [4, 4, 1]],
-      [17, [4, 4, 4, 4, 1]],
+      [4, [3, 1]],
+      [6, [3, 3]],
+      [7, [3, 3, 1]],
+      [13, [3, 3, 3, 3, 1]],
     ]);
 
     for (const [count, distribution] of expected) {
@@ -34,7 +33,7 @@ describe("passport pagination", () => {
   });
 
   it("preserves source order and assigns physical page numbers", () => {
-    const source = ids(13);
+    const source = ids(10);
     const snapshot = [...source];
     const pages = paginatePassportTrips(source);
 

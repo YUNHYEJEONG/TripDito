@@ -46,13 +46,13 @@ describe("passport stamp page assignments", () => {
     assert.deepEqual(assignPassportStampPage(source, "paris", 0), source);
   });
 
-  it("keeps chosen pages, fills open spaces, and never exceeds four stamps", () => {
+  it("keeps chosen pages, fills open spaces, and never exceeds three stamps", () => {
     const source = trips("a", "b", "c", "d", "e");
     const snapshot = structuredClone(source);
     const pages = paginatePassportTripsWithAssignments(source, { a: 3 });
 
-    assert.deepEqual(pageIds(pages), [["b", "c", "d", "e"], [], ["a"]]);
-    assert.ok(pages.every((page) => page.trips.length <= 4));
+    assert.deepEqual(pageIds(pages), [["b", "c", "d"], ["e"], ["a"]]);
+    assert.ok(pages.every((page) => page.trips.length <= 3));
     assert.deepEqual(source, snapshot);
   });
 

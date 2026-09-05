@@ -86,8 +86,8 @@ export function AddFromImagesSheet({
     }
     setImages([]);
     onOpenChange(false);
-    toast.info("사진을 분석하고 있어요", {
-      description: "다른 작업을 하셔도 됩니다. 끝나면 알려드릴게요.",
+    toast.info("사진을 분석하고 있어요!", {
+      description: "완료되면 알려드릴게요",
     });
   }
 

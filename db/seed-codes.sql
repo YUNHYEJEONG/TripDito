@@ -15,8 +15,13 @@ ON CONFLICT (cmmn_grp_cd_id) DO NOTHING;
 
 INSERT INTO cmmn_grp_cd_detl (cmmn_grp_cd_id, detl_cd, detl_cd_nm, sort_ordr) VALUES
   ('NTN','JP','일본',1), ('NTN','CN','중국',2), ('NTN','TW','대만',3), ('NTN','TH','태국',4), ('NTN','KR','한국',5),
+  -- 여권 도장 도안이 있는 확장 국가 (여행 생성·도장 표시용)
+  ('NTN','VN','베트남',6), ('NTN','SG','싱가포르',7), ('NTN','US','미국',8), ('NTN','AU','호주',9),
+  ('NTN','FR','프랑스',10), ('NTN','GB','영국',11), ('NTN','IT','이탈리아',12), ('NTN','ES','스페인',13),
   ('CRNCY','JPY','엔 (JPY)',1), ('CRNCY','CNY','위안 (CNY)',2), ('CRNCY','TWD','대만달러 (TWD)',3),
   ('CRNCY','THB','바트 (THB)',4), ('CRNCY','KRW','원 (KRW)',5), ('CRNCY','USD','달러 (USD)',6),
+  ('CRNCY','VND','동 (VND)',7), ('CRNCY','SGD','싱가포르달러 (SGD)',8), ('CRNCY','AUD','호주달러 (AUD)',9),
+  ('CRNCY','EUR','유로 (EUR)',10), ('CRNCY','GBP','파운드 (GBP)',11),
   ('TRIP_STTUS','PREP','준비전',1), ('TRIP_STTUS','PLANNED','예정',2), ('TRIP_STTUS','ONGOING','여행중',3), ('TRIP_STTUS','DONE','완료',4),
   ('GIFT_TAG','SELF','나',1), ('GIFT_TAG','FAMILY','가족',2), ('GIFT_TAG','FRIEND','친구',3), ('GIFT_TAG','COWORK','동료',4),
   -- 앱 화면의 '지인' 태그 (정의서 4개 외 확장 코드)
