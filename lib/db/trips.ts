@@ -17,6 +17,8 @@ export type TripDto = {
   currency: string;
   budget: number;
   status: "PREP" | "PLANNED" | "ONGOING" | "DONE";
+  /** 여권 도장을 찍은 페이지 (1~100). NULL 이면 아직 안 찍음 */
+  passportPage: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -52,13 +54,14 @@ type TripRow = {
   crncy_cd: string;
   bdgt_amt: string | number;
   trip_sttus_cd: TripDto["status"];
+  psprt_page_no: number | null;
   rgst_dttm: string;
   altr_dttm: string;
 };
 
 const COLS = `trip_sn, trip_nm, ntn_cd, cty_nm, tz_id,
   to_char(begin_de, 'YYYY-MM-DD') AS begin_de, to_char(end_de, 'YYYY-MM-DD') AS end_de,
-  crncy_cd, bdgt_amt, trip_sttus_cd, rgst_dttm, altr_dttm`;
+  crncy_cd, bdgt_amt, trip_sttus_cd, psprt_page_no, rgst_dttm, altr_dttm`;
 
 const DEFAULT_TZ: Record<string, string> = {
   JP: "Asia/Tokyo",
@@ -66,6 +69,14 @@ const DEFAULT_TZ: Record<string, string> = {
   TW: "Asia/Taipei",
   TH: "Asia/Bangkok",
   KR: "Asia/Seoul",
+  VN: "Asia/Ho_Chi_Minh",
+  SG: "Asia/Singapore",
+  US: "America/New_York",
+  AU: "Australia/Sydney",
+  FR: "Europe/Paris",
+  GB: "Europe/London",
+  IT: "Europe/Rome",
+  ES: "Europe/Madrid",
 };
 
 async function toDto(r: TripRow): Promise<TripDto> {
@@ -81,6 +92,7 @@ async function toDto(r: TripRow): Promise<TripDto> {
     currency: r.crncy_cd,
     budget: Number(r.bdgt_amt),
     status: r.trip_sttus_cd,
+    passportPage: r.psprt_page_no ?? null,
     createdAt: new Date(r.rgst_dttm).toISOString(),
     updatedAt: new Date(r.altr_dttm).toISOString(),
   };
@@ -187,6 +199,48 @@ export async function updateTrip(
       WHERE user_sn = $1 AND trip_sn = $2
       RETURNING ${COLS}`,
     [userSn, tripId, input.name, ntn, input.city, tz, input.startDate, input.endDate, crncy, input.budget, status],
+  )) as TripRow[];
+  return toDto(rows[0]);
+}
+
+/** 여행 마치기: 날짜와 무관하게 완료 상태로 바꾼다 (여권 도장 대상이 된다) */
+export async function completeTrip(userSn: number, tripId: string): Promise<TripDto> {
+  await requireTrip(userSn, tripId);
+  const sql = getSql();
+  const rows = (await sql.query(
+    `UPDATE trip_info SET trip_sttus_cd = 'DONE'
+      WHERE user_sn = $1 AND trip_sn = $2
+      RETURNING ${COLS}`,
+    [userSn, tripId],
+  )) as TripRow[];
+  return toDto(rows[0]);
+}
+
+function todayIn(timezone: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** 여권 도장 페이지 저장 (한 번 찍은 도장은 옮기지 않는다 → 이미 있으면 유지) */
+export async function setTripPassportPage(
+  userSn: number,
+  tripId: string,
+  pageNumber: number,
+): Promise<TripDto> {
+  const trip = await requireTrip(userSn, tripId);
+  if (trip.status !== "DONE" && trip.endDate >= todayIn(trip.timezone)) {
+    throw new ApiError(400, "TRIP_NOT_COMPLETED");
+  }
+  const sql = getSql();
+  const rows = (await sql.query(
+    `UPDATE trip_info SET psprt_page_no = COALESCE(psprt_page_no, $3)
+      WHERE user_sn = $1 AND trip_sn = $2
+      RETURNING ${COLS}`,
+    [userSn, tripId, pageNumber],
   )) as TripRow[];
   return toDto(rows[0]);
 }

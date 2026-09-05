@@ -1,9 +1,9 @@
 /**
- * 한 장에 찍히는 도장 수. 내지를 2×2 칸으로 나누고 도장 하나가 칸 하나를 채우므로,
- * **네 개가 화면 한 장을 가득 채운다.** 이 값을 바꾸면 칸 배치
+ * 한 장에 찍히는 도장 수. 내지를 세 단 계단으로 나누고 도장 하나가 단 하나를 채우므로,
+ * **세 개가 화면 한 장을 가득 채운다.** 이 값을 바꾸면 칸 배치
  * (`passport-stamp-layout.ts`의 `CELL_PATTERNS`)도 같이 바꿔야 한다.
  */
-export const PASSPORT_TRIPS_PER_PAGE = 4;
+export const PASSPORT_TRIPS_PER_PAGE = 3;
 
 export type PassportPage<T> = {
   index: number;
@@ -14,7 +14,7 @@ export type PassportPage<T> = {
 
 /**
  * A passport page is a complete physical page, never one half of a spread.
- * Four stamps per page fill the phone screen, and the same page carries over to
+ * Three stamps per page fill the phone screen, and the same page carries over to
  * the two-page Fold layout without repartitioning or moving a stamp.
  */
 export function paginatePassportTrips<T>(

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Bookmark,
   Heart,
+  Loader2,
   MessageCircle,
   MoreVertical,
   Plus,
@@ -126,17 +127,52 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
   }
 
   function handleDelete() {
+    // 목록에서 즉시 빠지고(낙관적), 실패하면 훅이 되돌린다
+    setDeleteOpen(false);
     deleteShot.mutate(shot.id, {
-      onSuccess: () => {
-        setDeleteOpen(false);
-        toast.success("피드를 삭제했습니다");
-      },
       onError: (error) => {
         toast.error(
           error instanceof Error ? error.message : "삭제에 실패했습니다",
         );
       },
     });
+  }
+
+  if (shot.pending) {
+    return (
+      <article
+        className="-mx-4 border-b border-[#EAEDED] pb-4 sm:-mx-5 md:-mx-6 lg:-mx-8"
+        aria-busy="true"
+      >
+        <header className="flex items-center gap-2.5 px-4 py-3 sm:px-5 md:px-6 lg:px-8">
+          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E8ECF0] text-[13px] font-semibold text-[#4E5968]">
+            {shot.authorAvatarDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shot.authorAvatarDataUrl} alt="" className="size-full object-cover" />
+            ) : (
+              shot.authorNickname.slice(0, 1)
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[14px] font-semibold leading-tight">
+              {shot.authorNickname}
+            </p>
+            <p className="flex items-center gap-1 truncate text-[11px] text-primary">
+              <Loader2 className="size-3 animate-spin" />
+              업로드 중…
+            </p>
+          </div>
+        </header>
+        <div className="relative opacity-70">
+          <ShotImageCarousel images={shot.images} pins={shot.pins} />
+        </div>
+        {body ? (
+          <p className="px-4 pt-3 text-[14px] leading-relaxed whitespace-pre-wrap text-muted-foreground sm:px-5 md:px-6 lg:px-8 line-clamp-2">
+            {body}
+          </p>
+        ) : null}
+      </article>
+    );
   }
 
   return (

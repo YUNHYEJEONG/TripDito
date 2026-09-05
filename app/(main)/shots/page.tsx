@@ -13,6 +13,7 @@ import {
 } from "@/components/common/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import { useShots } from "@/features/shots/hooks/use-shots";
+import { usePendingShots } from "@/features/shots/store/pending-shots";
 import type { ShotSort } from "@/features/shots/schema";
 import { queryShots } from "@/features/shots/utils/shot-query";
 import {
@@ -26,7 +27,13 @@ import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 
 export default function ShotsPage() {
   const router = useRouter();
-  const { data: shots = [], isLoading } = useShots();
+  const { data: loaded = [], isLoading } = useShots();
+  const pending = usePendingShots();
+  // 업로드 진행 중인 카드는 항상 맨 위
+  const shots = useMemo(
+    () => (pending.length ? [...pending, ...loaded] : loaded),
+    [pending, loaded],
+  );
   const { isLoggedIn, isLoading: authLoading } = useIsLoggedIn();
 
   const [tab, setTab] = useState<ShotsTab>("shots");

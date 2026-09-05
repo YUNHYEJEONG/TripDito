@@ -48,7 +48,8 @@ import {
   getPassportStampHeadingLabel,
   getPassportStampIntentHref,
 } from "@/features/profile/utils/passport-view";
-import { useTrips } from "@/features/trips/hooks/use-trips";
+import { useSetPassportPage, useTrips } from "@/features/trips/hooks/use-trips";
+import { getServerPassportStampPages } from "@/features/profile/utils/passport-trips";
 import type { Trip } from "@/features/trips/types";
 import { useHydrated } from "@/lib/react/use-hydrated";
 import { cn } from "@/lib/utils";
@@ -730,9 +731,15 @@ function PassportBook({
   const pageViewId = useId();
   const isFoldLayout = useFoldPassportLayout();
   const prefersReducedMotion = useReducedMotion();
-  const [assignments, setAssignments] = useState(
+  // 로컬(구버전 호환) 위에 서버 저장값을 덮는다. 서버값이 있으면 어느 기기에서든 같은 장에 찍힌다
+  const [localAssignments, setLocalAssignments] = useState(
     readPassportStampPageAssignments,
   );
+  const assignments = useMemo(
+    () => ({ ...localAssignments, ...getServerPassportStampPages(trips) }),
+    [localAssignments, trips],
+  );
+  const setPassportPage = useSetPassportPage();
   const [imprintingTripId, setImprintingTripId] = useState<string | null>(null);
   const [justStampedPageNumber, setJustStampedPageNumber] = useState<
     number | null
@@ -989,8 +996,10 @@ function PassportBook({
     );
     const stored = savePassportStampPageAssignments(nextAssignments);
     pendingFocusTripIdRef.current = target.id;
-    setAssignments(nextAssignments);
+    setLocalAssignments(nextAssignments);
     setStorageWarning(!stored);
+    // 서버에도 저장 — 실패해도 도장 연출은 그대로, 다음 기기에서는 다시 찍게 된다
+    setPassportPage.mutate({ id: target.id, pageNumber });
     setRequestedPageIndex(pageIndex);
     setJustStampedPageNumber(pageNumber);
     // 찍었으면 여기서 끝. 이후에는 이전 장으로 가든 어디로 가든 자동 진행이 붙잡지 않는다.

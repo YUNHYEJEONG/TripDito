@@ -21,7 +21,8 @@ import type { Trip } from "@/features/trips/types";
  * 정사각 도장(145×145)을 넣으면 칸마다 세로 73px이 버려지고, 그게 두 줄이라 화면
  * 한가운데가 통째로 남았다 — 잉크가 종이의 43%밖에 덮지 못했다.
  *
- * 지금은 **4단 계단**이다. 좌우를 번갈아 가며 네 단이 종이 세로를 처음부터 끝까지 훑는다.
+ * 지금은 **3단 계단**이다. 좌우를 번갈아 가며 세 단이 종이 세로를 처음부터 끝까지 훑는다.
+ * 단이 셋이라 도장 하나가 차지하는 세로가 넷일 때보다 커서, 도장이 더 크게 읽힌다.
  *
  * 각도와 겹침은 **실제 출입국 도장 규정**을 따른다. EU Practical Handbook for Border
  * Guards(Schengen Borders Code 부속서 IV의 실무 지침)는 도장을 *가로 방향으로 찍어 읽기
@@ -37,7 +38,7 @@ import type { Trip } from "@/features/trips/types";
  * 단 간격과 좌우는 자리마다 **불규칙하게** 둔다(`CELL_PATTERNS`). 등간격에 좌우 두 값만
  * 쓰면 규칙이 그대로 읽혀 손으로 찍은 것처럼 보이지 않는다.
  */
-export const PASSPORT_STAMP_CELL = { width: 55, height: 39 } as const;
+export const PASSPORT_STAMP_CELL = { width: 55, height: 48 } as const;
 
 /** 두 단 이상 떨어진 칸 사이에 반드시 남는 여백(%). 이웃 단에는 적용하지 않는다. */
 export const PASSPORT_STAMP_CELL_GUTTER = 1;
@@ -92,7 +93,7 @@ type PlacementSlot = Pick<PassportStampCell, "left" | "top"> & {
 
 type PlacementPattern = {
   name: PassportStampLayoutPattern;
-  /** 채우는 순서대로 나열한다 — 도장이 네 개보다 적으면 앞에서부터 쓴다. */
+  /** 채우는 순서대로 나열한다 — 도장이 세 개보다 적으면 앞에서부터 쓴다. */
   cells: readonly PlacementSlot[];
 };
 
@@ -116,57 +117,52 @@ const FALLBACK_GEOMETRY = {
  *
  * **불규칙은 각도가 아니라 간격으로 만든다.** 단 간격을 똑같이(20/20/20) 두고 좌우를 두
  * 값으로만 쓰면 "좌우 번갈아, 등간격"이라는 규칙이 그대로 읽힌다. 세 간격을 서로 다르게
- * 주고(예: 17/28/16) 좌우도 같은 쪽 안에서 어긋나게 한다.
+ * 주고(예: 25/27) 좌우도 같은 쪽 안에서 어긋나게 한다.
  *
  * 지켜야 하는 두 제약:
- * - 마지막 단은 `top 61`이라 네 단이 종이 세로를 정확히 채운다
+ * - 마지막 단은 `top 52`라 세 단이 종이 세로를 정확히 채운다
  * - 두 단 이상 떨어진 칸은 `PASSPORT_STAMP_CELL_GUTTER` 이상 떨어진다 — 같은 자리에
- *   포개지면 기록을 못 읽는다. 그래서 `top[i] + 높이 + 여백 ≤ top[i+2]`가 항상 참이다
+ *   포개지면 기록을 못 읽는다. 그래서 `top[0] + 높이 + 여백 ≤ top[2]`가 항상 참이다
  */
 const CELL_PATTERNS: readonly PlacementPattern[] = [
   {
     name: "top-run",
     cells: [
       { left: 0, top: 0, tilt: -2 },
-      { left: 43, top: 19, tilt: 2 },
-      { left: 2, top: 44, tilt: -1 },
-      { left: 45, top: 61, tilt: 2 },
+      { left: 43, top: 24, tilt: 2 },
+      { left: 2, top: 52, tilt: -1 },
     ],
   },
   {
     name: "left-run",
     cells: [
       { left: 42, top: 0, tilt: 2 },
-      { left: 0, top: 20, tilt: -2 },
-      { left: 45, top: 42, tilt: 1 },
-      { left: 3, top: 61, tilt: -2 },
+      { left: 0, top: 27, tilt: -2 },
+      { left: 45, top: 52, tilt: 1 },
     ],
   },
   {
     name: "close-pair",
     cells: [
       { left: 2, top: 0, tilt: -1 },
-      { left: 44, top: 17, tilt: 2 },
-      { left: 0, top: 45, tilt: -2 },
-      { left: 43, top: 61, tilt: 1 },
+      { left: 44, top: 22, tilt: 2 },
+      { left: 0, top: 52, tilt: -2 },
     ],
   },
   {
     name: "late-drop",
     cells: [
       { left: 45, top: 0, tilt: 1 },
-      { left: 3, top: 21, tilt: -2 },
-      { left: 42, top: 43, tilt: 2 },
-      { left: 0, top: 61, tilt: -1 },
+      { left: 3, top: 29, tilt: -2 },
+      { left: 42, top: 52, tilt: 2 },
     ],
   },
   {
     name: "even-run",
     cells: [
       { left: 0, top: 0, tilt: -2 },
-      { left: 42, top: 21, tilt: 1 },
-      { left: 1, top: 41, tilt: -1 },
-      { left: 44, top: 61, tilt: 2 },
+      { left: 42, top: 26, tilt: 1 },
+      { left: 1, top: 52, tilt: -1 },
     ],
   },
 ];

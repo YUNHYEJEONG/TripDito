@@ -17,8 +17,14 @@ export const tripFormSchema = z
 
 export type TripFormValues = z.infer<typeof tripFormSchema>;
 
+export type TripStatus = "PREP" | "PLANNED" | "ONGOING" | "DONE";
+
 export type Trip = TripFormValues & {
   id: string;
+  /** 서버 저장 상태. "여행 마치기"로 날짜와 무관하게 DONE 이 될 수 있다 */
+  status?: TripStatus;
+  /** 여권 도장을 찍은 페이지 (서버 저장). null 이면 아직 안 찍음 */
+  passportPage?: number | null;
   createdAt: string;
   updatedAt: string;
 };

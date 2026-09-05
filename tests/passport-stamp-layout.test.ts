@@ -115,8 +115,8 @@ describe("passport stamp cell layout", () => {
     }
   });
 
-  it("runs the four steps down the whole height of the page", () => {
-    const [first, , , last] = getPassportStampPlacements(page(0), {
+  it("runs the three steps down the whole height of the page", () => {
+    const [first, , last] = getPassportStampPlacements(page(0), {
       pageNumber: 1,
     });
 
@@ -176,8 +176,8 @@ describe("passport stamp cell layout", () => {
       PASSPORT_STAMP_CELL.width > 50 + PASSPORT_STAMP_CELL_GUTTER,
       "columns no longer overlap, so stamps cannot grow",
     );
-    // 네 단이 종이 세로를 처음부터 끝까지 쓴다.
-    const pitch = (100 - PASSPORT_STAMP_CELL.height) / 3;
+    // 세 단이 종이 세로를 처음부터 끝까지 쓴다.
+    const pitch = (100 - PASSPORT_STAMP_CELL.height) / 2;
     assert.ok(2 * pitch >= PASSPORT_STAMP_CELL.height, "distant steps collide");
 
     // 세로로 긴 내지에서 정사각 도장이 실제로 얼마나 커지는지 잰다.
