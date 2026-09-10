@@ -1,4 +1,4 @@
-import { handleApi, readJson, requireUser } from "@/lib/server/api";
+import { handleApi, optionalUser, readJson, requireUser } from "@/lib/server/api";
 import {
   createShot,
   listShots,
@@ -7,16 +7,16 @@ import {
 } from "@/lib/db/shots";
 
 /**
- * 때샷 피드.
+ * 때샷 피드 (비로그인도 조회 가능. author=me / liked=me 는 로그인 필요).
  * query: channel=shots|community, sort=newest|likes, country=JP, city=오사카, author=me|<uuid>, limit, offset
  */
 export async function GET(request: Request) {
   return handleApi(async () => {
-    const user = await requireUser();
+    const user = await optionalUser();
     const q = shotQuerySchema.parse(
       Object.fromEntries(new URL(request.url).searchParams),
     );
-    return listShots(user.userSn, q);
+    return listShots(user?.userSn ?? null, q);
   });
 }
 

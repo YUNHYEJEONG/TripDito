@@ -1,4 +1,4 @@
-import { handleApi, readJson, requireUser } from "@/lib/server/api";
+import { handleApi, optionalUser, readJson, requireUser } from "@/lib/server/api";
 import {
   deleteShot,
   getShot,
@@ -10,8 +10,8 @@ type Ctx = { params: Promise<{ shotId: string }> };
 
 export async function GET(_request: Request, { params }: Ctx) {
   return handleApi(async () => {
-    const user = await requireUser();
-    return getShot(user.userSn, (await params).shotId);
+    const user = await optionalUser();
+    return getShot(user?.userSn ?? null, (await params).shotId);
   });
 }
 

@@ -19,6 +19,10 @@ export const designSystem = {
     actionBlue: "#3182F6",
     /** 서비스 설명용 회색 카드 */
     surfaceGray: "#F2F4F6",
+    /* 리브랜딩 이전 팔레트 — 선물 태그(지인·동료·친구) 칩 색상 전용 */
+    skyBlueLight: "#8ECAE6",
+    amberFlame: "#FFB703",
+    princetonOrange: "#FB8500",
   },
   typography: {
     korean: "Noto Sans KR",

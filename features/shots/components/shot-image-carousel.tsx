@@ -6,6 +6,47 @@ import { cn } from "@/lib/utils";
 import type { ImagePin } from "../schema";
 import { useMouseDragScroll } from "../hooks/use-mouse-drag-scroll";
 
+/**
+ * 슬라이드 한 장. load 가 한 번 true 가 되면 img 를 계속 붙여 둔다.
+ * 받는 동안은 회색 배경만 보이고, 다 받으면 살짝 페이드인.
+ */
+function Slide({
+  src,
+  load,
+  priority,
+}: {
+  src: string;
+  load: boolean;
+  priority: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative aspect-square min-w-full shrink-0 basis-full snap-start bg-[#F2F4F6]">
+      {load ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          // 캐시에 있던 이미지는 onLoad 가 붙기 전에 끝날 수 있으므로 complete 도 본다
+          ref={(el) => {
+            if (el?.complete && el.naturalWidth > 0) setLoaded(true);
+          }}
+          src={src}
+          alt=""
+          // 가로 스크롤 안의 슬라이드는 브라우저 lazy 판정에 걸리므로 로딩 시점은 직접 정한다
+          loading="eager"
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
+          onLoad={() => setLoaded(true)}
+          className={cn(
+            "pointer-events-none size-full object-cover transition-opacity duration-200",
+            loaded ? "opacity-100" : "opacity-0",
+          )}
+          draggable={false}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function readCarouselIndex(scroller: HTMLElement, total: number) {
   const slide = scroller.firstElementChild as HTMLElement | null;
   const slideWidth = slide?.getBoundingClientRect().width ?? scroller.clientWidth;
@@ -20,22 +61,47 @@ export function ShotImageCarousel({
   images,
   pins = [],
   className,
+  active = true,
+  priority = false,
 }: {
   images: string[];
   pins?: ImagePin[];
   className?: string;
+  /**
+   * 이미지를 받기 시작할지. 피드에서는 카드가 화면 근처에 오면 true 로 바꿔
+   * 사용자가 내려오기 전에 미리 받아 둔다. 첫 장과 그 다음 장까지 받고,
+   * 넘길 때마다 다음 장을 이어서 받는다.
+   */
+  active?: boolean;
+  /** 첫 화면에 보이는 카드 — 첫 장을 최우선으로 받는다 */
+  priority?: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [index, setIndex] = useState(0);
+  // index: 지금 보는 장 / reached: 지금까지 넘겨 본 가장 먼 장 (받기 시작한 슬라이드를 계속 붙여 두기 위해)
+  const [nav, setNav] = useState({ index: 0, reached: 0 });
   const [openPinId, setOpenPinId] = useState<string | null>(null);
+  const index = nav.index;
 
   const total = images.length;
   const currentPins = pins.filter((pin) => pin.imageIndex === index);
 
+  function moveTo(next: number) {
+    setNav((prev) =>
+      prev.index === next
+        ? prev
+        : { index: next, reached: Math.max(prev.reached, next) },
+    );
+  }
+
+  /** 지금 보는 장과 바로 다음 장까지 미리 받아 둔다. active 와 reached 는 되돌아가지 않는다 */
+  function shouldLoad(i: number) {
+    return active && i <= nav.reached + 1;
+  }
+
   useMouseDragScroll(scrollerRef, total > 1);
 
   useEffect(() => {
-    setIndex(0);
+    setNav({ index: 0, reached: 0 });
     scrollerRef.current?.scrollTo({ left: 0 });
   }, [images]);
 
@@ -56,7 +122,7 @@ export function ShotImageCarousel({
         if (!best) return;
         const next = slides.indexOf(best.target);
         if (next < 0) return;
-        setIndex((prev) => (prev === next ? prev : next));
+        moveTo(next);
       },
       { root, threshold: [0.55, 0.75, 0.9] },
     );
@@ -69,7 +135,7 @@ export function ShotImageCarousel({
     const el = scrollerRef.current;
     if (!el || total <= 1) return;
     const next = readCarouselIndex(el, total);
-    setIndex((prev) => (prev === next ? prev : next));
+    moveTo(next);
   }
 
   return (
@@ -83,18 +149,12 @@ export function ShotImageCarousel({
         onScroll={handleScroll}
       >
         {images.map((src, i) => (
-          <div
+          <Slide
             key={`${src.slice(0, 24)}-${i}`}
-            className="relative aspect-square min-w-full shrink-0 basis-full snap-start bg-[#F2F4F6]"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt=""
-              className="pointer-events-none size-full object-cover"
-              draggable={false}
-            />
-          </div>
+            src={src}
+            load={shouldLoad(i)}
+            priority={priority && i === 0}
+          />
         ))}
       </div>
 

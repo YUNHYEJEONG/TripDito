@@ -9,6 +9,12 @@ import type { AuthProvider } from "../types";
 type SocialProvider = Exclude<AuthProvider, "dev">;
 type SocialStatus = Partial<Record<AuthProvider, boolean>>;
 
+/**
+ * 소셜 로그인은 키 발급·검수 전이라 아직 동작하지 않는다.
+ * 버튼은 보여 주되 눌리지 않게 막아 둔다. 준비되면 true 로 바꾼다.
+ */
+const SOCIAL_LOGIN_ENABLED = false;
+
 const NOT_CONFIGURED: Record<SocialProvider, string> = {
   google:
     "구글 로그인을 쓰려면 .env.local에 AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET을 설정하세요",
@@ -44,7 +50,13 @@ export function SocialLoginButtons({
     };
   }, []);
 
+  const disabled = !SOCIAL_LOGIN_ENABLED || pending != null;
+
   async function handleSocial(provider: SocialProvider) {
+    if (!SOCIAL_LOGIN_ENABLED) {
+      toast("소셜 로그인은 준비 중이에요. 아래 테스트 계정으로 로그인해 주세요");
+      return;
+    }
     if (!status?.[provider]) {
       toast.error(NOT_CONFIGURED[provider]);
       return;
@@ -60,9 +72,15 @@ export function SocialLoginButtons({
 
   return (
     <div className={cn("flex flex-col gap-2.5", className)}>
+      {!SOCIAL_LOGIN_ENABLED ? (
+        <p className="text-center text-[12px] text-muted-foreground">
+          소셜 로그인은 준비 중이에요
+        </p>
+      ) : null}
       <button
         type="button"
-        disabled={pending != null}
+        disabled={disabled}
+        aria-disabled={disabled}
         onClick={() => void handleSocial("google")}
         className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-white text-[15px] font-semibold text-[#1F1F1F] transition-opacity hover:opacity-95 disabled:opacity-50"
       >
@@ -71,7 +89,8 @@ export function SocialLoginButtons({
       </button>
       <button
         type="button"
-        disabled={pending != null}
+        disabled={disabled}
+        aria-disabled={disabled}
         onClick={() => void handleSocial("kakao")}
         className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-[15px] font-semibold text-[#191919] transition-opacity hover:opacity-95 disabled:opacity-50"
       >
@@ -80,7 +99,8 @@ export function SocialLoginButtons({
       </button>
       <button
         type="button"
-        disabled={pending != null}
+        disabled={disabled}
+        aria-disabled={disabled}
         onClick={() => void handleSocial("naver")}
         className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#03C75A] text-[15px] font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-50"
       >
