@@ -32,12 +32,12 @@
 | GET/PUT/DELETE | `/api/items/:itemId` | 품목 단건 |
 | POST | `/api/items/:itemId/purchase` | 구매 토글 (`PRCHS_DTTM`) |
 | GET/POST | `/api/shots` | 피드(`channel, sort, country, city, author, limit, offset`) / 업로드 |
-| GET/PUT/DELETE | `/api/shots/:shotId` | 때샷 단건 |
+| GET/PUT/DELETE | `/api/shots/:shotId` | 떼샷 단건 |
 | POST | `/api/shots/:shotId/like` · `/scrap` | 좋아요 / 스크랩 토글 |
 | GET/POST | `/api/shots/:shotId/comments` | 댓글 목록 / 작성 `{text, parentId?}` |
 | DELETE | `/api/shots/:shotId/comments/:commentId` | 댓글 삭제 (행 유지, `DEL_DTTM`) |
 | POST / PUT | `/api/uploads` | ① presigned URL 발급 ② 업로드 후 첨부 등록 |
-| GET | `/api/shots/:shotId/items` | 때샷 연결 쇼핑품목 + 여행 요약 (퍼가기) |
+| GET | `/api/shots/:shotId/items` | 떼샷 연결 쇼핑품목 + 여행 요약 (퍼가기) |
 | GET | `/api/files/*` | R2 오브젝트 프록시 (공개) |
 | GET | `/api/codes/:group` | 공통코드 (예: `NTN`, `CRNCY`, `GIFT_TAG`) |
 | GET | `/api/coupons?country=JP` | 쿠폰 (DB 적재분 우선, 없으면 외부 파싱/폴백) |
@@ -65,7 +65,7 @@ DB 에는 오브젝트 키만 저장한다(`FILE_PATH`). 공개 URL 은 `R2_PUBL
 - 이미지는 `lib/api/upload.ts#uploadImages` 로 R2 에 먼저 올린 뒤 `attachmentId` 로 저장한다. data URL 을 그대로 서버에 보내지 않는다.
 - 로그인 상태는 next-auth `useSession` 기반(`features/auth/hooks/use-auth.ts`). 이메일 가입/로그인·로컬 계정은 제거, `/signup` 은 `/login` 으로 리다이렉트.
 - 로그인 필수 페이지는 `useRequireLogin()` 으로 `/login?callbackUrl=` 이동. 목록 훅(`useTrips`, `useShots` 등)은 미로그인 시 빈 배열.
-- 서버 스키마에 없는 값: 때샷 **공유 횟수**는 브라우저 localStorage 에만 보관(`trip-shopping:shots:shares`). 광고 닫기 상태도 로컬 유지.
+- 서버 스키마에 없는 값: 떼샷 **공유 횟수**는 브라우저 localStorage 에만 보관(`trip-shopping:shots:shares`). 광고 닫기 상태도 로컬 유지.
 - 추가 API: `GET /api/shots/:shotId/items`(퍼가기용 품목+여행 요약), `GET /api/shots?liked=me`, `GET /api/files/*`(R2 프록시 — 공개 URL 미설정 시 이미지 서빙).
 
 ## 개발용 로그인 (소셜 키 발급 전 임시)

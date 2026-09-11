@@ -249,13 +249,13 @@ export default function ProfilePage() {
             <ProfileMenuLink
               href="/profile/likes"
               icon={Heart}
-              title="좋아요 누른 피드"
+              title="좋아요 누른 떼샷"
               description={`${likedCount}개`}
             />
             <ProfileMenuLink
               href="/profile/scraps"
               icon={Bookmark}
-              title="스크랩한 때샷"
+              title="스크랩한 떼샷"
               description={`${scraps.length}개 저장됨`}
             />
           </div>

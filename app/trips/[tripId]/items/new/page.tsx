@@ -48,6 +48,7 @@ export default function NewItemPage({
     <AppShell>
       <PageHeader title="상품 추가" backHref={`/trips/${tripId}`} />
       <ItemForm
+        tripRange={{ startDate: trip.startDate, endDate: trip.endDate }}
         submitLabel="추가"
         onCancel={() => router.push(`/trips/${tripId}`)}
         onSubmit={async (values) => {

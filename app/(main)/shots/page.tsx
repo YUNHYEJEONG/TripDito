@@ -100,7 +100,7 @@ export default function ShotsPage() {
   function handleCreate() {
     if (
       !requireLogin({
-        message: "로그인하고 때샷을 올려 보세요",
+        message: "로그인하고 떼샷을 올려 보세요",
         callbackUrl: "/shots/new",
       })
     ) {
@@ -127,7 +127,7 @@ export default function ShotsPage() {
   return (
     <AppShell withBottomNav className="px-0 sm:px-0 md:px-0 lg:px-0">
       <PageHeader
-        title="때샷구경"
+        title="떼샷구경"
         actions={<HeaderNavActions />}
         className="sticky top-0 z-30 mx-0 mb-0 bg-canvas/95 px-4 sm:px-5 md:px-6 lg:px-8"
       />
@@ -154,9 +154,9 @@ export default function ShotsPage() {
         ) : feed.length === 0 ? (
           <div className="px-4 pt-6 sm:px-5 md:px-6 lg:px-8">
             <EmptyState
-              title="아직 때샷이 없어요. 😥"
-              description="첫 때샷의 주인공이 되어 보세요!"
-              actionLabel="때샷 올리기"
+              title="아직 떼샷이 없어요. 😥"
+              description="첫 떼샷의 주인공이 되어 보세요!"
+              actionLabel="떼샷 올리기"
               onAction={handleCreate}
               secondaryLabel="다른 여행지 선택"
               onSecondary={handleSelectOtherDestination}
@@ -186,7 +186,7 @@ export default function ShotsPage() {
       <div className="fixed right-4 bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] z-30 md:right-[max(1rem,calc((100vw-720px)/2+1rem))] lg:right-[max(1rem,calc((100vw-960px)/2+1rem))]">
         <Button
           size="icon-lg"
-          aria-label="때샷 올리기"
+          aria-label="떼샷 올리기"
           className="size-14 rounded-full shadow-md [&_svg:not([class*='size-'])]:size-7"
           onClick={handleCreate}
         >

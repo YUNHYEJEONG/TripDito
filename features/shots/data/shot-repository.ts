@@ -209,7 +209,7 @@ export const shotRepository = {
     return this.getById(id);
   },
 
-  /** 때샷에 연결된 쇼핑품목 + 여행 요약 */
+  /** 떼샷에 연결된 쇼핑품목 + 여행 요약 */
   async listItems(
     shotId: string,
   ): Promise<{ items: ShoppingItem[]; trip: Trip | null }> {

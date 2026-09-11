@@ -52,7 +52,7 @@ export function useShots(filter: ShotListFilter = {}) {
   });
 }
 
-/** 내가 좋아요한 때샷 */
+/** 내가 좋아요한 떼샷 */
 export function useLikedShots() {
   return useShots({ liked: "me" });
 }
@@ -66,7 +66,7 @@ export function useShot(id: string) {
   });
 }
 
-/** 때샷에 연결된 쇼핑품목 + 여행 요약 (퍼가기 시트). 보는 건 비로그인도 가능 */
+/** 떼샷에 연결된 쇼핑품목 + 여행 요약 (퍼가기 시트). 보는 건 비로그인도 가능 */
 export function useShotItems(shotId: string, enabled = true) {
   return useQuery({
     queryKey: shotKeys.items(shotId),
@@ -124,7 +124,7 @@ export function useCreateShot() {
       pendingShots.remove(pendingId);
       prependShotToLists(queryClient, shot);
       markShotsStale(queryClient);
-      toast.success("때샷을 올렸어요");
+      toast.success("떼샷을 올렸어요");
     },
     onError: (error, { pendingId }) => {
       pendingShots.remove(pendingId);

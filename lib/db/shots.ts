@@ -424,7 +424,7 @@ export async function listScraps(userSn: number, limit = 50, offset = 0) {
   return toDtos(rows, userSn);
 }
 
-/** 때샷에 연결된 쇼핑품목 (다른 사람 것도 열람 가능 — 퍼가기용) */
+/** 떼샷에 연결된 쇼핑품목 (다른 사람 것도 열람 가능 — 퍼가기용) */
 export async function listShotItems(viewerSn: ViewerSn, shotId: string) {
   const row = await findRow(viewerSn, shotId);
   if (!row) throw new ApiError(404, "SHOT_NOT_FOUND");

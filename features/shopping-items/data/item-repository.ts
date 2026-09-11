@@ -106,7 +106,7 @@ export const itemRepository = {
     return created;
   },
 
-  /** 다른 사람 때샷의 쇼핑품목을 내 여행 리스트로 퍼가기 (첨부 ID 재사용) */
+  /** 다른 사람 떼샷의 쇼핑품목을 내 여행 리스트로 퍼가기 (첨부 ID 재사용) */
   async copyToTrip(
     source: ShoppingItem,
     targetTripId: string,

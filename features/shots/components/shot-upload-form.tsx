@@ -308,7 +308,7 @@ export function ShotUploadForm({
       </Field>
 
       <Field
-        label={channel === "shots" ? "때샷 이미지" : "이미지"}
+        label={channel === "shots" ? "떼샷 이미지" : "이미지"}
         required
         trailing={
           <span className="text-[12px] text-muted-foreground tabular-nums">

@@ -13,7 +13,7 @@ const tabs = [
   },
   {
     href: "/shots",
-    label: "때샷구경",
+    label: "떼샷구경",
     icon: Camera,
   },
   {
