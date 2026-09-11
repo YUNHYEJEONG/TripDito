@@ -89,22 +89,28 @@ export async function itemsToDtos(rows: ItemRow[]): Promise<ShoppingItemDto[]> {
 }
 
 async function normalizeTags(tags: string[]) {
-  const codes = [...new Set(tags.map((t) => GIFT_TAG_TO_CODE[t] ?? t.toUpperCase()))];
+  const codes = [
+    ...new Set(tags.map((t) => GIFT_TAG_TO_CODE[t] ?? t.toUpperCase())),
+  ];
   for (const c of codes) {
-    if (!(await isValidCode("GIFT_TAG", c))) throw new ApiError(400, "INVALID_GIFT_TAG");
+    if (!(await isValidCode("GIFT_TAG", c)))
+      throw new ApiError(400, "INVALID_GIFT_TAG");
   }
   return codes;
 }
 
 export async function listItems(userSn: number, tripId: string) {
-  await requireTrip(userSn, tripId);
+  if (!/^\d+$/.test(tripId)) throw new ApiError(404, "TRIP_NOT_FOUND");
   const sql = getSql();
+  // 소유 검증을 JOIN 으로 합쳐 왕복 1회로. 결과가 없을 때만 여행 존재 여부를 따로 확인한다
   const rows = (await sql.query(
     `SELECT ${ITEM_COLS} FROM shop_item_info i
-      WHERE i.trip_sn = $1 AND i.use_at = 'Y'
+       JOIN trip_info tr ON tr.trip_sn = i.trip_sn
+      WHERE i.trip_sn = $1 AND tr.user_sn = $2 AND i.use_at = 'Y' AND tr.use_at = 'Y'
       ORDER BY i.rgst_dttm DESC, i.shop_item_sn DESC`,
-    [tripId],
+    [tripId, userSn],
   )) as ItemRow[];
+  if (rows.length === 0) await requireTrip(userSn, tripId);
   return itemsToDtos(rows);
 }
 
@@ -139,8 +145,16 @@ export async function createItem(
        (trip_sn, item_nm, estm_amt, qy, memo_cn, atcm_file_id, prchs_plan_de, prchs_dttm)
      VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $8 THEN now() END)
      RETURNING shop_item_sn`,
-    [tripId, input.name, input.estimatedPrice, input.quantity, input.memo || null,
-     input.attachmentId ?? null, input.plannedPurchaseDate ?? null, Boolean(input.purchased)],
+    [
+      tripId,
+      input.name,
+      input.estimatedPrice,
+      input.quantity,
+      input.memo || null,
+      input.attachmentId ?? null,
+      input.plannedPurchaseDate ?? null,
+      Boolean(input.purchased),
+    ],
   )) as { shop_item_sn: string | number }[];
   const id = String(rows[0].shop_item_sn);
   await replaceTags(id, codes);
@@ -163,9 +177,18 @@ export async function updateItem(
             prchs_plan_de = $7,
             prchs_dttm = CASE WHEN $8 THEN COALESCE(prchs_dttm, now()) ELSE NULL END
       WHERE shop_item_sn = $1`,
-    [itemId, input.name, input.estimatedPrice, input.quantity, input.memo || null,
-     input.attachmentId === undefined ? before.atcm_file_id : input.attachmentId,
-     input.plannedPurchaseDate ?? null, purchased],
+    [
+      itemId,
+      input.name,
+      input.estimatedPrice,
+      input.quantity,
+      input.memo || null,
+      input.attachmentId === undefined
+        ? before.atcm_file_id
+        : input.attachmentId,
+      input.plannedPurchaseDate ?? null,
+      purchased,
+    ],
   );
   await replaceTags(itemId, codes);
   return getItem(userSn, itemId);
@@ -195,7 +218,9 @@ export async function deleteItem(userSn: number, itemId: string) {
 
 async function replaceTags(itemId: string, codes: string[]) {
   const sql = getSql();
-  await sql.query(`DELETE FROM shop_item_tag_mpng WHERE shop_item_sn = $1`, [itemId]);
+  await sql.query(`DELETE FROM shop_item_tag_mpng WHERE shop_item_sn = $1`, [
+    itemId,
+  ]);
   for (const c of codes) {
     await sql.query(
       `INSERT INTO shop_item_tag_mpng (shop_item_sn, gift_tag_cd) VALUES ($1, $2)

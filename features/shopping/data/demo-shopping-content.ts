@@ -192,3 +192,73 @@ export const SHOPPING_DESTINATION_OPTIONS: { city: string; country: string }[] =
     { city: "홋카이도", country: "일본" },
     { city: "삿포로", country: "일본" },
   ];
+
+export type TrendingCity = {
+  id: string;
+  city: string;
+  country: string;
+  /** 한 줄 추천 이유 */
+  reason: string;
+  /** 시즌 태그 (예: "9월 추천") */
+  season: string;
+  imageSrc: string;
+  tone: string;
+};
+
+/** 홈(비로그인) — 요즘 가기 좋은 해외 도시 */
+export const DEMO_TRENDING_CITIES: TrendingCity[] = [
+  {
+    id: "city-tokyo",
+    city: "도쿄",
+    country: "일본",
+    reason: "선선해진 날씨, 드럭스토어·가전 쇼핑",
+    season: "가을 추천",
+    imageSrc: "/trip-backgrounds/tokyo.jpg",
+    tone: "bg-[#1B3A4B]",
+  },
+  {
+    id: "city-osaka",
+    city: "오사카",
+    country: "일본",
+    reason: "도톤보리 먹거리와 돈키호테 야간 쇼핑",
+    season: "먹방 여행",
+    imageSrc: "/trip-backgrounds/osaka.jpg",
+    tone: "bg-[#3D2C29]",
+  },
+  {
+    id: "city-sapporo",
+    city: "삿포로",
+    country: "일본",
+    reason: "단풍 시즌 시작, 유제품·스위츠 쇼핑",
+    season: "단풍 시즌",
+    imageSrc: "/trip-backgrounds/sapporo.jpg",
+    tone: "bg-[#2C3E50]",
+  },
+  {
+    id: "city-okinawa",
+    city: "오키나와",
+    country: "일본",
+    reason: "늦여름 바다, 리조트에서 여유롭게",
+    season: "늦여름 휴양",
+    imageSrc: "/trip-backgrounds/okinawa.jpg",
+    tone: "bg-[#1F4E79]",
+  },
+  {
+    id: "city-taiwan",
+    city: "타이베이",
+    country: "대만",
+    reason: "야시장 먹거리와 가성비 좋은 쇼핑",
+    season: "주말 짧게",
+    imageSrc: "/trip-backgrounds/taiwan.jpg",
+    tone: "bg-[#5C3A21]",
+  },
+  {
+    id: "city-shanghai",
+    city: "상하이",
+    country: "중국",
+    reason: "와이탄 야경과 대형 쇼핑몰 투어",
+    season: "도시 여행",
+    imageSrc: "/trip-backgrounds/china.jpg",
+    tone: "bg-[#4A3728]",
+  },
+];

@@ -19,22 +19,9 @@ import {
 } from "@/components/ui/gray-card";
 import { TripCard } from "@/features/trips/components/trip-card";
 import { useTrips } from "@/features/trips/hooks/use-trips";
-import { useItems } from "@/features/shopping-items/hooks/use-items";
-import { calculateBudget } from "@/features/budget/utils/calculate-budget";
+import { tripProgress } from "@/features/trips/utils/trip-progress";
 import { getCompletedPassportTrips } from "@/features/profile/utils/passport-trips";
 import { appConfig } from "@/config/app";
-
-function TripCardWithProgress({
-  tripId,
-  children,
-}: {
-  tripId: string;
-  children: (progress?: number) => React.ReactNode;
-}) {
-  const { data: items = [] } = useItems(tripId);
-  const summary = calculateBudget(0, items);
-  return <>{children(items.length ? summary.purchaseProgress : undefined)}</>;
-}
 
 export default function MyTripsPage() {
   const router = useRouter();
@@ -96,9 +83,7 @@ export default function MyTripsPage() {
       ) : (
         <div className="flex flex-col gap-1.5">
           {trips.map((trip) => (
-            <TripCardWithProgress key={trip.id} tripId={trip.id}>
-              {(progress) => <TripCard trip={trip} progress={progress} />}
-            </TripCardWithProgress>
+            <TripCard key={trip.id} trip={trip} progress={tripProgress(trip)} />
           ))}
         </div>
       )}

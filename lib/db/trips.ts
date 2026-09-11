@@ -19,8 +19,17 @@ export type TripDto = {
   status: "PREP" | "PLANNED" | "ONGOING" | "DONE";
   /** 여권 도장을 찍은 페이지 (1~100). NULL 이면 아직 안 찍음 */
   passportPage: number | null;
+  /** 쇼핑 품목 집계 — 목록 조회(listTrips)에서만 채워진다 */
+  stats?: TripItemStats;
   createdAt: string;
   updatedAt: string;
+};
+
+export type TripItemStats = {
+  itemCount: number;
+  purchasedCount: number;
+  /** 예상 금액 합계 (estm_amt × qy) */
+  estimatedTotal: number;
 };
 
 export const tripInputSchema = z
@@ -57,6 +66,9 @@ type TripRow = {
   psprt_page_no: number | null;
   rgst_dttm: string;
   altr_dttm: string;
+  item_cnt?: string | number | null;
+  prchs_cnt?: string | number | null;
+  estm_total?: string | number | null;
 };
 
 const COLS = `trip_sn, trip_nm, ntn_cd, cty_nm, tz_id,
@@ -80,6 +92,14 @@ const DEFAULT_TZ: Record<string, string> = {
 };
 
 async function toDto(r: TripRow): Promise<TripDto> {
+  const stats: TripItemStats | undefined =
+    r.item_cnt === undefined
+      ? undefined
+      : {
+          itemCount: Number(r.item_cnt ?? 0),
+          purchasedCount: Number(r.prchs_cnt ?? 0),
+          estimatedTotal: Number(r.estm_total ?? 0),
+        };
   return {
     id: String(r.trip_sn),
     name: r.trip_nm,
@@ -93,6 +113,7 @@ async function toDto(r: TripRow): Promise<TripDto> {
     budget: Number(r.bdgt_amt),
     status: r.trip_sttus_cd,
     passportPage: r.psprt_page_no ?? null,
+    ...(stats ? { stats } : {}),
     createdAt: new Date(r.rgst_dttm).toISOString(),
     updatedAt: new Date(r.altr_dttm).toISOString(),
   };
@@ -126,12 +147,32 @@ async function normalize(input: TripInput) {
   return { ntn, crncy, tz, status };
 }
 
+/**
+ * 내 여행 목록 + 여행별 쇼핑 품목 집계를 한 번의 쿼리로.
+ * (목록 화면이 여행마다 품목 API 를 따로 부르던 N+1 을 없앤다)
+ */
 export async function listTrips(userSn: number): Promise<TripDto[]> {
   const sql = getSql();
   const rows = (await sql.query(
-    `SELECT ${COLS} FROM trip_info
-      WHERE user_sn = $1 AND use_at = 'Y'
-      ORDER BY begin_de DESC, trip_sn DESC`,
+    `SELECT t.trip_sn, t.trip_nm, t.ntn_cd, t.cty_nm, t.tz_id,
+            to_char(t.begin_de, 'YYYY-MM-DD') AS begin_de,
+            to_char(t.end_de, 'YYYY-MM-DD') AS end_de,
+            t.crncy_cd, t.bdgt_amt, t.trip_sttus_cd, t.psprt_page_no, t.rgst_dttm, t.altr_dttm,
+            COALESCE(s.item_cnt, 0) AS item_cnt,
+            COALESCE(s.prchs_cnt, 0) AS prchs_cnt,
+            COALESCE(s.estm_total, 0) AS estm_total
+       FROM trip_info t
+       LEFT JOIN (
+         SELECT trip_sn,
+                COUNT(*) AS item_cnt,
+                COUNT(prchs_dttm) AS prchs_cnt,
+                COALESCE(SUM(estm_amt * qy), 0) AS estm_total
+           FROM shop_item_info
+          WHERE use_at = 'Y'
+          GROUP BY trip_sn
+       ) s ON s.trip_sn = t.trip_sn
+      WHERE t.user_sn = $1 AND t.use_at = 'Y'
+      ORDER BY t.begin_de DESC, t.trip_sn DESC`,
     [userSn],
   )) as TripRow[];
   return Promise.all(rows.map(toDto));
@@ -179,7 +220,18 @@ export async function createTrip(
        (user_sn, trip_nm, ntn_cd, cty_nm, tz_id, begin_de, end_de, crncy_cd, bdgt_amt, trip_sttus_cd)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING ${COLS}`,
-    [userSn, input.name, ntn, input.city, tz, input.startDate, input.endDate, crncy, input.budget, status],
+    [
+      userSn,
+      input.name,
+      ntn,
+      input.city,
+      tz,
+      input.startDate,
+      input.endDate,
+      crncy,
+      input.budget,
+      status,
+    ],
   )) as TripRow[];
   return toDto(rows[0]);
 }
@@ -198,13 +250,28 @@ export async function updateTrip(
             end_de = $8, crncy_cd = $9, bdgt_amt = $10, trip_sttus_cd = $11
       WHERE user_sn = $1 AND trip_sn = $2
       RETURNING ${COLS}`,
-    [userSn, tripId, input.name, ntn, input.city, tz, input.startDate, input.endDate, crncy, input.budget, status],
+    [
+      userSn,
+      tripId,
+      input.name,
+      ntn,
+      input.city,
+      tz,
+      input.startDate,
+      input.endDate,
+      crncy,
+      input.budget,
+      status,
+    ],
   )) as TripRow[];
   return toDto(rows[0]);
 }
 
 /** 여행 마치기: 날짜와 무관하게 완료 상태로 바꾼다 (여권 도장 대상이 된다) */
-export async function completeTrip(userSn: number, tripId: string): Promise<TripDto> {
+export async function completeTrip(
+  userSn: number,
+  tripId: string,
+): Promise<TripDto> {
   await requireTrip(userSn, tripId);
   const sql = getSql();
   const rows = (await sql.query(
@@ -249,10 +316,9 @@ export async function setTripPassportPage(
 export async function deleteTrip(userSn: number, tripId: string) {
   await requireTrip(userSn, tripId);
   const sql = getSql();
-  await sql.query(
-    `UPDATE shop_item_info SET use_at = 'N' WHERE trip_sn = $1`,
-    [tripId],
-  );
+  await sql.query(`UPDATE shop_item_info SET use_at = 'N' WHERE trip_sn = $1`, [
+    tripId,
+  ]);
   await sql.query(
     `UPDATE trip_info SET use_at = 'N' WHERE user_sn = $1 AND trip_sn = $2`,
     [userSn, tripId],

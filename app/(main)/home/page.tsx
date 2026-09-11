@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import {
   HomeSkeleton,
@@ -13,57 +12,31 @@ import { HomeAdBanner } from "@/features/home/components/home-ad-banner";
 import { HomeCouponBanner } from "@/features/home/components/home-coupon-banner";
 import { HomeCreateTripCta } from "@/features/home/components/home-create-trip-cta";
 import { HomeFxCard } from "@/features/home/components/home-fx-card";
+import { HomeGuestDiscover } from "@/features/home/components/home-guest-discover";
 import { HomeShoppingTodo } from "@/features/home/components/home-shopping-todo";
 import { HomeUpcomingTripCard } from "@/features/home/components/home-upcoming-trip-card";
 import { getUpcomingTrip } from "@/features/home/utils/get-upcoming-trip";
 import { useTaxFreeCoupons } from "@/features/coupons/hooks/use-taxfree-coupons";
 import { filterCouponsByDestination } from "@/features/coupons/lib/filter-coupons";
-import { useItems } from "@/features/shopping-items/hooks/use-items";
 import { useTrips } from "@/features/trips/hooks/use-trips";
-import { calculateBudget } from "@/features/budget/utils/calculate-budget";
+import { tripProgress } from "@/features/trips/utils/trip-progress";
 import { appConfig } from "@/config/app";
-
-function UpcomingTripWithStats({
-  tripId,
-  children,
-}: {
-  tripId: string;
-  children: (stats: {
-    progress?: number;
-    requiredBudget: number;
-  }) => React.ReactNode;
-}) {
-  const { data: items = [] } = useItems(tripId);
-  const summary = calculateBudget(0, items);
-  return (
-    <>
-      {children({
-        progress: items.length ? summary.purchaseProgress : undefined,
-        requiredBudget: summary.estimatedTotal,
-      })}
-    </>
-  );
-}
 
 export default function HomePage() {
   const { data: trips = [], isLoading } = useTrips();
   const { data: couponData } = useTaxFreeCoupons();
   const upcoming = getUpcomingTrip(trips);
-  const destinationCoupons = useMemo(() => {
-    if (!upcoming || !couponData?.coupons) return [];
-    return filterCouponsByDestination(couponData.coupons, {
-      city: upcoming.city,
-      country: upcoming.country,
-    });
-  }, [upcoming, couponData?.coupons]);
+  const destinationCoupons =
+    upcoming && couponData?.coupons
+      ? filterCouponsByDestination(couponData.coupons, {
+          city: upcoming.city,
+          country: upcoming.country,
+        })
+      : [];
 
   return (
     <AppShell withBottomNav>
-      <PageHeader
-        brand
-        title={appConfig.name}
-        actions={<HeaderNavActions />}
-      />
+      <PageHeader brand title={appConfig.name} actions={<HeaderNavActions />} />
 
       {isLoading ? (
         <LoadingRegion>
@@ -73,15 +46,11 @@ export default function HomePage() {
         <CardStack>
           {upcoming ? (
             <>
-              <UpcomingTripWithStats tripId={upcoming.id}>
-                {({ progress, requiredBudget }) => (
-                  <HomeUpcomingTripCard
-                    trip={upcoming}
-                    progress={progress}
-                    requiredBudget={requiredBudget}
-                  />
-                )}
-              </UpcomingTripWithStats>
+              <HomeUpcomingTripCard
+                trip={upcoming}
+                progress={tripProgress(upcoming)}
+                requiredBudget={upcoming.stats?.estimatedTotal ?? 0}
+              />
 
               <HomeCouponBanner
                 city={upcoming.city}
@@ -98,7 +67,10 @@ export default function HomePage() {
               <HomeFxCard currency={upcoming.currency} />
             </>
           ) : (
-            <HomeCreateTripCta />
+            <>
+              <HomeCreateTripCta />
+              <HomeGuestDiscover />
+            </>
           )}
 
           <HomeAdBanner />

@@ -27,11 +27,7 @@ import { createId } from "@/lib/storage/id";
 import { cn } from "@/lib/utils";
 import { MAX_SHOT_IMAGES } from "../constants";
 import { useMouseDragScroll } from "../hooks/use-mouse-drag-scroll";
-import {
-  shotFormSchema,
-  type ImagePin,
-  type ShotFormValues,
-} from "../schema";
+import { shotFormSchema, type ImagePin, type ShotFormValues } from "../schema";
 
 const EMPTY_FORM_VALUES: ShotFormValues = {
   channel: "shots",
@@ -114,9 +110,13 @@ export function ShotUploadForm({
         [...files].slice(0, remaining),
         IMAGE_PRESETS.shot,
       );
-      form.setValue("images", [...images, ...compressed.map((c) => c.dataUrl)], {
-        shouldValidate: true,
-      });
+      form.setValue(
+        "images",
+        [...images, ...compressed.map((c) => c.dataUrl)],
+        {
+          shouldValidate: true,
+        },
+      );
       if (images.length === 0 && compressed.length > 0) {
         setPinImageIndex(0);
       }
@@ -232,9 +232,13 @@ export function ShotUploadForm({
   }
 
   function removePin(id: string) {
-    form.setValue("pins", pins.filter((p) => p.id !== id), {
-      shouldValidate: true,
-    });
+    form.setValue(
+      "pins",
+      pins.filter((p) => p.id !== id),
+      {
+        shouldValidate: true,
+      },
+    );
     setPinDraft(null);
     setPinText("");
   }
@@ -262,43 +266,6 @@ export function ShotUploadForm({
         });
       })}
     >
-      <Field label="업로드 위치" required>
-        <div className="grid grid-cols-2 gap-2">
-          {(
-            [
-              { value: "shots", label: "때샷구경" },
-              { value: "community", label: "커뮤니티" },
-            ] as const
-          ).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={cn(
-                "rounded-xl border px-3 py-2.5 text-[14px] font-semibold transition-colors",
-                channel === option.value
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-[#E5E8EB] bg-background text-foreground",
-              )}
-              onClick={() => {
-                form.setValue("channel", option.value, {
-                  shouldValidate: true,
-                });
-                if (option.value === "community") {
-                  form.setValue("shoppingItemIds", [], {
-                    shouldValidate: true,
-                  });
-                  form.setValue("pins", [], { shouldValidate: true });
-                  setPinDraft(null);
-                  setPinText("");
-                }
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </Field>
-
       <Field
         label="내 여행지"
         required
@@ -438,7 +405,10 @@ export function ShotUploadForm({
                             key={pin.id}
                             type="button"
                             className="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full bg-primary text-white shadow-md"
-                            style={{ left: `${pin.xPct}%`, top: `${pin.yPct}%` }}
+                            style={{
+                              left: `${pin.xPct}%`,
+                              top: `${pin.yPct}%`,
+                            }}
                             onClick={(e) => {
                               e.stopPropagation();
                               openPin(pin);
@@ -461,59 +431,58 @@ export function ShotUploadForm({
                         <Plus className="size-4" strokeWidth={2.5} />
                       </span>
                       <div
-                        className={cn(
-                          "absolute z-20 flex w-[min(78%,260px)] flex-col gap-1 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-black/10",
-                          pinDraft.xPct > 55 && "-translate-x-full",
-                          pinDraft.yPct > 80 && "-translate-y-full",
-                        )}
+                        className="absolute z-20 flex w-[min(78%,260px)] flex-col gap-1 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-black/10"
                         style={{
-                          left: `calc(${pinDraft.xPct}% ${pinDraft.xPct > 55 ? "- 22px" : "+ 22px"})`,
-                          top: `calc(${pinDraft.yPct}% ${pinDraft.yPct > 80 ? "- 22px" : "- 18px"})`,
+                          // 핀 아래(위쪽 60%)엔 아래로, 아래쪽 40%엔 위로 펼치고, 좌우는 이미지 안쪽으로 clamp
+                          left: `clamp(6px, calc(${pinDraft.xPct}% - min(39%, 130px)), calc(100% - min(78%, 260px) - 6px))`,
+                          ...(pinDraft.yPct > 60
+                            ? { bottom: `calc(${100 - pinDraft.yPct}% + 20px)` }
+                            : { top: `calc(${pinDraft.yPct}% + 20px)` }),
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex w-full items-center gap-1">
-                        <input
-                          ref={pinInputRef}
-                          value={pinText}
-                          onChange={(e) => {
-                            setPinText(e.target.value);
-                            // 직접 수정하면 아이템 연결 해제
-                            if (pinDraft.itemId) {
-                              setPinDraft({ ...pinDraft, itemId: null });
-                            }
-                          }}
-                          onBlur={commitPin}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
+                          <input
+                            ref={pinInputRef}
+                            value={pinText}
+                            onChange={(e) => {
+                              setPinText(e.target.value);
+                              // 직접 수정하면 아이템 연결 해제
+                              if (pinDraft.itemId) {
+                                setPinDraft({ ...pinDraft, itemId: null });
+                              }
+                            }}
+                            onBlur={commitPin}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                commitPin();
+                              } else if (e.key === "Escape") {
+                                e.preventDefault();
+                                setPinDraft(null);
+                                setPinText("");
+                              }
+                            }}
+                            placeholder="코멘트 입력 후 Enter"
+                            maxLength={80}
+                            className="h-8 min-w-0 flex-1 bg-transparent px-2 text-[13px] outline-none placeholder:text-[#A0A7AE]"
+                          />
+                          <button
+                            type="button"
+                            aria-label="코멘트 삭제"
+                            // input blur 보다 먼저 실행되도록 mousedown 에서 처리
+                            onMouseDown={(e) => {
                               e.preventDefault();
-                              commitPin();
-                            } else if (e.key === "Escape") {
-                              e.preventDefault();
-                              setPinDraft(null);
-                              setPinText("");
-                            }
-                          }}
-                          placeholder="코멘트 입력 후 Enter"
-                          maxLength={80}
-                          className="h-8 min-w-0 flex-1 bg-transparent px-2 text-[13px] outline-none placeholder:text-[#A0A7AE]"
-                        />
-                        <button
-                          type="button"
-                          aria-label="코멘트 삭제"
-                          // input blur 보다 먼저 실행되도록 mousedown 에서 처리
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            if (pinDraft.id) removePin(pinDraft.id);
-                            else {
-                              setPinDraft(null);
-                              setPinText("");
-                            }
-                          }}
-                          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#848C94] hover:bg-[#F2F4F6] hover:text-red-500"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
+                              if (pinDraft.id) removePin(pinDraft.id);
+                              else {
+                                setPinDraft(null);
+                                setPinText("");
+                              }
+                            }}
+                            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#848C94] hover:bg-[#F2F4F6] hover:text-red-500"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
                         </div>
                         {purchasedItems.length > 0 ? (
                           /* 쇼핑리스트에서 체크한 아이템 — 탭하면 코멘트로 연결 */
@@ -528,11 +497,17 @@ export function ShotUploadForm({
                                   onMouseDown={(e) => {
                                     e.preventDefault();
                                     if (selected) {
-                                      setPinDraft({ ...pinDraft, itemId: null });
+                                      setPinDraft({
+                                        ...pinDraft,
+                                        itemId: null,
+                                      });
                                       return;
                                     }
                                     setPinText(item.name);
-                                    setPinDraft({ ...pinDraft, itemId: item.id });
+                                    setPinDraft({
+                                      ...pinDraft,
+                                      itemId: item.id,
+                                    });
                                     pinInputRef.current?.focus();
                                   }}
                                   className={cn(
@@ -632,9 +607,7 @@ export function ShotUploadForm({
       {channel === "shots" ? (
         <Field
           label="쇼핑리스트"
-          description={
-            !tripId ? "내 여행지를 우선 선택해주세요." : undefined
-          }
+          description={!tripId ? "내 여행지를 우선 선택해주세요." : undefined}
         >
           <Button
             type="button"
@@ -742,9 +715,7 @@ function Field({
         <p className="text-[12px] text-muted-foreground">{description}</p>
       ) : null}
       {children}
-      {error ? (
-        <p className="text-[12px] text-destructive">{error}</p>
-      ) : null}
+      {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
     </div>
   );
 }

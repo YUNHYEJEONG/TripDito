@@ -25,6 +25,12 @@ export type Trip = TripFormValues & {
   status?: TripStatus;
   /** 여권 도장을 찍은 페이지 (서버 저장). null 이면 아직 안 찍음 */
   passportPage?: number | null;
+  /** 쇼핑 품목 집계 (목록 API 에서만 내려옴) */
+  stats?: {
+    itemCount: number;
+    purchasedCount: number;
+    estimatedTotal: number;
+  };
   createdAt: string;
   updatedAt: string;
 };

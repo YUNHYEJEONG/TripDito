@@ -5,10 +5,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { cn } from "@/lib/utils";
 
-/** 헤더 아이콘 버튼 — 타이틀·취소와 같은 36px 밴드에 세로 가운데 */
+/** 헤더 아이콘 버튼 — 타이틀·취소와 같은 36px 밴드에 세로 가운데, 원형 */
 export const headerIconButtonClassName = cn(
   buttonVariants({ variant: "ghost", size: "icon-sm" }),
-  "size-9 shrink-0 active:translate-y-0 [&_svg:not([class*='size-'])]:size-5",
+  "size-9 shrink-0 rounded-full text-foreground/80 hover:bg-secondary hover:text-foreground active:translate-y-0 active:bg-secondary [&_svg:not([class*='size-'])]:size-5",
 );
 
 /** 헤더 '취소' — 타이틀(16px)보다 작은 13px, 회색→클릭 시 블랙, 볼드 없음 */
@@ -31,6 +31,12 @@ export function HeaderCancelButton({
   );
 }
 
+/**
+ * 공통 페이지 헤더
+ * - 딱딱한 1px 보더 대신 가운데가 진한 그라데이션 헤어라인 + 은은한 블러
+ * - 화면명 앞에 브랜드 그라데이션 마커(3×16)로 포인트
+ * - 우측 액션은 원형 아이콘 버튼
+ */
 export function PageHeader({
   title,
   description,
@@ -53,7 +59,8 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "z-20 -mx-4 mb-3 flex h-12 items-center gap-1.5 border-b border-border bg-canvas/95 px-4 backdrop-blur-md sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
+        "relative z-20 -mx-4 mb-3 flex h-12 items-center gap-1.5 bg-canvas/85 px-4 backdrop-blur-xl sm:-mx-5 sm:px-5 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8",
+        "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-border after:to-transparent",
         sticky && "sticky top-0",
         className,
       )}
@@ -62,7 +69,7 @@ export function PageHeader({
         <Link
           href={backHref}
           aria-label="뒤로"
-          className={headerIconButtonClassName}
+          className={cn(headerIconButtonClassName, "-ml-1.5")}
         >
           <ArrowLeft />
         </Link>
@@ -78,14 +85,20 @@ export function PageHeader({
           ) : null}
         </div>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center self-stretch">
+        <div className="flex min-w-0 flex-1 items-center gap-2 self-stretch">
+          {!backHref ? (
+            <span
+              aria-hidden
+              className="h-4 w-[3px] shrink-0 rounded-full bg-[linear-gradient(180deg,#62CBFF_0%,#3182F6_100%)]"
+            />
+          ) : null}
           <div
             className={cn(
               "flex min-w-0 flex-col justify-center",
               description ? "gap-0.5 py-0.5" : "h-9",
             )}
           >
-            <h1 className="truncate text-left text-base font-semibold leading-none tracking-tight text-foreground">
+            <h1 className="truncate text-left text-[17px] font-bold leading-none tracking-[-0.01em] text-foreground">
               {title}
             </h1>
             {description ? (
@@ -98,7 +111,7 @@ export function PageHeader({
       )}
 
       {actions ? (
-        <div className="flex h-9 shrink-0 items-center gap-0.5">
+        <div className="-mr-1.5 flex h-9 shrink-0 items-center gap-0.5">
           {actions}
         </div>
       ) : null}
