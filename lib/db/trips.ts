@@ -191,7 +191,7 @@ export async function getTrip(
   return rows[0] ? toDto(rows[0]) : null;
 }
 
-/** 소유자 검증 없이 조회 (때샷 카드의 목적지·기간 표시용) */
+/** 소유자 검증 없이 조회 (떼샷 카드의 목적지·기간 표시용) */
 export async function getTripAny(tripId: string): Promise<TripDto | null> {
   const sql = getSql();
   const rows = (await sql.query(

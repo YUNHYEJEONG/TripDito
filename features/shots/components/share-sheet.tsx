@@ -39,7 +39,7 @@ export function ShareSheet({
   }
 
   async function shareKakao() {
-    const text = `${nickname} 님의 때샷 — 트립디토`;
+    const text = `${nickname} 님의 떼샷 — 트립디토`;
     try {
       if (navigator.share) {
         await navigator.share({ title: text, text, url: shareUrl });

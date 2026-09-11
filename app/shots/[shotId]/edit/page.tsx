@@ -39,7 +39,7 @@ export default function EditShotPage({
   const formDefaults = useMemo((): Partial<ShotFormValues> | undefined => {
     if (!shot) return undefined;
     return {
-      // 커뮤니티 채널은 없앴으므로 수정 시 항상 때샷구경으로 저장
+      // 커뮤니티 채널은 없앴으므로 수정 시 항상 떼샷구경으로 저장
       channel: "shots",
       tripId: shot.tripId,
       images: shot.images,

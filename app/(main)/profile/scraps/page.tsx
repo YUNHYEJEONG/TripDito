@@ -23,7 +23,7 @@ export default function ProfileScrapsPage() {
 
   return (
     <AppShell withBottomNav>
-      <PageHeader title="스크랩한 때샷" backHref="/profile" />
+      <PageHeader title="스크랩한 떼샷" backHref="/profile" />
 
       {loading ? (
         <LoadingRegion>
@@ -31,7 +31,7 @@ export default function ProfileScrapsPage() {
         </LoadingRegion>
       ) : scrapedShots.length === 0 ? (
         <EmptyState
-          title="스크랩한 때샷이 없어요"
+          title="스크랩한 떼샷이 없어요"
           description="피드에서 북마크를 누르면 여기에 쌓여요."
         />
       ) : (

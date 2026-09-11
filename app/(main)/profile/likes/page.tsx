@@ -29,7 +29,7 @@ export default function ProfileLikesPage() {
 
   return (
     <AppShell withBottomNav>
-      <PageHeader title="좋아요 누른 피드" backHref="/profile" />
+      <PageHeader title="좋아요 누른 떼샷" backHref="/profile" />
 
       {isLoading ? (
         <LoadingRegion>
@@ -38,7 +38,7 @@ export default function ProfileLikesPage() {
       ) : likedShots.length === 0 ? (
         <EmptyState
           title="좋아요한 피드가 없어요"
-          description="때샷에서 하트를 누르면 여기에 쌓여요."
+          description="떼샷에서 하트를 누르면 여기에 쌓여요."
         />
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

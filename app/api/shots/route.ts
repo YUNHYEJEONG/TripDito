@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/shots";
 
 /**
- * 때샷 피드 (비로그인도 조회 가능. author=me / liked=me 는 로그인 필요).
+ * 떼샷 피드 (비로그인도 조회 가능. author=me / liked=me 는 로그인 필요).
  * query: channel=shots|community, sort=newest|likes, country=JP, city=오사카, author=me|<uuid>, limit, offset
  */
 export async function GET(request: Request) {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   });
 }
 
-/** 때샷 업로드 (이미지는 /api/uploads 로 R2에 먼저 올린 뒤 attachmentId 전달) */
+/** 떼샷 업로드 (이미지는 /api/uploads 로 R2에 먼저 올린 뒤 attachmentId 전달) */
 export async function POST(request: Request) {
   return handleApi(async () => {
     const user = await requireUser();

@@ -8,19 +8,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldLabel } from "@/components/common/field-label";
 import { defaultItemFormValues } from "../constants";
+import { addDaysIso, getTripDayFilterOptions } from "../utils/trip-day";
+import { cn } from "@/lib/utils";
 import { GIFT_TAG_OPTIONS, type GiftTagId } from "../constants/gift-tags";
-import {
-  shoppingItemFormSchema,
-  type ShoppingItemFormValues,
-} from "../schema";
+import { shoppingItemFormSchema, type ShoppingItemFormValues } from "../schema";
+
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+function formatDayChip(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  return `${d.getMonth() + 1}.${d.getDate()} ${WEEKDAY[d.getDay()]}`;
+}
 
 export function ItemForm({
   defaultValues,
+  tripRange,
   submitLabel = "저장",
   onSubmit,
   onCancel,
 }: {
   defaultValues?: Partial<ShoppingItemFormValues>;
+  /** 여행 기간. 주어지면 예상 구매일을 여행 일차 칩으로 고른다 (기간 밖 선택 불가) */
+  tripRange?: { startDate: string; endDate: string };
   submitLabel?: string;
   onSubmit: (values: ShoppingItemFormValues) => Promise<void> | void;
   onCancel?: () => void;
@@ -36,12 +45,29 @@ export function ItemForm({
 
   const imageDataUrl = form.watch("imageDataUrl");
   const giftTags = form.watch("giftTags") ?? [];
+  const plannedPurchaseDate = form.watch("plannedPurchaseDate") ?? null;
+
+  const dayOptions = tripRange
+    ? getTripDayFilterOptions(tripRange.startDate, tripRange.endDate).map(
+        (day) => ({ day, iso: addDaysIso(tripRange.startDate, day - 1) }),
+      )
+    : [];
+
+  function setPlannedDate(next: string | null) {
+    form.setValue("plannedPurchaseDate", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
 
   function toggleGiftTag(id: GiftTagId) {
     const next = giftTags.includes(id)
       ? giftTags.filter((tag) => tag !== id)
       : [...giftTags, id];
-    form.setValue("giftTags", next, { shouldDirty: true, shouldValidate: true });
+    form.setValue("giftTags", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }
 
   return (
@@ -100,17 +126,48 @@ export function ItemForm({
         label="예상 구매일"
         error={form.formState.errors.plannedPurchaseDate?.message}
       >
-        <Input
-          type="date"
-          value={form.watch("plannedPurchaseDate") ?? ""}
-          onChange={(event) => {
-            form.setValue(
-              "plannedPurchaseDate",
-              event.target.value ? event.target.value : null,
-              { shouldDirty: true, shouldValidate: true },
-            );
-          }}
-        />
+        {tripRange && dayOptions.length > 0 ? (
+          <div
+            role="radiogroup"
+            aria-label="예상 구매일"
+            className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <DayChip
+              selected={plannedPurchaseDate === null}
+              onClick={() => setPlannedDate(null)}
+              title="미정"
+            />
+            {plannedPurchaseDate &&
+            !dayOptions.some((o) => o.iso === plannedPurchaseDate) ? (
+              /* 여행 날짜를 나중에 바꿔 기간 밖이 된 기존 값 — 보이게 두고 다른 일차로 옮길 수 있게 */
+              <DayChip
+                selected
+                onClick={() => undefined}
+                title="기간 밖"
+                subtitle={formatDayChip(plannedPurchaseDate)}
+              />
+            ) : null}
+            {dayOptions.map(({ day, iso }) => (
+              <DayChip
+                key={iso}
+                selected={plannedPurchaseDate === iso}
+                onClick={() => setPlannedDate(iso)}
+                title={`${day}일차`}
+                subtitle={formatDayChip(iso)}
+              />
+            ))}
+          </div>
+        ) : (
+          <Input
+            type="date"
+            min={tripRange?.startDate}
+            max={tripRange?.endDate}
+            value={plannedPurchaseDate ?? ""}
+            onChange={(event) =>
+              setPlannedDate(event.target.value ? event.target.value : null)
+            }
+          />
+        )}
       </Field>
       <Field label="선물 태그">
         <div className="flex flex-wrap gap-2">
@@ -152,6 +209,45 @@ export function ItemForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function DayChip({
+  selected,
+  onClick,
+  title,
+  subtitle,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onClick}
+      className={cn(
+        "flex h-11 shrink-0 flex-col items-center justify-center rounded-lg border px-3 leading-none transition-colors",
+        selected
+          ? "border-primary bg-brand-soft text-primary"
+          : "border-border/80 bg-background text-foreground hover:bg-secondary",
+      )}
+    >
+      <span className="text-[13px] font-semibold">{title}</span>
+      {subtitle ? (
+        <span
+          className={cn(
+            "mt-1 text-[10px]",
+            selected ? "text-primary/80" : "text-muted-foreground",
+          )}
+        >
+          {subtitle}
+        </span>
+      ) : null}
+    </button>
   );
 }
 
