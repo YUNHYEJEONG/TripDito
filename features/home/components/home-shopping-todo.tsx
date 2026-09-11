@@ -281,6 +281,7 @@ function ShoppingRow({
             <CurrencyText amount={lineTotal(item)} currency={currency} />
             {` · ${quantity}개`}
             {dayNumber != null ? ` · ${dayNumber}일차` : null}
+            {item.purchasePlace ? ` · ${item.purchasePlace}` : null}
           </p>
         </div>
       </Link>

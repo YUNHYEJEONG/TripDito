@@ -9,6 +9,7 @@ import { CardStack } from "@/components/layout/card-stack";
 import { PageHeader } from "@/components/layout/page-header";
 import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { HomeAdBanner } from "@/features/home/components/home-ad-banner";
+import { HomeAddFab } from "@/features/home/components/home-add-fab";
 import { HomeCouponBanner } from "@/features/home/components/home-coupon-banner";
 import { HomeCreateTripCta } from "@/features/home/components/home-create-trip-cta";
 import { HomeFxCard } from "@/features/home/components/home-fx-card";
@@ -74,8 +75,14 @@ export default function HomePage() {
           )}
 
           <HomeAdBanner />
+          {upcoming ? (
+            /* 우측 하단 FAB 가 마지막 카드를 가리지 않도록 */
+            <div className="h-12" aria-hidden />
+          ) : null}
         </CardStack>
       )}
+
+      {!isLoading && upcoming ? <HomeAddFab tripId={upcoming.id} /> : null}
     </AppShell>
   );
 }

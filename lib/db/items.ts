@@ -14,6 +14,8 @@ export type ShoppingItemDto = {
   estimatedPrice: number;
   quantity: number;
   memo: string;
+  /** 구매 장소 (쉼표 구분 자유 텍스트) */
+  purchasePlace: string;
   /** 첨부 묶음 ID (R2) */
   attachmentId: string | null;
   /** 대표 이미지 공개 URL */
@@ -31,6 +33,7 @@ export const itemInputSchema = z.object({
   estimatedPrice: z.number().min(0).default(0),
   quantity: z.number().int().min(1).default(1),
   memo: z.string().trim().max(500).default(""),
+  purchasePlace: z.string().trim().max(200).default(""),
   attachmentId: z.string().max(30).nullable().optional(),
   plannedPurchaseDate: z
     .string()
@@ -51,6 +54,7 @@ export type ItemRow = {
   estm_amt: string | number;
   qy: number;
   memo_cn: string | null;
+  prchs_plc_nm: string | null;
   atcm_file_id: string | null;
   prchs_plan_de: string | null;
   prchs_dttm: string | null;
@@ -59,7 +63,7 @@ export type ItemRow = {
   gift_tags: string[] | null;
 };
 
-export const ITEM_COLS = `i.shop_item_sn, i.trip_sn, i.item_nm, i.estm_amt, i.qy, i.memo_cn, i.atcm_file_id,
+export const ITEM_COLS = `i.shop_item_sn, i.trip_sn, i.item_nm, i.estm_amt, i.qy, i.memo_cn, i.prchs_plc_nm, i.atcm_file_id,
   to_char(i.prchs_plan_de, 'YYYY-MM-DD') AS prchs_plan_de, i.prchs_dttm, i.rgst_dttm, i.altr_dttm,
   (SELECT array_agg(t.gift_tag_cd ORDER BY t.rgst_dttm)
      FROM shop_item_tag_mpng t WHERE t.shop_item_sn = i.shop_item_sn) AS gift_tags`;
@@ -75,6 +79,7 @@ export async function itemsToDtos(rows: ItemRow[]): Promise<ShoppingItemDto[]> {
     estimatedPrice: Number(r.estm_amt),
     quantity: r.qy,
     memo: r.memo_cn ?? "",
+    purchasePlace: r.prchs_plc_nm ?? "",
     attachmentId: r.atcm_file_id,
     imageUrl: r.atcm_file_id
       ? (attachments.get(r.atcm_file_id)?.files[0]?.url ?? null)
@@ -142,8 +147,8 @@ export async function createItem(
   const sql = getSql();
   const rows = (await sql.query(
     `INSERT INTO shop_item_info
-       (trip_sn, item_nm, estm_amt, qy, memo_cn, atcm_file_id, prchs_plan_de, prchs_dttm)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $8 THEN now() END)
+       (trip_sn, item_nm, estm_amt, qy, memo_cn, atcm_file_id, prchs_plan_de, prchs_dttm, prchs_plc_nm)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, CASE WHEN $8 THEN now() END, $9)
      RETURNING shop_item_sn`,
     [
       tripId,
@@ -154,6 +159,7 @@ export async function createItem(
       input.attachmentId ?? null,
       input.plannedPurchaseDate ?? null,
       Boolean(input.purchased),
+      input.purchasePlace || null,
     ],
   )) as { shop_item_sn: string | number }[];
   const id = String(rows[0].shop_item_sn);
@@ -175,7 +181,8 @@ export async function updateItem(
     `UPDATE shop_item_info
         SET item_nm = $2, estm_amt = $3, qy = $4, memo_cn = $5, atcm_file_id = $6,
             prchs_plan_de = $7,
-            prchs_dttm = CASE WHEN $8 THEN COALESCE(prchs_dttm, now()) ELSE NULL END
+            prchs_dttm = CASE WHEN $8 THEN COALESCE(prchs_dttm, now()) ELSE NULL END,
+            prchs_plc_nm = $9
       WHERE shop_item_sn = $1`,
     [
       itemId,
@@ -188,6 +195,7 @@ export async function updateItem(
         : input.attachmentId,
       input.plannedPurchaseDate ?? null,
       purchased,
+      input.purchasePlace || null,
     ],
   );
   await replaceTags(itemId, codes);

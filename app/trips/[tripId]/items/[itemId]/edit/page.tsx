@@ -57,6 +57,7 @@ export default function EditItemPage({
     <AppShell>
       <PageHeader title="상품 수정" backHref={`/trips/${tripId}`} />
       <ItemForm
+        tripId={tripId}
         tripRange={{ startDate: trip.startDate, endDate: trip.endDate }}
         defaultValues={item}
         submitLabel="수정 저장"
