@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { MapPin, Package } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CurrencyText } from "@/components/common/currency-text";
 import type { ShoppingItem } from "../types";
@@ -62,6 +62,12 @@ export function ItemCard({
             <CurrencyText amount={lineTotal(item)} currency={currency} />
             {` · ${item.quantity >= 1 ? item.quantity : 1}개`}
           </p>
+          {item.purchasePlace ? (
+            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <MapPin className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{item.purchasePlace}</span>
+            </p>
+          ) : null}
           {item.memo ? (
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {item.memo}

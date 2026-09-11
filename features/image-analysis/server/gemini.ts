@@ -9,7 +9,13 @@ export type DetectedItem = {
   brand: string;
   quantity: number;
   priceOnImage: number | null;
+  /** 사진에 가격이 없을 때 모델이 추정한 현지 일반 소매가(1개당). 검색 실패 시 마지막 폴백 */
+  typicalPrice: number | null;
   searchQuery: string;
+  /** 영어 검색어 — 현지어 검색이 실패하면 대체로 쓴다 */
+  searchQueryEn: string;
+  /** 여행지에서 이 상품을 살 만한 매장·체인 (한국어 통용 표기, 최대 3개) */
+  expectedStores: string[];
   confidence: "high" | "medium" | "low";
 };
 
@@ -40,7 +46,10 @@ function buildPrompt(market: Market) {
 - brand: 브랜드명. 모르면 빈 문자열.
 - quantity: 개수. 기본 1.
 - priceOnImage: 사진에 가격이 찍혀 있으면 "1개당" 금액(${market.currency}, 정수). 영수증에서 수량×단가로 합계가 적힌 줄은 단가로 환산할 것. 세금 포함 금액이 있으면 그것을 사용. 없으면 null. 절대 추측하지 말 것.
+- typicalPrice: 사진에 가격이 없을 때, 이 상품의 ${market.countryName} 현지 일반 소매가(1개당, ${market.currency}, 정수)를 상식 선에서 추정. 상품을 전혀 모르면 null. priceOnImage 가 있으면 같은 값.
 - searchQuery: ${market.countryName} 쇼핑 검색에 쓸 검색어. 브랜드·제품명·용량을 ${market.language}로 (예: 일본이면 "ロイズ 生チョコレート オーレ 20粒").
+- searchQueryEn: 같은 상품의 영어 검색어 (브랜드 + 영문 제품명, 예: "Royce Nama Chocolate Au Lait").
+- expectedStores: ${market.countryName}에서 이 상품을 살 만한 매장·체인 이름 최대 3개, 한국 여행자가 부르는 표기로 (예: 일본이면 "돈키호테", "마츠모토키요시", "편의점"). 모르면 빈 배열.
 - confidence: 상품을 정확히 식별했으면 high, 종류만 알면 medium, 불확실하면 low.`;
 }
 
@@ -54,7 +63,10 @@ const schema = {
       brand: { type: Type.STRING },
       quantity: { type: Type.INTEGER },
       priceOnImage: { type: Type.INTEGER, nullable: true },
+      typicalPrice: { type: Type.INTEGER, nullable: true },
       searchQuery: { type: Type.STRING },
+      searchQueryEn: { type: Type.STRING },
+      expectedStores: { type: Type.ARRAY, items: { type: Type.STRING } },
       confidence: { type: Type.STRING, enum: ["high", "medium", "low"] },
     },
     required: [
@@ -63,7 +75,10 @@ const schema = {
       "brand",
       "quantity",
       "priceOnImage",
+      "typicalPrice",
       "searchQuery",
+      "searchQueryEn",
+      "expectedStores",
       "confidence",
     ],
   },
@@ -102,7 +117,18 @@ function normalize(parsed: unknown): DetectedItem[] {
       typeof item.priceOnImage === "number" && item.priceOnImage > 0
         ? Math.round(item.priceOnImage)
         : null,
+    typicalPrice:
+      typeof item.typicalPrice === "number" && item.typicalPrice > 0
+        ? Math.round(item.typicalPrice)
+        : null,
     searchQuery: item.searchQuery?.trim() || item.nameOriginal?.trim() || "",
+    searchQueryEn: item.searchQueryEn?.trim() || "",
+    expectedStores: Array.isArray(item.expectedStores)
+      ? item.expectedStores
+          .map((s) => String(s).trim())
+          .filter(Boolean)
+          .slice(0, 3)
+      : [],
     confidence: item.confidence ?? "low",
   }));
 }

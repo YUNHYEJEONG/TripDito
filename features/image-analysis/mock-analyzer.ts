@@ -24,7 +24,9 @@ export const mockImageAnalyzer: ImageAnalyzer = {
       return {
         name: fromName && fromName.length > 1 ? fromName : catalog.name,
         estimatedPrice: catalog.price,
+        priceSource: "estimate" as const,
         quantity: 1,
+        purchasePlace: "돈키호테",
         memo: "데모 분석 결과",
         sourceImageId: image.id,
         imageDataUrl: image.dataUrl,

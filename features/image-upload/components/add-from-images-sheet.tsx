@@ -5,6 +5,7 @@ import {
   Camera,
   Images,
   Loader2,
+  MapPin,
   Minus,
   Plus,
   Sparkles,
@@ -34,9 +35,20 @@ import {
 } from "@/features/image-analysis/store/analysis-jobs";
 import type { ProposedItem } from "@/features/image-analysis/port";
 import { useCreateManyItems } from "@/features/shopping-items/hooks/use-items";
+import {
+  StoreSuggest,
+  appendPlace,
+} from "@/features/shopping-items/components/store-suggest";
 import { useTrip } from "@/features/trips/hooks/use-trips";
 
 const EMPTY_SET: ReadonlySet<number> = new Set<number>();
+
+const PRICE_SOURCE_HINT: Record<ProposedItem["priceSource"], string> = {
+  image: "사진에 적힌 가격이에요",
+  search: "쇼핑 검색 결과의 중간값이에요",
+  estimate: "AI가 추정한 대략적인 현지 가격이에요. 확인 후 수정해 주세요",
+  none: "가격을 찾지 못했어요. 직접 입력해 주세요",
+};
 
 /** 개수 -/+ 스테퍼. 0 이 되면 상위에서 선택 해제로 처리한다 */
 function QuantityStepper({
@@ -211,6 +223,7 @@ export function AddFromImagesSheet({
           estimatedPrice: item.estimatedPrice,
           quantity: item.quantity,
           memo: item.memo,
+          purchasePlace: item.purchasePlace,
           imageDataUrl: thumbs.get(item.sourceImageId) ?? item.imageDataUrl,
           plannedPurchaseDate: null,
           giftTags: [],
@@ -396,6 +409,9 @@ export function AddFromImagesSheet({
                         <Input
                           type="number"
                           min={0}
+                          step="any"
+                          aria-label="예상 가격"
+                          title={PRICE_SOURCE_HINT[item.priceSource]}
                           value={item.estimatedPrice}
                           onChange={(e) =>
                             updateProposed(index, {
@@ -417,6 +433,42 @@ export function AddFromImagesSheet({
                           }}
                         />
                       </div>
+                      <div className="relative">
+                        <MapPin
+                          className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground"
+                          aria-hidden
+                        />
+                        <Input
+                          aria-label="구매 장소"
+                          placeholder="구매 장소 (예: 돈키호테)"
+                          className="pl-8"
+                          value={item.purchasePlace}
+                          onChange={(e) =>
+                            updateProposed(index, {
+                              purchasePlace: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <StoreSuggest
+                        compact
+                        tripId={tripId}
+                        productName={item.name}
+                        onPick={(store) =>
+                          updateProposed(index, {
+                            purchasePlace: appendPlace(
+                              item.purchasePlace,
+                              store.name,
+                            ),
+                          })
+                        }
+                      />
+                      {item.priceSource === "estimate" ||
+                      item.priceSource === "none" ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          {PRICE_SOURCE_HINT[item.priceSource]}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 );

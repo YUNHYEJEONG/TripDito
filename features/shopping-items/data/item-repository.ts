@@ -11,6 +11,7 @@ export type ShoppingItemDto = {
   estimatedPrice: number;
   quantity: number;
   memo: string;
+  purchasePlace: string;
   attachmentId: string | null;
   imageUrl: string | null;
   plannedPurchaseDate: string | null;
@@ -29,6 +30,7 @@ export function fromItemDto(dto: ShoppingItemDto): ShoppingItem {
     estimatedPrice: dto.estimatedPrice,
     quantity: dto.quantity,
     memo: dto.memo,
+    purchasePlace: dto.purchasePlace ?? "",
     imageDataUrl: dto.imageUrl,
     attachmentId: dto.attachmentId,
     plannedPurchaseDate: dto.plannedPurchaseDate,
@@ -65,6 +67,7 @@ async function toPayload(
     estimatedPrice: input.estimatedPrice,
     quantity: input.quantity,
     memo: input.memo ?? "",
+    purchasePlace: input.purchasePlace ?? "",
     attachmentId,
     plannedPurchaseDate: input.plannedPurchaseDate ?? null,
     giftTags: input.giftTags ?? [],
@@ -119,6 +122,7 @@ export const itemRepository = {
           estimatedPrice: source.estimatedPrice,
           quantity: source.quantity,
           memo: source.memo,
+          purchasePlace: source.purchasePlace ?? "",
           attachmentId: source.attachmentId ?? null,
           plannedPurchaseDate: source.plannedPurchaseDate ?? null,
           giftTags: source.giftTags ?? [],
