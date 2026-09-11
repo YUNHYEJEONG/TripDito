@@ -11,14 +11,20 @@ import { Label } from "@/components/ui/label";
 import { FieldError } from "./field-error";
 
 /**
+ * 테스트 단계 공용 계정. 서버 .env 의 DEV_LOGIN_EMAIL / DEV_LOGIN_PASSWORD 와 같아야 한다.
+ * 소셜 로그인이 열리면 이 폼과 함께 걷어낸다.
+ */
+const TEST_ACCOUNT = { email: "test@naver.com", password: "tripdito1234" };
+
+/**
  * 소셜 키 발급 전 임시 개발용 로그인 폼.
  * 서버의 ENABLE_DEV_LOGIN 이 켜져 있을 때만 렌더링된다.
  */
 export function DevLoginForm({ callbackUrl = "/profile" }: { callbackUrl?: string }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(TEST_ACCOUNT.email);
+  const [password, setPassword] = useState(TEST_ACCOUNT.password);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -70,7 +76,7 @@ export function DevLoginForm({ callbackUrl = "/profile" }: { callbackUrl?: strin
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-[12px] text-muted-foreground">개발용 로그인</span>
+        <span className="text-[12px] text-muted-foreground">테스트 계정 로그인</span>
         <div className="h-px flex-1 bg-border" />
       </div>
       <form className="flex flex-col gap-3" noValidate onSubmit={handleSubmit}>
@@ -108,12 +114,12 @@ export function DevLoginForm({ callbackUrl = "/profile" }: { callbackUrl?: strin
           </div>
           <FieldError message={error} />
         </div>
-        <Button type="submit" variant="outline" className="w-full" disabled={pending}>
-          개발용 계정으로 로그인
+        <Button type="submit" className="w-full" disabled={pending}>
+          테스트 계정으로 로그인
         </Button>
       </form>
       <p className="text-center text-[11px] text-muted-foreground">
-        소셜 로그인 키 발급 전 임시 경로입니다. 운영 배포에서는 비활성화됩니다.
+        테스트 단계라 계정이 미리 채워져 있어요. 그대로 로그인하면 됩니다.
       </p>
     </div>
   );

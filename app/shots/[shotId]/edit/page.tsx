@@ -11,10 +11,7 @@ import {
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { ShotUploadForm } from "@/features/shots/components/shot-upload-form";
-import {
-  useShot,
-  useUpdateShot,
-} from "@/features/shots/hooks/use-shots";
+import { useShot, useUpdateShot } from "@/features/shots/hooks/use-shots";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
 import type { ShotFormValues } from "@/features/shots/schema";
@@ -42,7 +39,8 @@ export default function EditShotPage({
   const formDefaults = useMemo((): Partial<ShotFormValues> | undefined => {
     if (!shot) return undefined;
     return {
-      channel: shot.channel,
+      // 커뮤니티 채널은 없앴으므로 수정 시 항상 때샷구경으로 저장
+      channel: "shots",
       tripId: shot.tripId,
       images: shot.images,
       body: shot.body,
@@ -91,9 +89,7 @@ export default function EditShotPage({
       <PageHeader
         title="피드 수정"
         className="mb-3"
-        actions={
-          <HeaderCancelButton onClick={() => router.push("/shots")} />
-        }
+        actions={<HeaderCancelButton onClick={() => router.push("/shots")} />}
       />
       <ShotUploadForm
         key={shot.id}

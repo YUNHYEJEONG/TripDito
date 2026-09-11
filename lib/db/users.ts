@@ -45,6 +45,28 @@ export async function findUserByUuid(uuid: string): Promise<DbUser | null> {
 }
 
 /**
+ * 세션 회원 조회 캐시 (인스턴스 로컬, 30초).
+ * 모든 API 가 요청마다 회원을 DB 에서 다시 읽어 왕복 1회(~80ms)가 고정으로 붙던 것을 줄인다.
+ * 프로필 수정·탈퇴 시 invalidateUserCache 로 즉시 비운다.
+ */
+const USER_CACHE_TTL_MS = 30 * 1000;
+const userCache = new Map<string, { at: number; user: DbUser | null }>();
+
+export async function findUserByUuidCached(
+  uuid: string,
+): Promise<DbUser | null> {
+  const hit = userCache.get(uuid);
+  if (hit && Date.now() - hit.at < USER_CACHE_TTL_MS) return hit.user;
+  const user = await findUserByUuid(uuid);
+  userCache.set(uuid, { at: Date.now(), user });
+  return user;
+}
+
+export function invalidateUserCache(uuid: string) {
+  userCache.delete(uuid);
+}
+
+/**
  * 소셜 콜백 처리 (정의서 p.17)
  * 1) 제공자코드+계정ID 로 이미 연결된 계정 → 그대로 로그인
  * 2) 같은 이메일(검증됨)의 회원 → OAUTH_ACNT_INFO 행만 추가 (EMAIL_MATCH)
@@ -78,7 +100,13 @@ export async function upsertSocialUser(input: {
       `UPDATE oauth_acnt_info
           SET acs_token = $3, rfrsh_token = COALESCE($4, rfrsh_token), token_expr_dttm = $5
         WHERE prvdr_cd = $1 AND prvdr_acnt_id = $2`,
-      [input.provider, input.providerAccountId, input.accessToken ?? null, input.refreshToken ?? null, tokenExpr],
+      [
+        input.provider,
+        input.providerAccountId,
+        input.accessToken ?? null,
+        input.refreshToken ?? null,
+        tokenExpr,
+      ],
     );
     await sql.query(
       `UPDATE user_info SET last_lgn_dttm = now() WHERE user_sn = $1`,
@@ -119,7 +147,15 @@ export async function upsertSocialUser(input: {
        (user_sn, prvdr_cd, prvdr_acnt_id, link_ty_cd, acs_token, rfrsh_token, token_expr_dttm)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (prvdr_cd, prvdr_acnt_id) DO NOTHING`,
-    [user.user_sn, input.provider, input.providerAccountId, linkType, input.accessToken ?? null, input.refreshToken ?? null, tokenExpr],
+    [
+      user.user_sn,
+      input.provider,
+      input.providerAccountId,
+      linkType,
+      input.accessToken ?? null,
+      input.refreshToken ?? null,
+      tokenExpr,
+    ],
   );
   await sql.query(
     `UPDATE user_info SET last_lgn_dttm = now() WHERE user_sn = $1`,
@@ -140,17 +176,26 @@ export async function updateProfile(
             prfl_atcm_file_id = CASE WHEN $4 THEN $3 ELSE prfl_atcm_file_id END
       WHERE user_sn = $1
       RETURNING ${USER_COLS}`,
-    [userSn, input.nickname ?? null, input.profileFileId ?? null, input.profileFileId !== undefined],
+    [
+      userSn,
+      input.nickname ?? null,
+      input.profileFileId ?? null,
+      input.profileFileId !== undefined,
+    ],
   )) as UserRow[];
-  return toUser(rows[0]);
+  const user = toUser(rows[0]);
+  invalidateUserCache(user.userUuid);
+  return user;
 }
 
 export async function withdrawUser(userSn: number) {
   const sql = getSql();
-  await sql.query(
+  const rows = (await sql.query(
     `UPDATE user_info
         SET user_sttus_cd = 'WTHDRW', wthdrw_dttm = now(), use_at = 'N'
-      WHERE user_sn = $1`,
+      WHERE user_sn = $1
+      RETURNING user_uuid`,
     [userSn],
-  );
+  )) as { user_uuid: string }[];
+  if (rows[0]) invalidateUserCache(rows[0].user_uuid);
 }

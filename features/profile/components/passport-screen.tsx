@@ -16,6 +16,8 @@ import {
   type RefObject,
 } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageHeader } from "@/components/layout/page-header";
+import { HeaderNavActions } from "@/components/layout/header-nav-actions";
 import { PassportStampArtwork } from "@/features/profile/components/passport-stamp-artwork";
 import {
   getPassportPageIndexAfterLayoutChange,
@@ -1434,6 +1436,12 @@ export function PassportScreen({
   const archivedTrips = getCompletedPassportTrips(previewTrips ?? trips);
   const passportLoading = previewTrips ? !hydrated : !hydrated || isLoading;
 
+  const statusLabel = passportLoading
+    ? "기록 불러오는 중"
+    : `완료한 여행 ${archivedTrips.length}개${
+        archivedTrips.length > 2 ? " · 밀어서 넘기기" : ""
+      }`;
+
   const screen = (
     <main
       aria-labelledby={embedded ? "passport-stamps-heading" : undefined}
@@ -1449,42 +1457,7 @@ export function PassportScreen({
         <h2 id="passport-stamps-heading" className="sr-only">
           {getPassportStampHeadingLabel(passportLoading, archivedTrips.length)}
         </h2>
-      ) : (
-        <header className="flex min-h-16 items-end justify-between gap-3 px-2 pb-1">
-          <div className="flex items-end gap-1.5">
-            <Link
-              href="/my-trips"
-              aria-label="내여행으로 돌아가기"
-              className="-ml-1 flex size-11 shrink-0 items-center justify-center self-end rounded-full text-foreground outline-none transition-colors active:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40"
-            >
-              <ArrowLeft className="size-5" aria-hidden />
-            </Link>
-            <div>
-              <p className="text-[10px] font-extrabold tracking-[0.18em] text-[var(--passport-eyebrow)]">
-                DITO TRAVEL MEMORY
-              </p>
-              <h1 className="mt-0.5 text-[24px] leading-8 font-extrabold tracking-[-0.04em] text-foreground">
-                나의 여권
-              </h1>
-            </div>
-          </div>
-          <p className="pb-1 text-right text-[12px] font-semibold text-[var(--passport-ink-2)]">
-            <span role="status">
-              {passportLoading
-                ? "기록 불러오는 중"
-                : `완료한 여행 ${archivedTrips.length}개`}
-            </span>
-            {!passportLoading && archivedTrips.length > 2 ? (
-              <span
-                aria-hidden
-                className="mt-0.5 block text-[11px] font-medium text-[var(--passport-ink-3)]"
-              >
-                밀어서 넘기기
-              </span>
-            ) : null}
-          </p>
-        </header>
-      )}
+      ) : null}
 
       {passportLoading ? (
         <div
@@ -1512,11 +1485,15 @@ export function PassportScreen({
 
   if (embedded) return screen;
 
+  // 다른 탭 화면과 같은 공통 헤더·여백을 쓴다. 헤더 높이는 globals.css 의 --passport-chrome 과 맞물린다
   return (
-    <AppShell
-      withBottomNav
-      className="px-2 min-[360px]:px-3 min-[700px]:max-[900px]:px-4"
-    >
+    <AppShell withBottomNav>
+      <PageHeader
+        title="나의 여권"
+        description={statusLabel}
+        backHref="/my-trips"
+        actions={<HeaderNavActions />}
+      />
       {screen}
     </AppShell>
   );

@@ -6,7 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 import type { Provider } from "next-auth/providers";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import {
-  findUserByUuid,
+  findUserByUuidCached,
   upsertSocialUser,
   type ProviderCode,
 } from "@/lib/db/users";
@@ -39,7 +39,9 @@ function buildProviders(): Provider[] {
           password: { label: "비밀번호", type: "password" },
         },
         async authorize(credentials) {
-          const email = String(credentials?.email ?? "").trim().toLowerCase();
+          const email = String(credentials?.email ?? "")
+            .trim()
+            .toLowerCase();
           const password = String(credentials?.password ?? "");
           if (
             email !== process.env.DEV_LOGIN_EMAIL!.toLowerCase() ||
@@ -93,8 +95,7 @@ function buildProviders(): Provider[] {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: buildProviders(),
-  secret:
-    process.env.AUTH_SECRET ?? "trip-ditto-poc-dev-secret-change-me",
+  secret: process.env.AUTH_SECRET ?? "trip-ditto-poc-dev-secret-change-me",
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -114,13 +115,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const provider = PROVIDER_CODE[account.provider];
       if (!provider) return false;
 
-      const email =
-        (profile as { email?: string } | undefined)?.email ?? null;
+      const email = (profile as { email?: string } | undefined)?.email ?? null;
       const emailVerified = Boolean(
-        (profile as { email_verified?: boolean } | undefined)
-          ?.email_verified ??
-          // 카카오·네이버는 email_verified 필드가 없다 → 이메일이 있으면 검증된 것으로 간주
-          (account.provider !== "google" && email),
+        (profile as { email_verified?: boolean } | undefined)?.email_verified ??
+        // 카카오·네이버는 email_verified 필드가 없다 → 이메일이 있으면 검증된 것으로 간주
+        (account.provider !== "google" && email),
       );
 
       const user = await upsertSocialUser({
@@ -170,12 +169,8 @@ export function getConfiguredSocialProviders() {
     google: Boolean(
       process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET,
     ),
-    kakao: Boolean(
-      process.env.AUTH_KAKAO_ID && process.env.AUTH_KAKAO_SECRET,
-    ),
-    naver: Boolean(
-      process.env.AUTH_NAVER_ID && process.env.AUTH_NAVER_SECRET,
-    ),
+    kakao: Boolean(process.env.AUTH_KAKAO_ID && process.env.AUTH_KAKAO_SECRET),
+    naver: Boolean(process.env.AUTH_NAVER_ID && process.env.AUTH_NAVER_SECRET),
   };
 }
 
@@ -183,5 +178,5 @@ export function getConfiguredSocialProviders() {
 export async function getCurrentUser() {
   const session = await auth();
   if (!session?.userUuid || !isDatabaseConfigured()) return null;
-  return findUserByUuid(session.userUuid);
+  return findUserByUuidCached(session.userUuid);
 }

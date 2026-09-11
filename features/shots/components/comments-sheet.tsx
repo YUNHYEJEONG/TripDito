@@ -158,7 +158,7 @@ export function CommentsSheet({
               로그인 후, 댓글을 달아주세요.
             </p>
             <Link
-              href="/login"
+              href={`/login?callbackUrl=${encodeURIComponent(`/shots#${shotId}`)}`}
               className={cn(buttonVariants({ size: "sm" }), "w-full max-w-xs")}
               onClick={() => onOpenChange(false)}
             >

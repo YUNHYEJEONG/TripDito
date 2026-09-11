@@ -20,21 +20,35 @@ import {
 } from "./shot-cache";
 import { scrapKeys } from "./use-scraps";
 
+/** 캐시 키에 넣는 조회자 구분. 로그인 전후로 likedByMe 등이 달라지므로 분리한다 */
+type Viewer = "me" | "guest";
+
 export const shotKeys = {
   all: ["shots"] as const,
-  list: (filter: ShotListFilter = {}) => ["shots", "list", filter] as const,
-  detail: (id: string) => ["shots", "detail", id] as const,
+  list: (filter: ShotListFilter = {}, viewer: Viewer = "me") =>
+    ["shots", "list", filter, viewer] as const,
+  detail: (id: string, viewer: Viewer = "me") =>
+    ["shots", "detail", id, viewer] as const,
   items: (id: string) => ["shots", "items", id] as const,
 };
 
-/** 피드 목록 (로그인 필요). 기본 최신순 100건 */
+/** 내 글 / 내가 좋아요한 글 필터는 로그인해야 조회할 수 있다 */
+function needsLogin(filter: ShotListFilter) {
+  return filter.author === "me" || filter.liked === "me";
+}
+
+/**
+ * 피드 목록. 기본 최신순 100건.
+ * 비로그인도 구경할 수 있다 (좋아요·댓글·스크랩만 로그인 필요).
+ */
 export function useShots(filter: ShotListFilter = {}) {
-  const { isLoggedIn } = useIsLoggedIn();
+  const { isLoggedIn, isLoading } = useIsLoggedIn();
   const merged: ShotListFilter = { limit: 100, ...filter };
   return useQuery({
-    queryKey: shotKeys.list(merged),
+    queryKey: shotKeys.list(merged, isLoggedIn ? "me" : "guest"),
     queryFn: () => shotRepository.list(merged),
-    enabled: isLoggedIn,
+    // 세션 확인 전에 guest 로 불러오면 로그인 직후 한 번 더 받게 되므로 기다린다
+    enabled: !isLoading && (isLoggedIn || !needsLogin(merged)),
   });
 }
 
@@ -44,21 +58,20 @@ export function useLikedShots() {
 }
 
 export function useShot(id: string) {
-  const { isLoggedIn } = useIsLoggedIn();
+  const { isLoggedIn, isLoading } = useIsLoggedIn();
   return useQuery({
-    queryKey: shotKeys.detail(id),
+    queryKey: shotKeys.detail(id, isLoggedIn ? "me" : "guest"),
     queryFn: () => shotRepository.getById(id),
-    enabled: Boolean(id) && isLoggedIn,
+    enabled: Boolean(id) && !isLoading,
   });
 }
 
-/** 때샷에 연결된 쇼핑품목 + 여행 요약 (퍼가기 시트) */
+/** 때샷에 연결된 쇼핑품목 + 여행 요약 (퍼가기 시트). 보는 건 비로그인도 가능 */
 export function useShotItems(shotId: string, enabled = true) {
-  const { isLoggedIn } = useIsLoggedIn();
   return useQuery({
     queryKey: shotKeys.items(shotId),
     queryFn: () => shotRepository.listItems(shotId),
-    enabled: Boolean(shotId) && enabled && isLoggedIn,
+    enabled: Boolean(shotId) && enabled,
   });
 }
 

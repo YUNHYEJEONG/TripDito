@@ -40,9 +40,9 @@ function LoginPageContent() {
             {appConfig.name} 시작하기
           </h2>
           <p className="text-[13px] text-muted-foreground">
-            소셜 계정으로 간편하게 로그인하세요.
+            지금은 테스트 단계라 아래 테스트 계정으로 로그인해요.
             <br />
-            같은 이메일이면 어떤 계정으로 들어와도 하나의 회원으로 연결돼요.
+            소셜 로그인은 준비되는 대로 열립니다.
           </p>
         </div>
 

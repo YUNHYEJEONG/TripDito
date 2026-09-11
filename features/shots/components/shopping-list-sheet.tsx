@@ -10,6 +10,7 @@ import { CurrencyText } from "@/components/common/currency-text";
 import { useCopyItemsToTrip } from "@/features/shopping-items/hooks/use-items";
 import { useTrips } from "@/features/trips/hooks/use-trips";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
+import { useLoginGate } from "@/features/auth/hooks/use-login-gate";
 import { useShotItems } from "@/features/shots/hooks/use-shots";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,7 @@ export function ShoppingListSheet({
   destinationCity?: string;
 }) {
   const router = useRouter();
+  const requireLogin = useLoginGate();
   const { data: profile } = useLocalProfile();
   const { data: trips = [] } = useTrips();
   const copyItems = useCopyItemsToTrip();
@@ -123,6 +125,16 @@ export function ShoppingListSheet({
   }
 
   function handlePergagi() {
+    // 목록 구경은 비로그인도 가능하지만, 내 여행에 담으려면 로그인해야 한다
+    if (
+      !requireLogin({
+        message: "로그인하고 쇼핑리스트를 퍼가 보세요",
+        callbackUrl: `/shots#${shotId}`,
+      })
+    ) {
+      onOpenChange(false);
+      return;
+    }
     if (selectedIds.length === 0) {
       toast.error("퍼갈 상품을 선택해 주세요");
       return;

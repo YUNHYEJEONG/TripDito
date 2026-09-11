@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocalProfile } from "@/features/profile/hooks/use-local-profile";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
+import { useLoginGate } from "@/features/auth/hooks/use-login-gate";
+import { useNearViewport } from "@/lib/react/use-near-viewport";
 import type { Shot } from "../schema";
 import {
   useDeleteShot,
@@ -48,8 +50,24 @@ function formatCount(n: number) {
   return new Intl.NumberFormat("ko-KR").format(n);
 }
 
-export function ShotPostCard({ shot }: { shot: Shot }) {
+/** 이 거리 안에 들어온 카드부터 이미지를 미리 받는다 (화면 높이의 1.5배 아래까지) */
+const IMAGE_PREFETCH_MARGIN = "150% 0px";
+
+export function ShotPostCard({
+  shot,
+  priority = false,
+}: {
+  shot: Shot;
+  /** 첫 화면 카드 — 이미지를 바로, 최우선으로 받는다 */
+  priority?: boolean;
+}) {
   const router = useRouter();
+  const requireLogin = useLoginGate();
+  const articleRef = useRef<HTMLElement>(null);
+  const nearViewport = useNearViewport(articleRef, {
+    rootMargin: IMAGE_PREFETCH_MARGIN,
+    initial: priority,
+  });
   const { data: profile } = useLocalProfile();
   const [expanded, setExpanded] = useState(false);
   const [needsClamp, setNeedsClamp] = useState(false);
@@ -104,7 +122,17 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
     return () => observer.disconnect();
   }, [body, expanded]);
 
+  const loginCallback = `/shots#${shot.id}`;
+
   async function handleLike() {
+    if (
+      !requireLogin({
+        message: "로그인하고 좋아요를 눌러 보세요",
+        callbackUrl: loginCallback,
+      })
+    ) {
+      return;
+    }
     try {
       await toggleLike.mutateAsync(shot.id);
     } catch {
@@ -113,6 +141,14 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
   }
 
   async function handleScrap() {
+    if (
+      !requireLogin({
+        message: "로그인하고 스크랩해 보세요",
+        callbackUrl: loginCallback,
+      })
+    ) {
+      return;
+    }
     try {
       await toggleScrap.mutateAsync(shot.id);
     } catch {
@@ -164,7 +200,8 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
           </div>
         </header>
         <div className="relative opacity-70">
-          <ShotImageCarousel images={shot.images} pins={shot.pins} />
+          {/* 업로드 중 카드는 항상 맨 위이고 data URL 이라 바로 보여준다 */}
+          <ShotImageCarousel images={shot.images} pins={shot.pins} priority />
         </div>
         {body ? (
           <p className="px-4 pt-3 text-[14px] leading-relaxed whitespace-pre-wrap text-muted-foreground sm:px-5 md:px-6 lg:px-8 line-clamp-2">
@@ -177,6 +214,7 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
 
   return (
     <article
+      ref={articleRef}
       id={shot.id}
       className={cn(
         "-mx-4 border-b border-[#EAEDED] pb-4 sm:-mx-5 md:-mx-6 lg:-mx-8",
@@ -228,7 +266,12 @@ export function ShotPostCard({ shot }: { shot: Shot }) {
         ) : null}
       </header>
 
-      <ShotImageCarousel images={shot.images} pins={shot.pins} />
+      <ShotImageCarousel
+        images={shot.images}
+        pins={shot.pins}
+        active={nearViewport}
+        priority={priority}
+      />
 
       {shot.shoppingItemIds.length > 0 ? (
         <button

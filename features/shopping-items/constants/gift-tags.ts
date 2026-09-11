@@ -17,20 +17,20 @@ export const GIFT_TAG_OPTIONS: {
   {
     id: "acquaintance",
     label: "지인",
-    bg: designSystem.brand.brandSoft,
-    text: "#1B64DA",
+    bg: designSystem.brand.skyBlueLight,
+    text: designSystem.brand.deepSpaceBlue,
   },
   {
     id: "colleague",
     label: "동료",
-    bg: designSystem.brand.secondary,
+    bg: designSystem.brand.amberFlame,
     text: designSystem.brand.deepSpaceBlue,
   },
   {
     id: "friend",
     label: "친구",
-    bg: designSystem.brand.primary,
-    text: "#FFFFFF",
+    bg: designSystem.brand.princetonOrange,
+    text: designSystem.brand.deepSpaceBlue,
   },
 ];
 

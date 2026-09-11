@@ -164,7 +164,10 @@ type RawComment = {
   createdAt: string;
 };
 
-async function toDtos(rows: ShotRow[], viewerSn: number): Promise<ShotDto[]> {
+/** 비로그인 조회는 viewerSn = null. liked/scrapped/isMine 은 모두 false */
+type ViewerSn = number | null;
+
+async function toDtos(rows: ShotRow[], viewerSn: ViewerSn): Promise<ShotDto[]> {
   const attachments = await getAttachments([
     ...rows.map((r) => r.atcm_file_id),
     ...rows.map((r) => r.author_prfl_file).filter((x): x is string => Boolean(x)),
@@ -217,7 +220,7 @@ async function toDtos(rows: ShotRow[], viewerSn: number): Promise<ShotDto[]> {
         commentCount: r.cmnt_cnt,
         likedByMe: r.liked,
         scrappedByMe: r.scrapped,
-        isMine: Number(r.user_sn) === viewerSn,
+        isMine: viewerSn != null && Number(r.user_sn) === viewerSn,
         createdAt: new Date(r.rgst_dttm).toISOString(),
         updatedAt: new Date(r.altr_dttm).toISOString(),
       };
@@ -225,7 +228,11 @@ async function toDtos(rows: ShotRow[], viewerSn: number): Promise<ShotDto[]> {
   );
 }
 
-export async function listShots(viewerSn: number, q: ShotQuery) {
+export async function listShots(viewerSn: ViewerSn, q: ShotQuery) {
+  // 내 글 / 내가 좋아요한 글 필터는 로그인해야 의미가 있다
+  if (viewerSn == null && (q.author === "me" || q.liked === "me")) {
+    throw new ApiError(401, "UNAUTHORIZED");
+  }
   const sql = getSql();
   const where: string[] = [`s.use_at = 'Y'`, `s.shot_sttus_cd = 'PUBLIC'`];
   const params: unknown[] = [viewerSn];
@@ -255,7 +262,7 @@ export async function listShots(viewerSn: number, q: ShotQuery) {
   return toDtos(rows, viewerSn);
 }
 
-async function findRow(viewerSn: number, shotId: string) {
+async function findRow(viewerSn: ViewerSn, shotId: string) {
   if (!/^\d+$/.test(shotId)) return null;
   const sql = getSql();
   const rows = (await sql.query(
@@ -265,7 +272,7 @@ async function findRow(viewerSn: number, shotId: string) {
   return rows[0] ?? null;
 }
 
-export async function getShot(viewerSn: number, shotId: string) {
+export async function getShot(viewerSn: ViewerSn, shotId: string) {
   const row = await findRow(viewerSn, shotId);
   if (!row) throw new ApiError(404, "SHOT_NOT_FOUND");
   return (await toDtos([row], viewerSn))[0];
@@ -418,7 +425,7 @@ export async function listScraps(userSn: number, limit = 50, offset = 0) {
 }
 
 /** 때샷에 연결된 쇼핑품목 (다른 사람 것도 열람 가능 — 퍼가기용) */
-export async function listShotItems(viewerSn: number, shotId: string) {
+export async function listShotItems(viewerSn: ViewerSn, shotId: string) {
   const row = await findRow(viewerSn, shotId);
   if (!row) throw new ApiError(404, "SHOT_NOT_FOUND");
   const sql = getSql();

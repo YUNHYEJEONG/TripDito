@@ -1,6 +1,7 @@
 "use client";
 
-import { Controller, useForm } from "react-hook-form";
+import { useMemo } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,11 @@ import {
 } from "@/components/ui/select";
 import { FieldLabel } from "@/components/common/field-label";
 import { CURRENCIES } from "@/config/currencies";
+import {
+  COUNTRY_NAMES,
+  findDestination,
+  getCitiesOf,
+} from "@/config/destinations";
 import { defaultTripFormValues } from "../constants";
 import { tripFormSchema, type TripFormValues } from "../schema";
 
@@ -31,6 +37,39 @@ export function TripForm({
     resolver: zodResolver(tripFormSchema),
     defaultValues: { ...defaultTripFormValues, ...defaultValues },
   });
+
+  const country = useWatch({ control: form.control, name: "country" });
+  const city = useWatch({ control: form.control, name: "city" });
+
+  // 목록에 없는 값(예전 여행·URL 프리필)도 잃지 않도록 현재 값을 선택지에 끼워 넣는다
+  const countryItems = useMemo(() => {
+    const names =
+      country && !COUNTRY_NAMES.includes(country)
+        ? [country, ...COUNTRY_NAMES]
+        : COUNTRY_NAMES;
+    return names.map((name) => ({ value: name, label: name }));
+  }, [country]);
+
+  const cityItems = useMemo(() => {
+    const cities = getCitiesOf(country);
+    const names = city && !cities.includes(city) ? [city, ...cities] : cities;
+    return names.map((name) => ({ value: name, label: name }));
+  }, [country, city]);
+
+  function handleCountryChange(next: string) {
+    form.setValue("country", next, { shouldValidate: true, shouldDirty: true });
+    const dest = findDestination(next);
+    // 국가가 바뀌면 도시는 그 나라 첫 도시로, 통화는 지원되는 경우에만 자동 반영
+    if (!dest?.cities.includes(form.getValues("city"))) {
+      form.setValue("city", dest?.cities[0] ?? "", {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (dest && CURRENCIES.some((c) => c.code === dest.currency)) {
+      form.setValue("currency", dest.currency, { shouldDirty: true });
+    }
+  }
 
   return (
     <form
@@ -52,14 +91,67 @@ export function TripForm({
           required
           error={form.formState.errors.country?.message}
         >
-          <Input placeholder="일본" {...form.register("country")} />
+          <Controller
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <Select
+                items={countryItems}
+                value={field.value || null}
+                onValueChange={(value) => handleCountryChange(value ?? "")}
+              >
+                <SelectTrigger
+                  className="w-full"
+                  aria-invalid={Boolean(form.formState.errors.country)}
+                >
+                  <SelectValue placeholder="국가 선택" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {countryItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </Field>
         <Field
           label="도시"
           required
           error={form.formState.errors.city?.message}
         >
-          <Input placeholder="도쿄" {...form.register("city")} />
+          <Controller
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <Select
+                items={cityItems}
+                value={field.value || null}
+                onValueChange={(value) => field.onChange(value ?? "")}
+                disabled={!country}
+              >
+                <SelectTrigger
+                  className="w-full"
+                  aria-invalid={Boolean(form.formState.errors.city)}
+                >
+                  <SelectValue
+                    placeholder={
+                      country ? "도시 선택" : "국가를 먼저 선택하세요"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {cityItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

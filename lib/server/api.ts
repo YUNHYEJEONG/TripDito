@@ -12,6 +12,11 @@ export class ApiError extends Error {
   }
 }
 
+/** 로그인하지 않아도 되는 핸들러용 (비로그인이면 null) */
+export async function optionalUser(): Promise<DbUser | null> {
+  return getCurrentUser();
+}
+
 /** 로그인 + DB 회원이 있어야 하는 핸들러용 */
 export async function requireUser(): Promise<DbUser> {
   const user = await getCurrentUser();

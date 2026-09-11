@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemRepository } from "../data/item-repository";
 import type { ShoppingItem, ShoppingItemFormValues } from "../schema";
 import { useIsLoggedIn } from "@/features/auth/hooks/use-auth";
+import { tripKeys } from "@/features/trips/hooks/use-trips";
 
 export const itemKeys = {
   all: ["items"] as const,
@@ -36,6 +37,7 @@ export function useCreateItem(tripId: string) {
       itemRepository.create(tripId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
@@ -55,6 +57,7 @@ export function useCopyItemToTrip() {
         queryKey: itemKeys.byTrip(item.tripId),
       });
       void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
@@ -77,6 +80,7 @@ export function useCopyItemsToTrip() {
         });
       }
       void queryClient.invalidateQueries({ queryKey: itemKeys.all });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
@@ -88,6 +92,7 @@ export function useCreateManyItems(tripId: string) {
       itemRepository.createMany(tripId, inputs),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
@@ -106,6 +111,7 @@ export function useUpdateItem(tripId: string, itemId: string) {
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
       void queryClient.invalidateQueries({ queryKey: itemKeys.detail(itemId) });
     },
   });
@@ -114,12 +120,11 @@ export function useUpdateItem(tripId: string, itemId: string) {
 export function useTogglePurchased(tripId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (itemId: string) => itemRepository.togglePurchased(itemId),
+    mutationFn: async (itemId: string) =>
+      itemRepository.togglePurchased(itemId),
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: itemKeys.byTrip(tripId) });
-      const previous = queryClient.getQueryData(
-        itemKeys.byTrip(tripId),
-      );
+      const previous = queryClient.getQueryData(itemKeys.byTrip(tripId));
       queryClient.setQueryData(
         itemKeys.byTrip(tripId),
         (old: ShoppingItem[] | undefined) => {
@@ -145,6 +150,7 @@ export function useTogglePurchased(tripId: string) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
@@ -158,6 +164,7 @@ export function useDeleteItem(tripId: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.byTrip(tripId) });
+      void queryClient.invalidateQueries({ queryKey: tripKeys.all });
     },
   });
 }
