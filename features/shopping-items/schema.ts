@@ -8,6 +8,8 @@ export const shoppingItemFormSchema = z.object({
   estimatedPrice: z.number().min(0, "가격은 0 이상이어야 합니다"),
   quantity: z.number().int().min(1, "수량은 1 이상이어야 합니다"),
   memo: z.string().trim(),
+  /** 구매 장소 (예: "돈키호테, 마츠모토키요시"). 비우면 빈 문자열 */
+  purchasePlace: z.string().trim(),
   imageDataUrl: z.string().nullable(),
   /** 예상 구매일 (YYYY-MM-DD). 미입력이면 null */
   plannedPurchaseDate: z.string().nullable(),

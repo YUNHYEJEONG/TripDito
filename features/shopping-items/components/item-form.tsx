@@ -12,6 +12,7 @@ import { addDaysIso, getTripDayFilterOptions } from "../utils/trip-day";
 import { cn } from "@/lib/utils";
 import { GIFT_TAG_OPTIONS, type GiftTagId } from "../constants/gift-tags";
 import { shoppingItemFormSchema, type ShoppingItemFormValues } from "../schema";
+import { StoreSuggest, appendPlace } from "./store-suggest";
 
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
@@ -21,12 +22,15 @@ function formatDayChip(iso: string) {
 }
 
 export function ItemForm({
+  tripId,
   defaultValues,
   tripRange,
   submitLabel = "저장",
   onSubmit,
   onCancel,
 }: {
+  /** 여행 ID. 주어지면 여행 도시 인근 매장 추천("근처 매장 찾기")을 켠다 */
+  tripId?: string;
   defaultValues?: Partial<ShoppingItemFormValues>;
   /** 여행 기간. 주어지면 예상 구매일을 여행 일차 칩으로 고른다 (기간 밖 선택 불가) */
   tripRange?: { startDate: string; endDate: string };
@@ -46,6 +50,7 @@ export function ItemForm({
   const imageDataUrl = form.watch("imageDataUrl");
   const giftTags = form.watch("giftTags") ?? [];
   const plannedPurchaseDate = form.watch("plannedPurchaseDate") ?? null;
+  const productName = form.watch("name") ?? "";
 
   const dayOptions = tripRange
     ? getTripDayFilterOptions(tripRange.startDate, tripRange.endDate).map(
@@ -122,6 +127,29 @@ export function ItemForm({
           />
         </Field>
       </div>
+      <Field
+        label="구매 장소"
+        error={form.formState.errors.purchasePlace?.message}
+      >
+        <Input
+          autoComplete="off"
+          placeholder="매장명 (쉼표로 여러 곳 입력 가능)"
+          {...form.register("purchasePlace")}
+        />
+        {tripId ? (
+          <StoreSuggest
+            tripId={tripId}
+            productName={productName}
+            onPick={(store) =>
+              form.setValue(
+                "purchasePlace",
+                appendPlace(form.getValues("purchasePlace") ?? "", store.name),
+                { shouldDirty: true, shouldValidate: true },
+              )
+            }
+          />
+        ) : null}
+      </Field>
       <Field
         label="예상 구매일"
         error={form.formState.errors.plannedPurchaseDate?.message}

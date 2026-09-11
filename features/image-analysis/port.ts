@@ -7,7 +7,11 @@ export type AnalyzableImage = {
 export type ProposedItem = {
   name: string;
   estimatedPrice: number;
+  /** 가격 출처 — 검토 화면에서 "추정" 안내용 */
+  priceSource: "image" | "search" | "estimate" | "none";
   quantity: number;
+  /** AI 가 제안한 구매 장소 (쉼표 구분). 사용자가 검토 화면에서 수정할 수 있다 */
+  purchasePlace: string;
   memo: string;
   sourceImageId: string;
   imageDataUrl: string | null;

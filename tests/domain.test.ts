@@ -20,6 +20,7 @@ function item(
     memo: "",
     imageDataUrl: null,
     plannedPurchaseDate: null,
+    purchasePlace: "",
     giftTags: [],
     purchased: false,
     purchasedAt: null,

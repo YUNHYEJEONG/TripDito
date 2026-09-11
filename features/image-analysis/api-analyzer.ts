@@ -19,6 +19,7 @@ function buildMemo(item: AnalyzedItem) {
   if (item.nameOriginal) parts.push(item.nameOriginal);
   if (item.priceSource === "image") parts.push("가격: 사진에서 읽음");
   else if (item.priceSource === "search") parts.push("가격: 검색 추정");
+  else if (item.priceSource === "estimate") parts.push("가격: AI 추정 (확인 필요)");
   return parts.join(" · ");
 }
 
@@ -92,7 +93,9 @@ export const apiImageAnalyzer: ImageAnalyzer = {
         items.push({
           name: item.name,
           estimatedPrice: item.estimatedPrice,
+          priceSource: item.priceSource,
           quantity: item.quantity,
+          purchasePlace: (item.expectedStores ?? []).join(", "),
           memo: buildMemo(item),
           sourceImageId: item.sourceImageId,
           imageDataUrl: byId.get(item.sourceImageId)?.dataUrl ?? null,
