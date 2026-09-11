@@ -40,6 +40,10 @@ const COUNTRY_BACKGROUNDS: BackgroundRule[] = [
     match: /대만|taiwan|tw\b|타이완/i,
     src: "/trip-backgrounds/taiwan.jpg",
   },
+  {
+    match: /태국|thailand|th\b/i,
+    src: "/trip-backgrounds/thailand.jpg",
+  },
 ];
 
 const FALLBACK_BACKGROUND = "/trip-backgrounds/japan.jpg";
